@@ -80,31 +80,20 @@ const PerformanceChart = ({ visibleModels }: PerformanceChartProps) => {
         </LineChart>
       </ResponsiveContainer>
       
-      {/* Value labels at end of lines - styled like reference */}
-      <div className="absolute right-2 top-0 bottom-0 flex flex-col justify-center gap-2 text-xs font-mono">
-        {models
-          .filter(model => visibleModels.includes(model.id))
-          .sort((a, b) => {
-            const aValue = lastDataPoint[a.id as keyof typeof lastDataPoint] as number;
-            const bValue = lastDataPoint[b.id as keyof typeof lastDataPoint] as number;
-            return bValue - aValue;
-          })
-          .map((model) => {
-            const value = lastDataPoint[model.id as keyof typeof lastDataPoint] as number;
-            return (
-              <div 
-                key={model.id}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full shadow-md"
-                style={{ 
-                  backgroundColor: model.color,
-                  color: model.id === 'gemini' || model.id === 'btc' || model.id === 'qwen' ? 'hsl(0, 0%, 10%)' : 'white'
-                }}
-              >
-                <span className="text-sm">{model.icon}</span>
-                <span className="font-semibold">${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-              </div>
-            );
-          })}
+      {/* Value labels at end of lines */}
+      <div className="absolute right-2 top-0 bottom-0 flex flex-col justify-center gap-1 text-xs font-mono">
+        {models.map((model) => (
+          visibleModels.includes(model.id) && (
+            <div 
+              key={model.id}
+              className="flex items-center gap-1 px-2 py-0.5 rounded"
+              style={{ backgroundColor: `${model.color}20` }}
+            >
+              <span style={{ color: model.color }}>{model.icon}</span>
+              <span style={{ color: model.color }}>${lastDataPoint[model.id as keyof typeof lastDataPoint].toLocaleString()}</span>
+            </div>
+          )
+        ))}
       </div>
     </div>
   );
