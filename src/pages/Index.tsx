@@ -6,6 +6,7 @@ import PerformanceChart from '@/components/PerformanceChart';
 import ModelBar from '@/components/ModelBar';
 import Sidebar from '@/components/Sidebar';
 import { models } from '@/lib/chartData';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
 const Index = () => {
   const [timeRange, setTimeRange] = useState('ALL');
@@ -20,7 +21,8 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-mono dark">
+    <ThemeProvider>
+    <div className="min-h-screen bg-background text-foreground font-mono">
       {/* Top Navigation */}
       <TopNav />
       
@@ -48,6 +50,7 @@ const Index = () => {
         <Sidebar />
       </div>
     </div>
+    </ThemeProvider>
   );
 };
 
