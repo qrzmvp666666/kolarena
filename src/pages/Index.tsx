@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import TopNav from '@/components/TopNav';
+import TickerBar from '@/components/TickerBar';
 import ChartHeader from '@/components/ChartHeader';
 import PerformanceChart from '@/components/PerformanceChart';
 import ModelBar from '@/components/ModelBar';
@@ -19,7 +21,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-mono dark">
-      <div className="flex h-screen">
+      {/* Top Navigation */}
+      <TopNav />
+      
+      {/* Ticker Bar */}
+      <TickerBar />
+      
+      <div className="flex h-[calc(100vh-88px)]">
         {/* Main Content */}
         <div className="flex-1 flex flex-col">
           <ChartHeader timeRange={timeRange} onTimeRangeChange={setTimeRange} />
