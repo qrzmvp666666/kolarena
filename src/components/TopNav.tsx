@@ -134,7 +134,7 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
           ) : (
             <button
               onClick={handleLogin}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-accent-purple/10 hover:bg-accent-purple/20 text-accent-purple font-mono text-sm transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-border bg-transparent hover:bg-accent text-foreground font-mono text-sm transition-colors"
             >
               <User size={16} />
               {t('loginRegister')}
