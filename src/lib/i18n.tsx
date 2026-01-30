@@ -21,6 +21,16 @@ export const translations: Translations = {
   openDanmaku: { zh: '开启弹幕', en: 'Open Danmaku' },
   loginRegister: { zh: '登录/注册', en: 'Login/Register' },
   logout: { zh: '退出登录', en: 'Logout' },
+  emailLogin: { zh: '邮箱登录', en: 'Email' },
+  phoneLogin: { zh: '手机登录', en: 'Phone' },
+  emailPlaceholder: { zh: '请输入邮箱', en: 'Enter your email' },
+  phonePlaceholder: { zh: '请输入手机号', en: 'Enter your phone number' },
+  passwordPlaceholder: { zh: '请输入密码', en: 'Enter your password' },
+  login: { zh: '登录', en: 'Login' },
+  orContinueWith: { zh: '或使用以下方式', en: 'or continue with' },
+  googleLogin: { zh: 'Google 登录', en: 'Continue with Google' },
+  noAccount: { zh: '还没有账号?', en: "Don't have an account?" },
+  register: { zh: '立即注册', en: 'Register' },
   
   // ChartHeader
   totalAccountValue: { zh: '总账户价值', en: 'TOTAL ACCOUNT VALUE' },
