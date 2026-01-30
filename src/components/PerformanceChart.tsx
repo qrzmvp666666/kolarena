@@ -62,7 +62,7 @@ const PerformanceChart = ({ visibleModels }: PerformanceChartProps) => {
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={chartData}
-          margin={{ top: 20, right: 140, left: 20, bottom: 20 }}
+          margin={{ top: 20, right: 100, left: 20, bottom: 20 }}
         >
           <CartesianGrid strokeDasharray="1 1" stroke="hsl(var(--border))" opacity={0.3} />
           <XAxis 
@@ -106,7 +106,7 @@ const PerformanceChart = ({ visibleModels }: PerformanceChartProps) => {
       <div 
         className="absolute flex flex-col gap-0"
         style={{ 
-          right: '8px',
+          right: '4px',
           top: '20px',
           bottom: '20px',
         }}
