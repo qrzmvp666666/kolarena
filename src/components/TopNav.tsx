@@ -9,9 +9,9 @@ const TopNav = () => {
       {/* Logo */}
       <div className="flex items-center gap-2">
         <span className="text-xl font-bold tracking-tight text-foreground">
-          Alpha<span className="text-accent-purple">Arena</span>
+          Kol<span className="text-accent-purple">Arena</span>
         </span>
-        <span className="text-xs text-muted-foreground">by Nofi</span>
+        <span className="text-xs text-muted-foreground">by</span>
       </div>
 
       {/* Center Navigation */}

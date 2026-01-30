@@ -100,3 +100,17 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Danmaku animation */
+@keyframes danmaku {
+  from {
+    transform: translateX(100vw);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-danmaku {
+  animation: danmaku linear forwards;
+}
