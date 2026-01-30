@@ -22,11 +22,10 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
         <span className="text-xl font-bold tracking-tight text-foreground">
           Kol<span className="text-accent-purple">Arena</span>
         </span>
-        <span className="text-xs text-muted-foreground">by</span>
       </div>
 
       {/* Center Navigation */}
-      <div className="flex items-center gap-8">
+      <div className="flex items-center gap-6">
         <a href="#" className="font-mono text-sm text-foreground hover:text-accent-cyan transition-colors">
           {t('live')}
         </a>
@@ -38,10 +37,26 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
         <a href="#" className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors">
           {t('models')}
         </a>
+        <span className="text-muted-foreground">|</span>
+        <a 
+          href="#" 
+          className="flex items-center gap-1 font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {t('joinWaitlist')}
+          <ExternalLink size={14} />
+        </a>
+        <span className="text-muted-foreground">|</span>
+        <a 
+          href="#" 
+          className="flex items-center gap-1 font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {t('aboutNofi')}
+          <ExternalLink size={14} />
+        </a>
       </div>
 
-      {/* Right Side */}
-      <div className="flex items-center gap-4">
+      {/* Right Side - Controls Only */}
+      <div className="flex items-center gap-3">
         {/* Language Toggle */}
         <button
           onClick={toggleLanguage}
@@ -68,20 +83,6 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
         >
           {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
         </button>
-        <a 
-          href="#" 
-          className="flex items-center gap-1 font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          {t('joinWaitlist')}
-          <ExternalLink size={14} />
-        </a>
-        <a 
-          href="#" 
-          className="flex items-center gap-1 font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          {t('aboutNofi')}
-          <ExternalLink size={14} />
-        </a>
       </div>
     </nav>
   );
