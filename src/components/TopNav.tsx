@@ -14,6 +14,7 @@ import LoginModal from '@/components/LoginModal';
 interface TopNavProps {
   danmakuEnabled: boolean;
   onToggleDanmaku: () => void;
+  hideDanmakuToggle?: boolean;
 }
 
 // Mock user state - replace with real auth later
@@ -22,7 +23,7 @@ interface MockUser {
   avatar: string;
 }
 
-const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
+const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: TopNavProps) => {
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const location = useLocation();
@@ -104,14 +105,16 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
           <span>{language === 'zh' ? '中文' : 'EN'}</span>
         </button>
         
-        <button
-          onClick={onToggleDanmaku}
-          className="p-2 rounded-md hover:bg-accent transition-colors"
-          aria-label="Toggle danmaku"
-          title={danmakuEnabled ? t('closeDanmaku') : t('openDanmaku')}
-        >
-          {danmakuEnabled ? <MessageSquare size={18} /> : <MessageSquareOff size={18} />}
-        </button>
+        {!hideDanmakuToggle && (
+          <button
+            onClick={onToggleDanmaku}
+            className="p-2 rounded-md hover:bg-accent transition-colors"
+            aria-label="Toggle danmaku"
+            title={danmakuEnabled ? t('closeDanmaku') : t('openDanmaku')}
+          >
+            {danmakuEnabled ? <MessageSquare size={18} /> : <MessageSquareOff size={18} />}
+          </button>
+        )}
         
         <button
           onClick={toggleTheme}
