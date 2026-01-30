@@ -1,5 +1,6 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { chartData, models } from '@/lib/chartData';
+import { useMemo } from 'react';
 
 interface PerformanceChartProps {
   visibleModels: string[];
@@ -32,15 +33,36 @@ const PerformanceChart = ({ visibleModels }: PerformanceChartProps) => {
     return null;
   };
 
-  // Get last data point for labels
+  // Get last data point for labels and calculate Y positions
   const lastDataPoint = chartData[chartData.length - 1];
+  
+  // Chart domain configuration
+  const yMin = 6000;
+  const yMax = 14500;
+  
+  // Calculate avatar positions based on chart values
+  const avatarPositions = useMemo(() => {
+    return models
+      .filter(model => visibleModels.includes(model.id))
+      .map(model => {
+        const value = lastDataPoint[model.id as keyof typeof lastDataPoint] as number;
+        // Calculate percentage position from bottom (inverted for CSS)
+        const percentage = ((value - yMin) / (yMax - yMin)) * 100;
+        return {
+          ...model,
+          value,
+          topPercentage: 100 - percentage,
+        };
+      })
+      .sort((a, b) => a.value - b.value); // Sort by value for proper stacking
+  }, [visibleModels, lastDataPoint]);
 
   return (
     <div className="h-full w-full relative">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={chartData}
-          margin={{ top: 20, right: 120, left: 20, bottom: 20 }}
+          margin={{ top: 20, right: 140, left: 20, bottom: 20 }}
         >
           <CartesianGrid strokeDasharray="1 1" stroke="hsl(var(--border))" opacity={0.3} />
           <XAxis 
@@ -57,7 +79,7 @@ const PerformanceChart = ({ visibleModels }: PerformanceChartProps) => {
             tick={{ fontSize: 10, fontFamily: 'JetBrains Mono' }}
             tickLine={false}
             axisLine={{ stroke: 'hsl(var(--border))' }}
-            domain={[6000, 14500]}
+            domain={[yMin, yMax]}
             ticks={[6000, 8000, 10000, 12000, 14000]}
           />
           <Tooltip content={<CustomTooltip />} />
@@ -80,19 +102,46 @@ const PerformanceChart = ({ visibleModels }: PerformanceChartProps) => {
         </LineChart>
       </ResponsiveContainer>
       
-      {/* Value labels at end of lines */}
-      <div className="absolute right-2 top-0 bottom-0 flex flex-col justify-center gap-1 text-xs font-mono">
-        {models.map((model) => (
-          visibleModels.includes(model.id) && (
+      {/* Avatar markers at end of lines */}
+      <div 
+        className="absolute flex flex-col gap-0"
+        style={{ 
+          right: '8px',
+          top: '20px',
+          bottom: '20px',
+        }}
+      >
+        {avatarPositions.map((model) => (
+          <div
+            key={model.id}
+            className="absolute flex items-center gap-2 transition-all duration-300"
+            style={{ 
+              top: `${model.topPercentage}%`,
+              transform: 'translateY(-50%)',
+              right: 0,
+            }}
+          >
+            {/* Avatar circle */}
             <div 
-              key={model.id}
-              className="flex items-center gap-1 px-2 py-0.5 rounded"
-              style={{ backgroundColor: `${model.color}20` }}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-lg border-2"
+              style={{ 
+                backgroundColor: model.color,
+                borderColor: 'hsl(var(--background))',
+                color: model.id === 'btc' || model.id === 'gemini' ? '#000' : '#fff',
+              }}
             >
-              <span style={{ color: model.color }}>{model.icon}</span>
-              <span style={{ color: model.color }}>${lastDataPoint[model.id as keyof typeof lastDataPoint].toLocaleString()}</span>
+              {model.shortName.charAt(0)}
             </div>
-          )
+            {/* Value label */}
+            <div className="flex flex-col items-start font-mono">
+              <span 
+                className="text-xs font-semibold"
+                style={{ color: model.color }}
+              >
+                ${model.value.toLocaleString()}
+              </span>
+            </div>
+          </div>
         ))}
       </div>
     </div>
