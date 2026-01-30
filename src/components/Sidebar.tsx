@@ -13,25 +13,25 @@ const Sidebar = () => {
         <TabsList className="w-full rounded-none border-b border-border bg-transparent p-0 h-auto">
           <TabsTrigger 
             value="trades" 
-            className="flex-1 rounded-none border-r border-border py-3 font-mono text-xs data-[state=active]:bg-secondary data-[state=active]:text-foreground"
+            className="flex-1 rounded-none border-r border-border py-3 font-mono text-xs text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold"
           >
             COMPLETED<br />TRADES
           </TabsTrigger>
           <TabsTrigger 
             value="modelchat" 
-            className="flex-1 rounded-none border-r border-border py-3 font-mono text-xs data-[state=active]:bg-secondary data-[state=active]:text-foreground"
+            className="flex-1 rounded-none border-r border-border py-3 font-mono text-xs text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold"
           >
             MODELCHAT
           </TabsTrigger>
           <TabsTrigger 
             value="positions" 
-            className="flex-1 rounded-none border-r border-border py-3 font-mono text-xs data-[state=active]:bg-secondary data-[state=active]:text-foreground"
+            className="flex-1 rounded-none border-r border-border py-3 font-mono text-xs text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold"
           >
             POSITIONS
           </TabsTrigger>
           <TabsTrigger 
             value="readme" 
-            className="flex-1 rounded-none py-3 font-mono text-xs data-[state=active]:bg-secondary data-[state=active]:text-foreground"
+            className="flex-1 rounded-none py-3 font-mono text-xs text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold"
           >
             README.TXT
           </TabsTrigger>
