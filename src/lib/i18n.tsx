@@ -50,6 +50,27 @@ export const translations: Translations = {
   // TickerBar
   highest: { zh: '最高', en: 'HIGHEST' },
   lowest: { zh: '最低', en: 'LOWEST' },
+
+  // Signals Page
+  tradingSignals: { zh: '交易信号', en: 'Trading Signals' },
+  signalSummary: { zh: '所有频道的交易信号汇总', en: 'Summary of trading signals from all channels' },
+  signalAll: { zh: '全部', en: 'All' },
+  signalSubscribed: { zh: '已订阅', en: 'Subscribed' },
+  signalUnsubscribed: { zh: '未订阅', en: 'Unsubscribed' },
+  searchPlaceholder: { zh: '搜索币种、作者...', en: 'Search coin, author...' },
+  refresh: { zh: '刷新', en: 'Refresh' },
+  signalSpot: { zh: '现货', en: 'Spot' },
+  signalLong: { zh: '做多', en: 'Long' },
+  signalShort: { zh: '做空', en: 'Short' },
+  signal7dCount: { zh: '7日信号 {count}条', en: '{count} signals in 7d' },
+  entryPrice: { zh: '入场', en: 'Entry' },
+  takeProfit: { zh: '止盈', en: 'TP' },
+  stopLoss: { zh: '止损', en: 'SL' },
+  leverage: { zh: '杠杆', en: 'Lev' },
+  notProvided: { zh: '未提供', en: 'N/A' },
+  signalCount: { zh: '条信号', en: ' signals' },
+  subscribe: { zh: '订阅', en: 'Subscribe' },
+  view: { zh: '查看', en: 'View' },
 };
 
 interface LanguageContextType {

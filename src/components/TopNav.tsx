@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Sun, Moon, MessageSquare, MessageSquareOff, Globe, User, LogOut, ChevronDown } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { useLanguage } from '@/lib/i18n';
@@ -24,6 +25,7 @@ interface MockUser {
 const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
+  const location = useLocation();
   
   // Mock login state - set to null for logged out, or user object for logged in
   const [user, setUser] = useState<MockUser | null>(null);
@@ -52,17 +54,27 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
 
       {/* Center Navigation */}
       <div className="flex items-center gap-6">
-        <a href="#" className="font-mono text-sm text-foreground hover:text-accent-cyan transition-colors">
+        <Link 
+          to="/" 
+          className={`font-mono text-sm transition-colors ${
+            location.pathname === '/' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
           {t('live')}
-        </a>
+        </Link>
         <span className="text-muted-foreground">|</span>
         <a href="#" className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors">
           {t('leaderboard')}
         </a>
         <span className="text-muted-foreground">|</span>
-        <a href="#" className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <Link 
+          to="/signals" 
+          className={`font-mono text-sm transition-colors ${
+            location.pathname === '/signals' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
           {t('models')}
-        </a>
+        </Link>
         <span className="text-muted-foreground">|</span>
         <a 
           href="#" 
