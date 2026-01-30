@@ -15,28 +15,28 @@ const Sidebar = () => {
   return (
     <div className="w-[380px] border-l border-border bg-card flex flex-col h-full">
       <Tabs defaultValue="pending" className="flex flex-col h-full">
-        <TabsList className="w-full rounded-none border-b border-border bg-transparent p-0 h-auto">
+        <TabsList className="w-full rounded-none border-b border-border bg-transparent p-0 h-auto flex-shrink-0">
           <TabsTrigger 
             value="trades" 
-            className="flex-1 rounded-none border-r border-border py-3 font-mono text-xs text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold"
+            className="flex-1 rounded-none border-r border-border py-2 px-1 font-mono text-[10px] text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold whitespace-nowrap overflow-hidden text-ellipsis"
           >
-            {t('completedTrades').split(' ').join('\n')}
+            {t('completedTrades')}
           </TabsTrigger>
           <TabsTrigger 
             value="pending" 
-            className="flex-1 rounded-none border-r border-border py-3 font-mono text-xs text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold"
+            className="flex-1 rounded-none border-r border-border py-2 px-1 font-mono text-[10px] text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold whitespace-nowrap overflow-hidden text-ellipsis"
           >
             {t('pendingOrders')}
           </TabsTrigger>
           <TabsTrigger 
             value="positions" 
-            className="flex-1 rounded-none border-r border-border py-3 font-mono text-xs text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold"
+            className="flex-1 rounded-none border-r border-border py-2 px-1 font-mono text-[10px] text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold whitespace-nowrap overflow-hidden text-ellipsis"
           >
             {t('positions')}
           </TabsTrigger>
           <TabsTrigger 
             value="comments" 
-            className="flex-1 rounded-none py-3 font-mono text-xs text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold"
+            className="flex-1 rounded-none py-2 px-1 font-mono text-[10px] text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold whitespace-nowrap overflow-hidden text-ellipsis"
           >
             {t('comments')}
           </TabsTrigger>
