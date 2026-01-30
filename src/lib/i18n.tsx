@@ -13,7 +13,7 @@ export const translations: Translations = {
   // TopNav
   live: { zh: '实盘', en: 'LIVE' },
   leaderboard: { zh: '排行榜', en: 'LEADERBOARD' },
-  models: { zh: '模型', en: 'MODELS' },
+  models: { zh: '信号', en: 'SIGNALS' },
   joinWaitlist: { zh: '加入等待', en: 'JOIN WAITLIST' },
   aboutUs: { zh: '关于我们', en: 'ABOUT US' },
   toggleDanmaku: { zh: '切换弹幕', en: 'Toggle Danmaku' },
