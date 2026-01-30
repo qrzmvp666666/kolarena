@@ -9,105 +9,53 @@ import { Search, Filter, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
-// Mock signal data
-const mockSignals = [
-  {
-    id: '1',
-    author: 'CryptoMaster',
-    channel: 'premium-signals',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=crypto1',
-    signalType: 'long' as const,
-    coinType: 'BTC',
-    signalCount7d: 4,
-    pair: 'BTC/USDT',
-    entryPrice: '100825',
-    takeProfit: '115498',
-    stopLoss: '97480',
-    leverage: null,
-    time: '15:21',
-    totalSignals: 2,
-  },
-  {
-    id: '2',
-    author: 'ETH_Whale',
-    channel: 'eth-trading',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=eth2',
-    signalType: 'spot' as const,
-    coinType: 'ETH',
-    signalCount7d: 4,
-    pair: 'ETH/USDT',
-    entryPrice: '1700',
-    takeProfit: null,
-    stopLoss: null,
-    leverage: null,
-    time: '17:04',
-    totalSignals: 16,
-  },
-  {
-    id: '3',
-    author: 'GoldAnalyst',
-    channel: 'xau-signals',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=gold3',
-    signalType: 'long' as const,
-    coinType: 'XAU',
-    signalCount7d: 4,
-    pair: 'XAU/USDT',
-    entryPrice: '5172',
-    takeProfit: '5315',
-    stopLoss: '5045',
-    leverage: null,
-    time: '15:11',
-    totalSignals: 4,
-  },
-  {
-    id: '4',
-    author: 'AltCoinKing',
-    channel: 'altcoin-gems',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alt4',
-    signalType: 'short' as const,
-    coinType: 'PENDLE',
-    signalCount7d: 10,
-    pair: 'PENDLE/USDT',
-    entryPrice: '1.9692',
-    takeProfit: null,
-    stopLoss: null,
-    leverage: null,
-    time: '14:55',
-    totalSignals: 81,
-  },
-  {
-    id: '5',
-    author: 'Carrysolo668',
-    channel: 'btc-premium',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=carry5',
-    signalType: 'long' as const,
-    coinType: 'BTC',
-    signalCount7d: 4,
-    pair: 'BTC/USDT',
-    entryPrice: '80300-81200',
-    takeProfit: '82500',
-    stopLoss: '80300',
-    leverage: null,
-    time: '14:37',
-    totalSignals: 10,
-  },
-  {
-    id: '6',
-    author: 'TraderNick',
-    channel: 'nick-analysis',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=nick6',
-    signalType: 'short' as const,
-    coinType: 'BTC',
-    signalCount7d: 10,
-    pair: 'BTC/USDT',
-    entryPrice: '86000-89000',
-    takeProfit: '78000',
-    stopLoss: '89500',
-    leverage: null,
-    time: '14:29',
-    totalSignals: 8,
-  },
+// Mock signal data - generate more traders
+const traderNames = [
+  'CryptoMaster', 'ETH_Whale', 'GoldAnalyst', 'AltCoinKing', 'Carrysolo668', 
+  'TraderNick', 'BitcoinBull', 'SolanaSniper', 'DefiDegen', 'WhaleWatcher',
+  'MoonHunter', 'DiamondHands', 'CryptoQueen', 'BlockchainBob', 'TokenTitan',
+  'SatoshiFan', 'EtherKing', 'ChartMaster', 'TrendTrader', 'ProfitPro',
+  'CoinCollector', 'CryptoNinja', 'MarketMaker', 'SwingKing', 'DayTraderX'
 ];
+
+const channels = [
+  'premium-signals', 'eth-trading', 'xau-signals', 'altcoin-gems', 'btc-premium',
+  'nick-analysis', 'whale-alerts', 'defi-plays', 'moon-shots', 'safe-trades'
+];
+
+const coinTypes = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'BNB', 'XAU', 'PENDLE', 'ARB', 'OP'];
+const signalTypes: ('spot' | 'long' | 'short')[] = ['spot', 'long', 'short'];
+
+const generateMockSignals = (count: number) => {
+  return Array.from({ length: count }, (_, i) => {
+    const signalType = signalTypes[Math.floor(Math.random() * signalTypes.length)];
+    const coinType = coinTypes[Math.floor(Math.random() * coinTypes.length)];
+    const hasTP = Math.random() > 0.3;
+    const hasSL = Math.random() > 0.3;
+    
+    return {
+      id: String(i + 1),
+      author: traderNames[i % traderNames.length],
+      channel: channels[Math.floor(Math.random() * channels.length)],
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=trader${i}`,
+      signalType,
+      coinType,
+      signalCount7d: Math.floor(Math.random() * 15) + 1,
+      pair: `${coinType}/USDT`,
+      entryPrice: coinType === 'BTC' ? String(Math.floor(Math.random() * 20000) + 80000) 
+        : coinType === 'ETH' ? String(Math.floor(Math.random() * 500) + 1500)
+        : coinType === 'SOL' ? String(Math.floor(Math.random() * 50) + 150)
+        : String((Math.random() * 100).toFixed(2)),
+      takeProfit: hasTP ? String(Math.floor(Math.random() * 10000) + 50000) : null,
+      stopLoss: hasSL ? String(Math.floor(Math.random() * 5000) + 70000) : null,
+      leverage: Math.random() > 0.7 ? `${Math.floor(Math.random() * 20) + 5}x` : null,
+      time: `${Math.floor(Math.random() * 12) + 10}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
+      totalSignals: Math.floor(Math.random() * 100) + 1,
+    };
+  });
+};
+
+const mockSignals = generateMockSignals(25);
 
 const SignalsContent = () => {
   const { t } = useLanguage();
@@ -187,8 +135,8 @@ const SignalsContent = () => {
           </div>
         </div>
 
-        {/* Signal Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Signal Grid - 5 columns */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {mockSignals.map(signal => (
             <SignalCard key={signal.id} signal={signal} />
           ))}
