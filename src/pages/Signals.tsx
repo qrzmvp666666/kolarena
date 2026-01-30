@@ -81,11 +81,11 @@ const SignalsContent = () => {
       <TickerBar />
       
       {/* Main Content */}
-      <div className="p-6">
+      <div className="px-6 py-3">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground mb-1">{t('tradingSignals')}</h1>
-          <p className="text-sm text-muted-foreground">{t('signalSummary')}</p>
+        <div className="mb-4">
+          <h1 className="text-xl font-bold text-foreground mb-0.5">{t('tradingSignals')}</h1>
+          <p className="text-xs text-muted-foreground">{t('signalSummary')}</p>
         </div>
 
         {/* Filter Bar */}
