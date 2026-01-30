@@ -12,6 +12,7 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 const Index = () => {
   const [timeRange, setTimeRange] = useState('ALL');
   const [visibleModels, setVisibleModels] = useState<string[]>(models.map(m => m.id));
+  const [danmakuEnabled, setDanmakuEnabled] = useState(true);
 
   const handleToggleModel = (modelId: string) => {
     setVisibleModels(prev => 
@@ -25,10 +26,10 @@ const Index = () => {
     <ThemeProvider>
     <div className="min-h-screen bg-background text-foreground font-mono relative">
       {/* Danmaku Layer */}
-      <Danmaku />
+      {danmakuEnabled && <Danmaku />}
       
       {/* Top Navigation */}
-      <TopNav />
+      <TopNav danmakuEnabled={danmakuEnabled} onToggleDanmaku={() => setDanmakuEnabled(!danmakuEnabled)} />
       
       {/* Ticker Bar */}
       <TickerBar />

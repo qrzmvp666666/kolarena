@@ -1,7 +1,12 @@
-import { ExternalLink, Sun, Moon } from 'lucide-react';
+import { ExternalLink, Sun, Moon, MessageSquare, MessageSquareOff } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 
-const TopNav = () => {
+interface TopNavProps {
+  danmakuEnabled: boolean;
+  onToggleDanmaku: () => void;
+}
+
+const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
   const { theme, toggleTheme } = useTheme();
 
   return (
@@ -31,6 +36,14 @@ const TopNav = () => {
 
       {/* Right Side */}
       <div className="flex items-center gap-6">
+        <button
+          onClick={onToggleDanmaku}
+          className="p-2 rounded-md hover:bg-accent transition-colors"
+          aria-label="Toggle danmaku"
+          title={danmakuEnabled ? '关闭弹幕' : '开启弹幕'}
+        >
+          {danmakuEnabled ? <MessageSquare size={18} /> : <MessageSquareOff size={18} />}
+        </button>
         <button
           onClick={toggleTheme}
           className="p-2 rounded-md hover:bg-accent transition-colors"
