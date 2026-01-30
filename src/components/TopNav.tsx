@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import LoginModal from '@/components/LoginModal';
 
 interface TopNavProps {
   danmakuEnabled: boolean;
@@ -26,13 +27,10 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
   
   // Mock login state - set to null for logged out, or user object for logged in
   const [user, setUser] = useState<MockUser | null>(null);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
   
-  // For demo: toggle login state
-  const handleLogin = () => {
-    setUser({
-      name: 'Demo User',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=demo&backgroundColor=ff6b6b'
-    });
+  const handleLogin = (loggedInUser: MockUser) => {
+    setUser(loggedInUser);
   };
   
   const handleLogout = () => {
@@ -133,7 +131,7 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
             </DropdownMenu>
           ) : (
             <button
-              onClick={handleLogin}
+              onClick={() => setLoginModalOpen(true)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-border bg-transparent hover:bg-accent text-foreground font-mono text-sm transition-colors"
             >
               <User size={16} />
@@ -141,6 +139,13 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
             </button>
           )}
         </div>
+
+        {/* Login Modal */}
+        <LoginModal
+          open={loginModalOpen}
+          onOpenChange={setLoginModalOpen}
+          onLogin={handleLogin}
+        />
       </div>
     </nav>
   );
