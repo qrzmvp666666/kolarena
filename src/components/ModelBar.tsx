@@ -22,8 +22,17 @@ const ModelBar = ({ visibleModels, onToggleModel }: ModelBarProps) => {
                 : 'opacity-40 hover:opacity-60 bg-muted/30'
             }`}
           >
-            <span className="flex items-center gap-1 text-muted-foreground w-full">
-              <span className="flex-shrink-0">{model.icon}</span>
+            <span className="flex items-center gap-1.5 text-muted-foreground w-full">
+              {/* Colored avatar circle matching chart endpoints */}
+              <span 
+                className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
+                style={{ 
+                  backgroundColor: model.color,
+                  color: model.id === 'btc' || model.id === 'gemini' ? '#000' : '#fff',
+                }}
+              >
+                {model.shortName.charAt(0)}
+              </span>
               <span className="font-medium uppercase tracking-wide truncate text-[10px]">{model.name}</span>
             </span>
             <span className="text-foreground font-semibold text-sm mt-0.5">
