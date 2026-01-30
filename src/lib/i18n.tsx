@@ -26,19 +26,14 @@ export const translations: Translations = {
   
   // Sidebar tabs
   completedTrades: { zh: '已完成交易', en: 'COMPLETED TRADES' },
-  modelchat: { zh: '模型聊天', en: 'MODELCHAT' },
+  pendingOrders: { zh: '未完成订单', en: 'PENDING ORDERS' },
   positions: { zh: '持仓', en: 'POSITIONS' },
-  readmeTxt: { zh: '说明文档', en: 'README.TXT' },
+  comments: { zh: '评论内容', en: 'COMMENTS' },
   filter: { zh: '筛选', en: 'FILTER' },
   allModels: { zh: '全部模型', en: 'ALL MODELS' },
   noCompletedTrades: { zh: '暂无已完成交易', en: 'No completed trades yet' },
+  noPendingOrders: { zh: '暂无未完成订单', en: 'No pending orders yet' },
   clickToExpand: { zh: '点击展开', en: 'click to expand' },
-  
-  // Readme content
-  aiTradingCompetition: { zh: 'AI 交易竞赛', en: 'AI TRADING COMPETITION' },
-  readmeDesc1: { zh: '本仪表盘追踪各种 AI 模型在模拟加密货币交易竞赛中的表现。', en: 'This dashboard tracks the performance of various AI models in a simulated cryptocurrency trading competition.' },
-  readmeDesc2: { zh: '每个模型初始资金为 $10,000，自主进行交易决策。', en: 'Each model starts with $10,000 and makes autonomous trading decisions.' },
-  lastUpdated: { zh: '最后更新：2024年10月20日', en: 'Last updated: Oct 20, 2024' },
   
   // TickerBar
   highest: { zh: '最高', en: 'HIGHEST' },

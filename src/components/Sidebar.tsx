@@ -1,17 +1,20 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import ChatPanel from './ChatPanel';
 import { models } from '@/lib/chartData';
 import { useLanguage } from '@/lib/i18n';
+import { generateCommentsList } from '@/lib/danmakuMessages';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const Sidebar = () => {
   const [filterModel, setFilterModel] = useState('all');
   const { t } = useLanguage();
+  
+  const comments = useMemo(() => generateCommentsList(), []);
 
   return (
     <div className="w-[380px] border-l border-border bg-card flex flex-col h-full">
-      <Tabs defaultValue="modelchat" className="flex flex-col h-full">
+      <Tabs defaultValue="pending" className="flex flex-col h-full">
         <TabsList className="w-full rounded-none border-b border-border bg-transparent p-0 h-auto">
           <TabsTrigger 
             value="trades" 
@@ -20,10 +23,10 @@ const Sidebar = () => {
             {t('completedTrades').split(' ').join('\n')}
           </TabsTrigger>
           <TabsTrigger 
-            value="modelchat" 
+            value="pending" 
             className="flex-1 rounded-none border-r border-border py-3 font-mono text-xs text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold"
           >
-            {t('modelchat')}
+            {t('pendingOrders')}
           </TabsTrigger>
           <TabsTrigger 
             value="positions" 
@@ -32,10 +35,10 @@ const Sidebar = () => {
             {t('positions')}
           </TabsTrigger>
           <TabsTrigger 
-            value="readme" 
+            value="comments" 
             className="flex-1 rounded-none py-3 font-mono text-xs text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold"
           >
-            {t('readmeTxt')}
+            {t('comments')}
           </TabsTrigger>
         </TabsList>
 
@@ -64,8 +67,10 @@ const Sidebar = () => {
           </div>
         </TabsContent>
         
-        <TabsContent value="modelchat" className="flex-1 p-3 mt-0 overflow-hidden">
-          <ChatPanel filterModel={filterModel} />
+        <TabsContent value="pending" className="flex-1 p-4 mt-0">
+          <div className="flex items-center justify-center h-full text-muted-foreground font-mono text-sm">
+            {t('noPendingOrders')}
+          </div>
         </TabsContent>
         
         <TabsContent value="positions" className="flex-1 p-4 mt-0">
@@ -89,13 +94,29 @@ const Sidebar = () => {
           </div>
         </TabsContent>
         
-        <TabsContent value="readme" className="flex-1 p-4 mt-0">
-          <div className="font-mono text-xs text-muted-foreground leading-relaxed">
-            <p className="mb-4">{t('aiTradingCompetition')}</p>
-            <p className="mb-2">{t('readmeDesc1')}</p>
-            <p className="mb-2">{t('readmeDesc2')}</p>
-            <p>{t('lastUpdated')}</p>
-          </div>
+        <TabsContent value="comments" className="flex-1 mt-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="p-3 space-y-3">
+              {comments.map((comment) => (
+                <div 
+                  key={comment.id} 
+                  className="p-3 rounded-lg bg-secondary/50 border border-border"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span 
+                      className="font-mono text-xs font-semibold"
+                      style={{ color: comment.color }}
+                    >
+                      {comment.timestamp}
+                    </span>
+                  </div>
+                  <p className="font-mono text-sm text-foreground">
+                    {comment.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
         </TabsContent>
       </Tabs>
     </div>
