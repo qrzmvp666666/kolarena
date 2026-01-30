@@ -36,25 +36,27 @@ const Index = () => {
           {/* Ticker Bar */}
           <TickerBar />
           
-          <div className="flex h-[calc(100vh-88px)]">
-            {/* Main Content */}
-            <div className="flex-1 flex flex-col">
-              <ChartHeader timeRange={timeRange} onTimeRangeChange={setTimeRange} />
-              
-              {/* Chart Area */}
-              <div className="flex-1 p-4">
-                <PerformanceChart visibleModels={visibleModels} />
+          <div className="flex flex-col h-[calc(100vh-88px)]">
+            <div className="flex flex-1 min-h-0">
+              {/* Main Content */}
+              <div className="flex-1 flex flex-col min-h-0">
+                <ChartHeader timeRange={timeRange} onTimeRangeChange={setTimeRange} />
+                
+                {/* Chart Area - fills remaining space */}
+                <div className="flex-1 p-4 min-h-0">
+                  <PerformanceChart visibleModels={visibleModels} />
+                </div>
               </div>
-              
-              {/* Model Bar */}
-              <ModelBar 
-                visibleModels={visibleModels} 
-                onToggleModel={handleToggleModel} 
-              />
-            </div>
 
-            {/* Sidebar */}
-            <Sidebar />
+              {/* Sidebar */}
+              <Sidebar />
+            </div>
+            
+            {/* Model Bar - fixed at bottom */}
+            <ModelBar 
+              visibleModels={visibleModels} 
+              onToggleModel={handleToggleModel} 
+            />
           </div>
         </div>
       </LanguageProvider>
