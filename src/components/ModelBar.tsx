@@ -7,31 +7,28 @@ interface ModelBarProps {
 
 const ModelBar = ({ visibleModels, onToggleModel }: ModelBarProps) => {
   return (
-    <div className="flex items-center justify-start gap-4 px-4 py-3 border-t border-border bg-card overflow-x-auto">
-      {models.map((model) => {
+    <div className="flex items-stretch border-t border-border bg-card overflow-x-auto">
+      {models.map((model, index) => {
         const isActive = visibleModels.includes(model.id);
         return (
           <button
             key={model.id}
             onClick={() => onToggleModel(model.id)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded transition-all font-mono text-xs whitespace-nowrap ${
+            className={`flex flex-col items-start justify-center px-4 py-2 font-mono text-xs whitespace-nowrap transition-all ${
+              index !== models.length - 1 ? 'border-r border-border' : ''
+            } ${
               isActive 
-                ? 'opacity-100' 
-                : 'opacity-40 hover:opacity-60'
+                ? 'opacity-100 bg-card' 
+                : 'opacity-40 hover:opacity-60 bg-muted/30'
             }`}
-            style={{ 
-              borderLeft: `3px solid ${model.color}`,
-              backgroundColor: isActive ? `${model.color}15` : 'transparent'
-            }}
           >
-            <span className="flex items-center gap-1.5">
-              <span 
-                className="w-2 h-2 rounded-full" 
-                style={{ backgroundColor: model.color }}
-              />
-              <span className="text-foreground font-medium">{model.name}</span>
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <span>{model.icon}</span>
+              <span className="font-medium uppercase tracking-wide">{model.name}</span>
             </span>
-            <span className="text-muted-foreground">${model.value.toLocaleString()}</span>
+            <span className="text-foreground font-semibold text-sm mt-0.5">
+              ${model.value.toLocaleString()}
+            </span>
           </button>
         );
       })}
