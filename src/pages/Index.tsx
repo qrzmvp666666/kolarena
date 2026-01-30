@@ -5,6 +5,7 @@ import ChartHeader from '@/components/ChartHeader';
 import PerformanceChart from '@/components/PerformanceChart';
 import ModelBar from '@/components/ModelBar';
 import Sidebar from '@/components/Sidebar';
+import Danmaku from '@/components/Danmaku';
 import { models } from '@/lib/chartData';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
@@ -22,7 +23,10 @@ const Index = () => {
 
   return (
     <ThemeProvider>
-    <div className="min-h-screen bg-background text-foreground font-mono">
+    <div className="min-h-screen bg-background text-foreground font-mono relative">
+      {/* Danmaku Layer */}
+      <Danmaku />
+      
       {/* Top Navigation */}
       <TopNav />
       
