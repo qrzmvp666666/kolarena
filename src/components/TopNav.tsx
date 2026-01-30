@@ -1,15 +1,43 @@
-import { Sun, Moon, MessageSquare, MessageSquareOff, Globe } from 'lucide-react';
+import { useState } from 'react';
+import { Sun, Moon, MessageSquare, MessageSquareOff, Globe, User, LogOut, ChevronDown } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { useLanguage } from '@/lib/i18n';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface TopNavProps {
   danmakuEnabled: boolean;
   onToggleDanmaku: () => void;
 }
 
+// Mock user state - replace with real auth later
+interface MockUser {
+  name: string;
+  avatar: string;
+}
+
 const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
+  
+  // Mock login state - set to null for logged out, or user object for logged in
+  const [user, setUser] = useState<MockUser | null>(null);
+  
+  // For demo: toggle login state
+  const handleLogin = () => {
+    setUser({
+      name: 'Demo User',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=demo&backgroundColor=ff6b6b'
+    });
+  };
+  
+  const handleLogout = () => {
+    setUser(null);
+  };
 
   const toggleLanguage = () => {
     setLanguage(language === 'zh' ? 'en' : 'zh');
@@ -53,7 +81,7 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
         </a>
       </div>
 
-      {/* Right Side - Controls Only */}
+      {/* Right Side - Controls & User */}
       <div className="flex items-center gap-3">
         {/* Language Toggle */}
         <button
@@ -74,6 +102,7 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
         >
           {danmakuEnabled ? <MessageSquare size={18} /> : <MessageSquareOff size={18} />}
         </button>
+        
         <button
           onClick={toggleTheme}
           className="p-2 rounded-md hover:bg-accent transition-colors"
@@ -81,6 +110,37 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
         >
           {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
         </button>
+
+        {/* User Section */}
+        <div className="ml-2 pl-3 border-l border-border">
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-accent rounded-md px-2 py-1 transition-colors">
+                <img 
+                  src={user.avatar} 
+                  alt={user.name}
+                  className="w-7 h-7 rounded-full border border-border"
+                />
+                <span className="font-mono text-sm text-foreground">{user.name}</span>
+                <ChevronDown size={14} className="text-muted-foreground" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="font-mono">
+                <DropdownMenuItem onClick={handleLogout} className="gap-2 cursor-pointer">
+                  <LogOut size={14} />
+                  {t('logout')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <button
+              onClick={handleLogin}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-accent-purple/10 hover:bg-accent-purple/20 text-accent-purple font-mono text-sm transition-colors"
+            >
+              <User size={16} />
+              {t('loginRegister')}
+            </button>
+          )}
+        </div>
       </div>
     </nav>
   );

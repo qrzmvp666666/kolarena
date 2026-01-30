@@ -19,6 +19,8 @@ export const translations: Translations = {
   toggleDanmaku: { zh: '切换弹幕', en: 'Toggle Danmaku' },
   closeDanmaku: { zh: '关闭弹幕', en: 'Close Danmaku' },
   openDanmaku: { zh: '开启弹幕', en: 'Open Danmaku' },
+  loginRegister: { zh: '登录/注册', en: 'Login/Register' },
+  logout: { zh: '退出登录', en: 'Logout' },
   
   // ChartHeader
   totalAccountValue: { zh: '总账户价值', en: 'TOTAL ACCOUNT VALUE' },
