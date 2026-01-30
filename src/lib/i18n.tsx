@@ -71,6 +71,9 @@ export const translations: Translations = {
   signalCount: { zh: '条信号', en: ' signals' },
   subscribe: { zh: '订阅', en: 'Subscribe' },
   view: { zh: '查看', en: 'View' },
+  futures: { zh: '合约', en: 'Futures' },
+  spot: { zh: '现货', en: 'Spot' },
+  comingSoon: { zh: '即将推出', en: 'Coming Soon' },
 };
 
 interface LanguageContextType {

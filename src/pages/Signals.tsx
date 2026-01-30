@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import TopNav from '@/components/TopNav';
 import TickerBar from '@/components/TickerBar';
-import Danmaku from '@/components/Danmaku';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { LanguageProvider, useLanguage } from '@/lib/i18n';
 import SignalCard from '@/components/SignalCard';
 import { Search, Filter, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Mock signal data - generate more traders
 const traderNames = [
@@ -59,8 +59,8 @@ const mockSignals = generateMockSignals(25);
 
 const SignalsContent = () => {
   const { t } = useLanguage();
-  const [danmakuEnabled, setDanmakuEnabled] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'subscribed' | 'unsubscribed'>('all');
+  const [marketType, setMarketType] = useState<'futures' | 'spot'>('futures');
   const [searchQuery, setSearchQuery] = useState('');
 
   const tabs = [
@@ -71,11 +71,8 @@ const SignalsContent = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-mono relative">
-      {/* Danmaku Layer */}
-      {danmakuEnabled && <Danmaku />}
-      
-      {/* Top Navigation */}
-      <TopNav danmakuEnabled={danmakuEnabled} onToggleDanmaku={() => setDanmakuEnabled(!danmakuEnabled)} />
+      {/* Top Navigation - no danmaku on signals page */}
+      <TopNav danmakuEnabled={false} onToggleDanmaku={() => {}} hideDanmakuToggle />
       
       {/* Ticker Bar */}
       <TickerBar />
@@ -90,8 +87,38 @@ const SignalsContent = () => {
 
         {/* Filter Bar */}
         <div className="flex items-center justify-between mb-6">
-          {/* Tabs */}
-          <div className="flex items-center gap-2">
+          {/* Left: Market Type Toggle + Tabs */}
+          <div className="flex items-center gap-4">
+            {/* Market Type Toggle */}
+            <div className="flex items-center rounded-lg border border-border overflow-hidden">
+              <button
+                onClick={() => setMarketType('futures')}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  marketType === 'futures'
+                    ? 'bg-accent-orange text-white'
+                    : 'bg-card text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {t('futures')}
+              </button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      disabled
+                      className="px-4 py-2 text-sm font-medium bg-muted/50 text-muted-foreground cursor-not-allowed opacity-50"
+                    >
+                      {t('spot')}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('comingSoon')}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            {/* Tabs */}
             {tabs.map(tab => (
               <button
                 key={tab.id}
