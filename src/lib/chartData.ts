@@ -5,6 +5,7 @@ export interface ModelData {
   color: string;
   value: number;
   icon: string;
+  avatar: string;
 }
 
 export interface ChartDataPoint {
@@ -20,13 +21,13 @@ export interface ChartDataPoint {
 }
 
 export const models: ModelData[] = [
-  { id: 'gpt5', name: 'GPT 5', shortName: 'GPT 5', color: 'hsl(168, 100%, 40%)', value: 7493.56, icon: '🟢' },
-  { id: 'claude', name: 'CLAUDE SONNET 4.5', shortName: 'CLAUDE', color: 'hsl(0, 0%, 20%)', value: 11789.67, icon: '⬛' },
-  { id: 'gemini', name: 'GEMINI 2.5 PRO', shortName: 'GEMINI', color: 'hsl(25, 100%, 50%)', value: 6721.51, icon: '🟠' },
-  { id: 'grok', name: 'GROK 4', shortName: 'GROK', color: 'hsl(0, 0%, 40%)', value: 13067.80, icon: '⚪' },
-  { id: 'deepseek', name: 'DEEPSEEK CHAT V3.1', shortName: 'DEEPSEEK', color: 'hsl(280, 100%, 60%)', value: 13574.28, icon: '🟣' },
-  { id: 'qwen', name: 'QWEN3 MAX', shortName: 'QWEN', color: 'hsl(200, 100%, 50%)', value: 10717.54, icon: '🔵' },
-  { id: 'btc', name: 'BTC BUY&HOLD', shortName: 'BTC', color: 'hsl(45, 100%, 50%)', value: 10307.02, icon: '🟡' },
+  { id: 'gpt5', name: 'GPT 5', shortName: 'GPT 5', color: 'hsl(168, 100%, 40%)', value: 7493.56, icon: '🟢', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=gpt5&backgroundColor=00cc99' },
+  { id: 'claude', name: 'CLAUDE SONNET 4.5', shortName: 'CLAUDE', color: 'hsl(0, 0%, 20%)', value: 11789.67, icon: '⬛', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=claude&backgroundColor=333333' },
+  { id: 'gemini', name: 'GEMINI 2.5 PRO', shortName: 'GEMINI', color: 'hsl(25, 100%, 50%)', value: 6721.51, icon: '🟠', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=gemini&backgroundColor=ff8800' },
+  { id: 'grok', name: 'GROK 4', shortName: 'GROK', color: 'hsl(0, 0%, 40%)', value: 13067.80, icon: '⚪', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=grok&backgroundColor=666666' },
+  { id: 'deepseek', name: 'DEEPSEEK CHAT V3.1', shortName: 'DEEPSEEK', color: 'hsl(280, 100%, 60%)', value: 13574.28, icon: '🟣', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=deepseek&backgroundColor=9933ff' },
+  { id: 'qwen', name: 'QWEN3 MAX', shortName: 'QWEN', color: 'hsl(200, 100%, 50%)', value: 10717.54, icon: '🔵', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=qwen&backgroundColor=0099ff' },
+  { id: 'btc', name: 'BTC BUY&HOLD', shortName: 'BTC', color: 'hsl(45, 100%, 50%)', value: 10307.02, icon: '🟡', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=btc&backgroundColor=ffcc00' },
 ];
 
 // Generate mock chart data

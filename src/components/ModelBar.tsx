@@ -23,16 +23,17 @@ const ModelBar = ({ visibleModels, onToggleModel }: ModelBarProps) => {
             }`}
           >
             <span className="flex items-center gap-1.5 text-muted-foreground w-full">
-              {/* Colored avatar circle matching chart endpoints */}
-              <span 
-                className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
-                style={{ 
-                  backgroundColor: model.color,
-                  color: model.id === 'btc' || model.id === 'gemini' ? '#000' : '#fff',
-                }}
+              {/* Avatar with person image */}
+              <div 
+                className="w-5 h-5 rounded-full flex-shrink-0 overflow-hidden border"
+                style={{ borderColor: model.color }}
               >
-                {model.shortName.charAt(0)}
-              </span>
+                <img 
+                  src={model.avatar} 
+                  alt={model.shortName}
+                  className="w-full h-full object-cover"
+                />
+              </div>
               <span className="font-medium uppercase tracking-wide truncate text-[10px]">{model.name}</span>
             </span>
             <span className="text-foreground font-semibold text-sm mt-0.5">
