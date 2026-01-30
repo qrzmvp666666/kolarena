@@ -1,4 +1,4 @@
-import { ExternalLink, Sun, Moon, MessageSquare, MessageSquareOff, Globe } from 'lucide-react';
+import { Sun, Moon, MessageSquare, MessageSquareOff, Globe } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { useLanguage } from '@/lib/i18n';
 
@@ -40,18 +40,16 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
         <span className="text-muted-foreground">|</span>
         <a 
           href="#" 
-          className="flex items-center gap-1 font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           {t('joinWaitlist')}
-          <ExternalLink size={14} />
         </a>
         <span className="text-muted-foreground">|</span>
         <a 
           href="#" 
-          className="flex items-center gap-1 font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          {t('aboutNofi')}
-          <ExternalLink size={14} />
+          {t('aboutUs')}
         </a>
       </div>
 

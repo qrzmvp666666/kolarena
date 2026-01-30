@@ -11,11 +11,11 @@ interface Translations {
 
 export const translations: Translations = {
   // TopNav
-  live: { zh: 'LIVE', en: 'LIVE' },
+  live: { zh: '实盘', en: 'LIVE' },
   leaderboard: { zh: '排行榜', en: 'LEADERBOARD' },
   models: { zh: '模型', en: 'MODELS' },
-  joinWaitlist: { zh: '加入等待列表', en: 'JOIN THE PLATFORM WAITLIST' },
-  aboutNofi: { zh: '关于 NOFI', en: 'ABOUT NOFI' },
+  joinWaitlist: { zh: '加入等待', en: 'JOIN WAITLIST' },
+  aboutUs: { zh: '关于我们', en: 'ABOUT US' },
   toggleDanmaku: { zh: '切换弹幕', en: 'Toggle Danmaku' },
   closeDanmaku: { zh: '关闭弹幕', en: 'Close Danmaku' },
   openDanmaku: { zh: '开启弹幕', en: 'Open Danmaku' },
