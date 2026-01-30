@@ -1,5 +1,6 @@
-import { ExternalLink, Sun, Moon, MessageSquare, MessageSquareOff } from 'lucide-react';
+import { ExternalLink, Sun, Moon, MessageSquare, MessageSquareOff, Globe } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
+import { useLanguage } from '@/lib/i18n';
 
 interface TopNavProps {
   danmakuEnabled: boolean;
@@ -8,6 +9,11 @@ interface TopNavProps {
 
 const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
   const { theme, toggleTheme } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
+
+  const toggleLanguage = () => {
+    setLanguage(language === 'zh' ? 'en' : 'zh');
+  };
 
   return (
     <nav className="flex items-center justify-between px-6 py-3 border-b border-border bg-card">
@@ -22,25 +28,36 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
       {/* Center Navigation */}
       <div className="flex items-center gap-8">
         <a href="#" className="font-mono text-sm text-foreground hover:text-accent-cyan transition-colors">
-          LIVE
+          {t('live')}
         </a>
         <span className="text-muted-foreground">|</span>
         <a href="#" className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors">
-          LEADERBOARD
+          {t('leaderboard')}
         </a>
         <span className="text-muted-foreground">|</span>
         <a href="#" className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors">
-          MODELS
+          {t('models')}
         </a>
       </div>
 
       {/* Right Side */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-4">
+        {/* Language Toggle */}
+        <button
+          onClick={toggleLanguage}
+          className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-accent transition-colors font-mono text-xs"
+          aria-label="Toggle language"
+          title={language === 'zh' ? 'Switch to English' : '切换到中文'}
+        >
+          <Globe size={16} />
+          <span>{language === 'zh' ? '中文' : 'EN'}</span>
+        </button>
+        
         <button
           onClick={onToggleDanmaku}
           className="p-2 rounded-md hover:bg-accent transition-colors"
           aria-label="Toggle danmaku"
-          title={danmakuEnabled ? '关闭弹幕' : '开启弹幕'}
+          title={danmakuEnabled ? t('closeDanmaku') : t('openDanmaku')}
         >
           {danmakuEnabled ? <MessageSquare size={18} /> : <MessageSquareOff size={18} />}
         </button>
@@ -55,14 +72,14 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku }: TopNavProps) => {
           href="#" 
           className="flex items-center gap-1 font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          JOIN THE PLATFORM WAITLIST
+          {t('joinWaitlist')}
           <ExternalLink size={14} />
         </a>
         <a 
           href="#" 
           className="flex items-center gap-1 font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          ABOUT NOFI
+          {t('aboutNofi')}
           <ExternalLink size={14} />
         </a>
       </div>

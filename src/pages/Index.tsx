@@ -8,6 +8,7 @@ import Sidebar from '@/components/Sidebar';
 import Danmaku from '@/components/Danmaku';
 import { models } from '@/lib/chartData';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { LanguageProvider } from '@/lib/i18n';
 
 const Index = () => {
   const [timeRange, setTimeRange] = useState('ALL');
@@ -24,37 +25,39 @@ const Index = () => {
 
   return (
     <ThemeProvider>
-    <div className="min-h-screen bg-background text-foreground font-mono relative">
-      {/* Danmaku Layer */}
-      {danmakuEnabled && <Danmaku />}
-      
-      {/* Top Navigation */}
-      <TopNav danmakuEnabled={danmakuEnabled} onToggleDanmaku={() => setDanmakuEnabled(!danmakuEnabled)} />
-      
-      {/* Ticker Bar */}
-      <TickerBar />
-      
-      <div className="flex h-[calc(100vh-88px)]">
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col">
-          <ChartHeader timeRange={timeRange} onTimeRangeChange={setTimeRange} />
+      <LanguageProvider>
+        <div className="min-h-screen bg-background text-foreground font-mono relative">
+          {/* Danmaku Layer */}
+          {danmakuEnabled && <Danmaku />}
           
-          {/* Chart Area */}
-          <div className="flex-1 p-4">
-            <PerformanceChart visibleModels={visibleModels} />
-          </div>
+          {/* Top Navigation */}
+          <TopNav danmakuEnabled={danmakuEnabled} onToggleDanmaku={() => setDanmakuEnabled(!danmakuEnabled)} />
           
-          {/* Model Bar */}
-          <ModelBar 
-            visibleModels={visibleModels} 
-            onToggleModel={handleToggleModel} 
-          />
-        </div>
+          {/* Ticker Bar */}
+          <TickerBar />
+          
+          <div className="flex h-[calc(100vh-88px)]">
+            {/* Main Content */}
+            <div className="flex-1 flex flex-col">
+              <ChartHeader timeRange={timeRange} onTimeRangeChange={setTimeRange} />
+              
+              {/* Chart Area */}
+              <div className="flex-1 p-4">
+                <PerformanceChart visibleModels={visibleModels} />
+              </div>
+              
+              {/* Model Bar */}
+              <ModelBar 
+                visibleModels={visibleModels} 
+                onToggleModel={handleToggleModel} 
+              />
+            </div>
 
-        {/* Sidebar */}
-        <Sidebar />
-      </div>
-    </div>
+            {/* Sidebar */}
+            <Sidebar />
+          </div>
+        </div>
+      </LanguageProvider>
     </ThemeProvider>
   );
 };

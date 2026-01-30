@@ -121,16 +121,19 @@ const PerformanceChart = ({ visibleModels }: PerformanceChartProps) => {
               right: 0,
             }}
           >
-            {/* Avatar circle */}
+            {/* Avatar circle with person image */}
             <div 
-              className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-lg border-2"
+              className="w-8 h-8 rounded-full flex items-center justify-center shadow-lg border-2 overflow-hidden"
               style={{ 
+                borderColor: model.color,
                 backgroundColor: model.color,
-                borderColor: 'hsl(var(--background))',
-                color: model.id === 'btc' || model.id === 'gemini' ? '#000' : '#fff',
               }}
             >
-              {model.shortName.charAt(0)}
+              <img 
+                src={model.avatar} 
+                alt={model.shortName}
+                className="w-full h-full object-cover"
+              />
             </div>
             {/* Value label */}
             <div className="flex flex-col items-start font-mono">
