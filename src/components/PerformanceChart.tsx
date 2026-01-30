@@ -121,19 +121,32 @@ const PerformanceChart = ({ visibleModels }: PerformanceChartProps) => {
               right: 0,
             }}
           >
-            {/* Avatar circle with person image */}
-            <div 
-              className="w-8 h-8 rounded-full flex items-center justify-center shadow-lg border-2 overflow-hidden"
-              style={{ 
-                borderColor: model.color,
-                backgroundColor: model.color,
-              }}
-            >
-              <img 
-                src={model.avatar} 
-                alt={model.shortName}
-                className="w-full h-full object-cover"
+            {/* Avatar circle with person image + pulse effect */}
+            <div className="relative">
+              {/* Pulse ring */}
+              <div 
+                className="absolute inset-0 rounded-full animate-ping opacity-30"
+                style={{ backgroundColor: model.color }}
               />
+              {/* Static outer glow */}
+              <div 
+                className="absolute -inset-1 rounded-full opacity-40 blur-sm"
+                style={{ backgroundColor: model.color }}
+              />
+              {/* Avatar */}
+              <div 
+                className="relative w-8 h-8 rounded-full flex items-center justify-center shadow-lg border-2 overflow-hidden"
+                style={{ 
+                  borderColor: model.color,
+                  backgroundColor: model.color,
+                }}
+              >
+                <img 
+                  src={model.avatar} 
+                  alt={model.shortName}
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
             {/* Value label */}
             <div className="flex flex-col items-start font-mono">
