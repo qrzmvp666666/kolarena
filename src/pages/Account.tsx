@@ -485,19 +485,19 @@ const Account = () => {
               </div>
 
               {/* Redemption Steps Guide */}
-              <Card className="mb-6 border-green-500/20 bg-green-500/5">
+              <Card className="mb-6 border-border bg-card">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <Info className="w-4 h-4 text-green-500" />
+                    <Info className="w-4 h-4 text-muted-foreground" />
                     <h3 className="font-mono font-medium text-sm">{t('redemptionStepsTitle')}</h3>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-4 gap-4">
                     {[1, 2, 3, 4].map((step) => (
-                      <div key={step} className="flex items-start gap-2">
-                        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500/20 text-green-500 text-xs font-medium flex items-center justify-center">
+                      <div key={step} className="flex items-center gap-2">
+                        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-muted text-muted-foreground text-xs font-medium flex items-center justify-center">
                           {step}
                         </span>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
+                        <p className="text-xs text-muted-foreground">
                           {t(`redemptionStep${step}`)}
                         </p>
                       </div>
