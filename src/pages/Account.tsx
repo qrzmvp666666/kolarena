@@ -9,6 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 
 type TabType = 'purchases' | 'accounts' | 'redemption';
 
+type PlanType = 'monthly' | 'quarterly' | 'yearly';
+
 interface PurchaseRecord {
   id: string;
   date: string;
@@ -16,7 +18,7 @@ interface PurchaseRecord {
   cryptoIcon: string;
   amount: string;
   usdValue: string;
-  plan: string;
+  plan: PlanType;
   status: 'completed' | 'pending' | 'failed';
   txHash: string;
 }
@@ -77,8 +79,8 @@ const mockPurchases: PurchaseRecord[] = [
     crypto: 'BTC',
     cryptoIcon: '/crypto/btc.svg',
     amount: '0.0025',
-    usdValue: '$105.50',
-    plan: 'Pro Monthly',
+    usdValue: '$10.00',
+    plan: 'monthly',
     status: 'completed',
     txHash: '0x1a2b3c...4d5e6f',
   },
@@ -87,9 +89,9 @@ const mockPurchases: PurchaseRecord[] = [
     date: '2024-01-10 09:15',
     crypto: 'ETH',
     cryptoIcon: '/crypto/eth.svg',
-    amount: '0.045',
-    usdValue: '$112.00',
-    plan: 'Pro Monthly',
+    amount: '0.012',
+    usdValue: '$28.00',
+    plan: 'quarterly',
     status: 'completed',
     txHash: '0x7g8h9i...0j1k2l',
   },
@@ -98,9 +100,9 @@ const mockPurchases: PurchaseRecord[] = [
     date: '2024-01-05 18:22',
     crypto: 'SOL',
     cryptoIcon: '/crypto/sol.svg',
-    amount: '1.25',
-    usdValue: '$125.00',
-    plan: 'Pro Quarterly',
+    amount: '0.98',
+    usdValue: '$99.00',
+    plan: 'yearly',
     status: 'pending',
     txHash: '0x3m4n5o...6p7q8r',
   },
@@ -200,6 +202,29 @@ const Account = () => {
         return <Badge className="bg-yellow-500/20 text-yellow-500 border-0">{t('rewardCredits')}</Badge>;
       case 'vip':
         return <Badge className="bg-purple-500/20 text-purple-500 border-0">{t('rewardVip')}</Badge>;
+    }
+  };
+
+  const getPlanBadge = (plan: PlanType) => {
+    switch (plan) {
+      case 'monthly':
+        return (
+          <Badge className="bg-blue-500/20 text-blue-400 border-0">
+            {t('planMonthly')} ({t('planPriceMonthly')})
+          </Badge>
+        );
+      case 'quarterly':
+        return (
+          <Badge className="bg-purple-500/20 text-purple-400 border-0">
+            {t('planQuarterly')} ({t('planPriceQuarterly')})
+          </Badge>
+        );
+      case 'yearly':
+        return (
+          <Badge className="bg-yellow-500/20 text-yellow-400 border-0">
+            {t('planYearly')} ({t('planPriceYearly')})
+          </Badge>
+        );
     }
   };
 
@@ -308,12 +333,13 @@ const Account = () => {
                         <img src={purchase.cryptoIcon} alt={purchase.crypto} className="w-6 h-6" />
                       </div>
                       <div>
-                        <div className="font-mono font-medium">
+                        <div className="font-mono font-medium flex items-center gap-2">
                           {purchase.amount} {purchase.crypto}
-                          <span className="text-muted-foreground ml-2 text-sm">({purchase.usdValue})</span>
+                          <span className="text-muted-foreground text-sm">({purchase.usdValue})</span>
+                          {getPlanBadge(purchase.plan)}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {purchase.plan} • {purchase.date}
+                          {purchase.date}
                         </div>
                       </div>
                     </div>
