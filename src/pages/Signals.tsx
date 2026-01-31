@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import TopNav from '@/components/TopNav';
 import TickerBar from '@/components/TickerBar';
-import { ThemeProvider } from '@/components/ThemeProvider';
-import { LanguageProvider, useLanguage } from '@/lib/i18n';
+import { useLanguage } from '@/lib/i18n';
 import SignalCard from '@/components/SignalCard';
 import { Search, Filter, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -173,14 +172,4 @@ const SignalsContent = () => {
   );
 };
 
-const Signals = () => {
-  return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <SignalsContent />
-      </LanguageProvider>
-    </ThemeProvider>
-  );
-};
-
-export default Signals;
+export default SignalsContent;

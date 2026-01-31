@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import TopNav from '@/components/TopNav';
 import TickerBar from '@/components/TickerBar';
-import { ThemeProvider } from '@/components/ThemeProvider';
-import { LanguageProvider, useLanguage } from '@/lib/i18n';
+import { useLanguage } from '@/lib/i18n';
 import { models } from '@/lib/chartData';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -239,14 +238,4 @@ const LeaderboardContent = () => {
   );
 };
 
-const Leaderboard = () => {
-  return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <LeaderboardContent />
-      </LanguageProvider>
-    </ThemeProvider>
-  );
-};
-
-export default Leaderboard;
+export default LeaderboardContent;
