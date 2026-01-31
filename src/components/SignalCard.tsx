@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useLanguage } from '@/lib/i18n';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Signal {
@@ -25,6 +26,7 @@ interface SignalCardProps {
 
 const SignalCard = ({ signal }: SignalCardProps) => {
   const { t } = useLanguage();
+  const [isFavorite, setIsFavorite] = useState(false);
 
   const getSignalTypeStyle = (type: 'spot' | 'long' | 'short') => {
     switch (type) {
@@ -50,14 +52,24 @@ const SignalCard = ({ signal }: SignalCardProps) => {
 
   return (
     <div className="bg-card border border-border rounded-lg p-4 hover:border-foreground/20 transition-colors relative">
-      {/* Subscribe Button - Top Right */}
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="absolute top-3 right-3 h-7 text-xs border-accent-orange text-accent-orange hover:bg-accent-orange hover:text-white"
-      >
-        {t('subscribe')}
-      </Button>
+      {/* Favorite & Subscribe Buttons - Top Right */}
+      <div className="absolute top-3 right-3 flex items-center gap-1">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className={`h-7 w-7 p-0 ${isFavorite ? 'text-yellow-500' : 'text-muted-foreground hover:text-yellow-500'}`}
+          onClick={() => setIsFavorite(!isFavorite)}
+        >
+          <Star className={`w-4 h-4 ${isFavorite ? 'fill-yellow-500' : ''}`} />
+        </Button>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="h-7 text-xs border-accent-orange text-accent-orange hover:bg-accent-orange hover:text-white"
+        >
+          {t('subscribe')}
+        </Button>
+      </div>
 
       {/* Header */}
       <div className="flex items-start mb-3 pr-16">
