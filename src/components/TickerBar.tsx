@@ -63,9 +63,7 @@ const TickerBar = () => {
         {prices.map((crypto, index) => (
           <div 
             key={crypto.symbol} 
-            className={`flex items-center gap-2 font-mono transition-all duration-300 ${
-              flashingIndex === index ? 'scale-105' : ''
-            }`}
+            className="flex items-center gap-2 font-mono"
           >
             <img 
               src={crypto.icon} 
@@ -75,9 +73,9 @@ const TickerBar = () => {
             />
             <span className="text-muted-foreground">{crypto.symbol}</span>
             <span 
-              className={`font-medium transition-all duration-300 ${
+              className={`font-medium transition-colors duration-300 ${
                 flashingIndex === index 
-                  ? 'text-accent-green animate-pulse' 
+                  ? 'text-accent-green' 
                   : 'text-foreground'
               }`}
             >
