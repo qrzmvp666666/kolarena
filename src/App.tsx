@@ -8,6 +8,7 @@ import { LanguageProvider } from "@/lib/i18n";
 import Index from "./pages/Index";
 import Signals from "./pages/Signals";
 import Leaderboard from "./pages/Leaderboard";
+import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/signals" element={<Signals />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
+              <Route path="/about" element={<About />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

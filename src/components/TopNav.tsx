@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import LoginModal from '@/components/LoginModal';
+import CommunityModal from '@/components/CommunityModal';
 
 interface TopNavProps {
   danmakuEnabled: boolean;
@@ -31,6 +32,7 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
   // Mock login state - set to null for logged out, or user object for logged in
   const [user, setUser] = useState<MockUser | null>(null);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [communityModalOpen, setCommunityModalOpen] = useState(false);
   
   const handleLogin = (loggedInUser: MockUser) => {
     setUser(loggedInUser);
@@ -82,19 +84,21 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
           {t('models')}
         </Link>
         <span className="text-muted-foreground">|</span>
-        <a 
-          href="#" 
+        <button
+          onClick={() => setCommunityModalOpen(true)}
           className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          {t('joinWaitlist')}
-        </a>
+          {t('joinCommunity')}
+        </button>
         <span className="text-muted-foreground">|</span>
-        <a 
-          href="#" 
-          className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
+        <Link 
+          to="/about"
+          className={`font-mono text-sm transition-colors ${
+            location.pathname === '/about' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+          }`}
         >
           {t('aboutUs')}
-        </a>
+        </Link>
       </div>
 
       {/* Right Side - Controls & User */}
@@ -165,6 +169,12 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
           open={loginModalOpen}
           onOpenChange={setLoginModalOpen}
           onLogin={handleLogin}
+        />
+
+        {/* Community Modal */}
+        <CommunityModal
+          open={communityModalOpen}
+          onOpenChange={setCommunityModalOpen}
         />
       </div>
     </nav>
