@@ -50,10 +50,14 @@ const SignalCard = ({ signal }: SignalCardProps) => {
 
   return (
     <div className="bg-card border border-border rounded-lg p-4 hover:border-foreground/20 transition-colors relative">
-      {/* Signal Type Badge - Top Right */}
-      <span className={`absolute top-3 right-3 text-xs px-2 py-1 rounded border ${getSignalTypeStyle(signal.signalType)}`}>
-        {getSignalTypeLabel(signal.signalType)}
-      </span>
+      {/* Subscribe Button - Top Right */}
+      <Button 
+        variant="outline" 
+        size="sm" 
+        className="absolute top-3 right-3 h-7 text-xs border-accent-orange text-accent-orange hover:bg-accent-orange hover:text-white"
+      >
+        {t('subscribe')}
+      </Button>
 
       {/* Header */}
       <div className="flex items-start mb-3 pr-16">
@@ -83,15 +87,21 @@ const SignalCard = ({ signal }: SignalCardProps) => {
         </span>
       </div>
 
-      {/* Trading Pair & Price */}
+      {/* Trading Pair & Price with Signal Type */}
       <div className="flex items-baseline justify-between mb-3">
         <div className="flex items-baseline gap-1">
           <span className="text-lg font-bold text-foreground">{signal.pair.split('/')[0]}</span>
           <span className="text-sm text-muted-foreground">/{signal.pair.split('/')[1]}</span>
         </div>
-        <div className="text-right">
-          <div className="text-xs text-muted-foreground mb-0.5">{t('entryPrice')}</div>
-          <div className="text-xl font-bold text-foreground">{signal.entryPrice}</div>
+        <div className="flex items-center gap-3">
+          {/* Signal Type Badge */}
+          <span className={`text-xs px-2 py-1 rounded border ${getSignalTypeStyle(signal.signalType)}`}>
+            {getSignalTypeLabel(signal.signalType)}
+          </span>
+          <div className="text-right">
+            <div className="text-xs text-muted-foreground mb-0.5">{t('entryPrice')}</div>
+            <div className="text-xl font-bold text-foreground">{signal.entryPrice}</div>
+          </div>
         </div>
       </div>
 
@@ -123,9 +133,6 @@ const SignalCard = ({ signal }: SignalCardProps) => {
           <span className="text-xs text-muted-foreground">
             {signal.totalSignals}{t('signalCount')}
           </span>
-          <Button variant="outline" size="sm" className="h-7 text-xs">
-            {t('subscribe')}
-          </Button>
           <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
             {t('view')}
             <ChevronRight className="w-3 h-3" />
