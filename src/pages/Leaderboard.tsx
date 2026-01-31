@@ -10,9 +10,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Search, Filter, RefreshCw, Calendar as CalendarIcon } from 'lucide-react';
+import { Search, Filter, RefreshCw, Calendar as CalendarIcon, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { zhCN, enUS } from 'date-fns/locale';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip, Area, AreaChart } from 'recharts';
 
 // Coin types for filtering
 const coinTypes = ['ALL', 'BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'BNB'];
@@ -58,6 +59,273 @@ const generateLeaderboardData = () => {
 };
 
 const leaderboardData = generateLeaderboardData();
+
+// Generate mock profit trend data
+const generateProfitTrendData = (traderId: string) => {
+  const days = 30;
+  let cumulative = 10000;
+  return Array.from({ length: days }, (_, i) => {
+    const daily = (Math.random() - 0.45) * 500;
+    cumulative += daily;
+    return {
+      date: format(new Date(Date.now() - (days - i) * 24 * 60 * 60 * 1000), 'MM/dd'),
+      daily: Math.round(daily),
+      cumulative: Math.round(cumulative),
+    };
+  });
+};
+
+// Generate coin distribution data
+const generateCoinDistribution = () => {
+  const coins = [
+    { name: 'BTC', value: Math.floor(Math.random() * 40) + 20, color: '#F7931A' },
+    { name: 'ETH', value: Math.floor(Math.random() * 25) + 15, color: '#627EEA' },
+    { name: 'SOL', value: Math.floor(Math.random() * 15) + 10, color: '#00FFA3' },
+    { name: 'XRP', value: Math.floor(Math.random() * 10) + 5, color: '#23292F' },
+    { name: 'DOGE', value: Math.floor(Math.random() * 10) + 5, color: '#C3A634' },
+    { name: 'BNB', value: Math.floor(Math.random() * 10) + 5, color: '#F3BA2F' },
+  ];
+  const total = coins.reduce((sum, c) => sum + c.value, 0);
+  return coins.map(c => ({ ...c, percent: ((c.value / total) * 100).toFixed(1) }));
+};
+
+// Generate trade history
+const generateTradeHistory = (traderName: string) => {
+  const pairs = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'XRP/USDT', 'DOGE/USDT', 'BNB/USDT'];
+  const directions = ['long', 'short'] as const;
+  const types = ['open', 'close'] as const;
+  
+  return Array.from({ length: 15 }, (_, i) => {
+    const direction = directions[Math.floor(Math.random() * 2)];
+    const type = types[Math.floor(Math.random() * 2)];
+    const pnl = type === 'close' ? (Math.random() - 0.4) * 1000 : 0;
+    return {
+      id: i + 1,
+      time: format(new Date(Date.now() - i * 3600 * 1000 * Math.random() * 24), 'MM/dd HH:mm'),
+      pair: pairs[Math.floor(Math.random() * pairs.length)],
+      type,
+      direction,
+      amount: (Math.random() * 2 + 0.1).toFixed(3),
+      price: (Math.random() * 50000 + 1000).toFixed(2),
+      pnl: Math.round(pnl),
+    };
+  }).sort((a, b) => b.id - a.id);
+};
+
+// Advanced Analysis Component
+interface AdvancedAnalysisProps {
+  traders: typeof leaderboardData;
+  t: (key: string) => string;
+}
+
+const AdvancedAnalysisContent = ({ traders, t }: AdvancedAnalysisProps) => {
+  const [selectedTrader, setSelectedTrader] = useState(traders[0]?.id || '');
+  
+  const currentTrader = traders.find(tr => tr.id === selectedTrader) || traders[0];
+  const profitTrendData = useMemo(() => generateProfitTrendData(selectedTrader), [selectedTrader]);
+  const coinDistribution = useMemo(() => generateCoinDistribution(), [selectedTrader]);
+  const tradeHistory = useMemo(() => generateTradeHistory(currentTrader?.name || ''), [selectedTrader]);
+
+  if (!currentTrader) {
+    return (
+      <div className="flex items-center justify-center h-64 text-muted-foreground border border-border rounded-lg bg-card">
+        {t('comingSoon')}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Trader Selector & Stats */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-muted-foreground">{t('selectTrader')}:</span>
+          <Select value={selectedTrader} onValueChange={setSelectedTrader}>
+            <SelectTrigger className="w-[200px] h-9 bg-card border-border">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {traders.map(trader => (
+                <SelectItem key={trader.id} value={trader.id}>
+                  <div className="flex items-center gap-2">
+                    <span>{trader.icon}</span>
+                    <span>{trader.name}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {/* Quick Stats */}
+        <div className="flex items-center gap-6">
+          <div className="text-center">
+            <div className="text-xs text-muted-foreground">{t('totalTrades')}</div>
+            <div className="text-lg font-bold text-foreground">{currentTrader.trades}</div>
+          </div>
+          <div className="text-center">
+            <div className="text-xs text-muted-foreground">{t('winRate')}</div>
+            <div className="text-lg font-bold text-foreground">{currentTrader.winRate}%</div>
+          </div>
+          <div className="text-center">
+            <div className="text-xs text-muted-foreground">{t('totalPnL')}</div>
+            <div className={`text-lg font-bold ${currentTrader.totalPnL >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+              {currentTrader.totalPnL >= 0 ? '+' : ''}${currentTrader.totalPnL.toLocaleString()}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-xs text-muted-foreground">{t('profitFactor')}</div>
+            <div className="text-lg font-bold text-foreground">{(Math.random() * 1.5 + 0.8).toFixed(2)}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Profit Trend Chart */}
+        <div className="lg:col-span-2 border border-border rounded-lg p-4 bg-card">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-accent-orange" />
+              {t('profitTrend')}
+            </h3>
+            <div className="flex items-center gap-4 text-xs">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-full bg-accent-orange" />
+                <span className="text-muted-foreground">{t('cumulativeProfit')}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-full bg-accent-green" />
+                <span className="text-muted-foreground">{t('dailyProfit')}</span>
+              </div>
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart data={profitTrendData}>
+              <defs>
+                <linearGradient id="colorCumulative" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#F97316" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#F97316" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+              <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+              <RechartsTooltip 
+                contentStyle={{ 
+                  backgroundColor: 'hsl(var(--card))', 
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '8px',
+                  fontSize: '12px'
+                }} 
+              />
+              <Area type="monotone" dataKey="cumulative" stroke="#F97316" fillOpacity={1} fill="url(#colorCumulative)" strokeWidth={2} />
+              <Line type="monotone" dataKey="daily" stroke="#22C55E" strokeWidth={1.5} dot={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Coin Distribution Pie Chart */}
+        <div className="border border-border rounded-lg p-4 bg-card">
+          <h3 className="text-sm font-medium text-foreground mb-4">{t('coinDistribution')}</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <PieChart>
+              <Pie
+                data={coinDistribution}
+                cx="50%"
+                cy="50%"
+                innerRadius={50}
+                outerRadius={75}
+                paddingAngle={2}
+                dataKey="value"
+              >
+                {coinDistribution.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <RechartsTooltip 
+                contentStyle={{ 
+                  backgroundColor: 'hsl(var(--card))', 
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '8px',
+                  fontSize: '12px'
+                }}
+                formatter={(value, name, props) => [`${props.payload.percent}%`, name]}
+              />
+              <Legend 
+                layout="vertical" 
+                align="right" 
+                verticalAlign="middle"
+                formatter={(value, entry: any) => (
+                  <span className="text-xs text-foreground">{value} ({entry.payload.percent}%)</span>
+                )}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Trade History Table */}
+      <div className="border border-border rounded-lg overflow-hidden bg-card">
+        <div className="px-4 py-3 border-b border-border">
+          <h3 className="text-sm font-medium text-foreground">{t('tradeHistory')}</h3>
+        </div>
+        <ScrollArea className="max-h-[300px]">
+          <table className="w-full text-xs">
+            <thead className="sticky top-0 bg-muted/50">
+              <tr className="border-b border-border">
+                <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('tradeTime')}</th>
+                <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('tradePair')}</th>
+                <th className="px-4 py-2 text-center font-medium text-muted-foreground">{t('tradeType')}</th>
+                <th className="px-4 py-2 text-center font-medium text-muted-foreground">{t('tradeDirection')}</th>
+                <th className="px-4 py-2 text-right font-medium text-muted-foreground">{t('tradeAmount')}</th>
+                <th className="px-4 py-2 text-right font-medium text-muted-foreground">{t('tradePrice')}</th>
+                <th className="px-4 py-2 text-right font-medium text-muted-foreground">{t('tradePnL')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tradeHistory.map((trade) => (
+                <tr key={trade.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+                  <td className="px-4 py-2 text-muted-foreground">{trade.time}</td>
+                  <td className="px-4 py-2 text-foreground font-medium">{trade.pair}</td>
+                  <td className="px-4 py-2 text-center">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                      trade.type === 'open' 
+                        ? 'bg-blue-500/20 text-blue-400' 
+                        : 'bg-purple-500/20 text-purple-400'
+                    }`}>
+                      {t(trade.type)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    <span className={`inline-flex items-center gap-1 ${
+                      trade.direction === 'long' ? 'text-accent-green' : 'text-accent-red'
+                    }`}>
+                      {trade.direction === 'long' ? (
+                        <ArrowUpRight className="w-3 h-3" />
+                      ) : (
+                        <ArrowDownRight className="w-3 h-3" />
+                      )}
+                      {t(trade.direction === 'long' ? 'longPosition' : 'shortPosition')}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 text-right text-foreground">{trade.amount}</td>
+                  <td className="px-4 py-2 text-right text-foreground">${trade.price}</td>
+                  <td className={`px-4 py-2 text-right font-medium ${
+                    trade.pnl === 0 ? 'text-muted-foreground' : trade.pnl > 0 ? 'text-accent-green' : 'text-accent-red'
+                  }`}>
+                    {trade.pnl === 0 ? '-' : `${trade.pnl > 0 ? '+' : ''}$${trade.pnl.toLocaleString()}`}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </ScrollArea>
+      </div>
+    </div>
+  );
+};
+
 
 const LeaderboardContent = () => {
   const { t } = useLanguage();
@@ -481,9 +749,7 @@ const LeaderboardContent = () => {
             </div>
           </>
         ) : (
-          <div className="flex items-center justify-center h-64 text-muted-foreground border border-border rounded-lg bg-card">
-            {t('comingSoon')}
-          </div>
+          <AdvancedAnalysisContent traders={filteredData} t={t} />
         )}
       </div>
     </div>
