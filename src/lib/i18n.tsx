@@ -237,6 +237,20 @@ export const translations: Translations = {
   rewardMembership: { zh: '会员', en: 'Membership' },
   rewardCredits: { zh: '积分', en: 'Credits' },
   rewardVip: { zh: 'VIP', en: 'VIP' },
+
+  // Purchase Steps
+  purchaseStepsTitle: { zh: '购买流程', en: 'How to Purchase' },
+  purchaseStep1: { zh: '前往「套餐订阅」选择适合您的会员套餐', en: 'Go to "Subscription Plans" and choose a plan' },
+  purchaseStep2: { zh: '选择支付方式（Stripe 或加密货币）', en: 'Select payment method (Stripe or Crypto)' },
+  purchaseStep3: { zh: '完成支付后，系统自动激活会员权益', en: 'After payment, membership activates automatically' },
+  purchaseStep4: { zh: '在此页面查看您的购买记录和订单状态', en: 'View your purchase history and order status here' },
+
+  // Redemption Steps
+  redemptionStepsTitle: { zh: '兑换流程', en: 'How to Redeem' },
+  redemptionStep1: { zh: '获取兑换码（官方活动、合作伙伴或社区赠送）', en: 'Get a code (from events, partners, or community)' },
+  redemptionStep2: { zh: '在上方输入框输入兑换码', en: 'Enter the code in the input field above' },
+  redemptionStep3: { zh: '点击「立即兑换」完成兑换', en: 'Click "Redeem" to complete' },
+  redemptionStep4: { zh: '奖励将自动发放到您的账户', en: 'Rewards will be added to your account automatically' },
 };
 
 interface LanguageContextType {

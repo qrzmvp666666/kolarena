@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CreditCard, Wallet, Bitcoin, Clock, CheckCircle, XCircle, Gift, Ticket, Zap, Star, Crown } from 'lucide-react';
+import { CreditCard, Wallet, Bitcoin, Clock, CheckCircle, XCircle, Gift, Ticket, Zap, Star, Crown, Info, ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import TopNav from '@/components/TopNav';
 import { Button } from '@/components/ui/button';
@@ -338,6 +338,28 @@ const Account = () => {
             <div>
               <h1 className="font-mono text-xl font-semibold mb-6">{t('purchaseRecords')}</h1>
               
+              {/* Purchase Steps Guide */}
+              <Card className="mb-6 border-primary/20 bg-primary/5">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Info className="w-4 h-4 text-primary" />
+                    <h3 className="font-mono font-medium text-sm">{t('purchaseStepsTitle')}</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {[1, 2, 3, 4].map((step) => (
+                      <div key={step} className="flex items-start gap-2">
+                        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 text-primary text-xs font-medium flex items-center justify-center">
+                          {step}
+                        </span>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {t(`purchaseStep${step}`)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              
               <div className="space-y-4">
                 {mockPurchases.map((purchase) => (
                   <div
@@ -461,6 +483,28 @@ const Account = () => {
                   </Button>
                 </div>
               </div>
+
+              {/* Redemption Steps Guide */}
+              <Card className="mb-6 border-green-500/20 bg-green-500/5">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Info className="w-4 h-4 text-green-500" />
+                    <h3 className="font-mono font-medium text-sm">{t('redemptionStepsTitle')}</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {[1, 2, 3, 4].map((step) => (
+                      <div key={step} className="flex items-start gap-2">
+                        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500/20 text-green-500 text-xs font-medium flex items-center justify-center">
+                          {step}
+                        </span>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {t(`redemptionStep${step}`)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Redemption Records */}
               <h2 className="font-mono font-medium mb-4">{t('redemptionRecords')}</h2>
