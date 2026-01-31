@@ -74,6 +74,25 @@ export const translations: Translations = {
   futures: { zh: '合约', en: 'Futures' },
   spot: { zh: '现货', en: 'Spot' },
   comingSoon: { zh: '即将推出', en: 'Coming Soon' },
+
+  // Leaderboard Page
+  competition: { zh: '比赛', en: 'Competition' },
+  comprehensiveIndex: { zh: '综合指数', en: 'Comprehensive' },
+  average: { zh: '平均', en: 'Average' },
+  overallData: { zh: '总体数据', en: 'Overall Data' },
+  advancedAnalysis: { zh: '高级分析', en: 'Advanced Analysis' },
+  model: { zh: '模型', en: 'MODEL' },
+  accountValue: { zh: '账户价值', en: 'ACCOUNT VALUE' },
+  returnRate: { zh: '回报率', en: 'RETURN RATE' },
+  totalPnL: { zh: '总盈亏', en: 'TOTAL P&L' },
+  winRate: { zh: '胜率', en: 'WIN RATE' },
+  maxProfit: { zh: '最大盈利', en: 'MAX PROFIT' },
+  maxLoss: { zh: '最大亏损', en: 'MAX LOSS' },
+  sharpeRatio: { zh: '夏普比率', en: 'Sharpe Ratio' },
+  winningModel: { zh: '获胜模型', en: 'Winning Model' },
+  totalEquity: { zh: '总权益', en: 'Total Equity' },
+  note: { zh: '注意', en: 'Note' },
+  leaderboardNote: { zh: '所有统计数据（除账户价值和盈亏外）仅反映已完成交易。活跃仓位在关闭前不计入计算。', en: 'All statistics (except account value and P&L) only reflect completed trades. Active positions are not included until closed.' },
 };
 
 interface LanguageContextType {
