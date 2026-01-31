@@ -101,6 +101,16 @@ export const translations: Translations = {
   negative: { zh: '亏损', en: 'Negative' },
   lowRisk: { zh: '低风险', en: 'Low Risk' },
   highRisk: { zh: '高风险', en: 'High Risk' },
+  timeRange: { zh: '时间范围', en: 'Time Range' },
+  timeRange_week: { zh: '每周', en: 'Weekly' },
+  timeRange_month: { zh: '每月', en: 'Monthly' },
+  timeRange_quarter: { zh: '每季度', en: 'Quarterly' },
+  timeRange_year: { zh: '每年', en: 'Yearly' },
+  timeRange_custom: { zh: '自定义', en: 'Custom' },
+  selectDateRange: { zh: '选择日期范围', en: 'Select date range' },
+  startDate: { zh: '开始日期', en: 'Start Date' },
+  endDate: { zh: '结束日期', en: 'End Date' },
+  confirm: { zh: '确认', en: 'Confirm' },
 
   // Community Modal
   communityDesc: { zh: '扫码加入我们的社区，获取最新资讯和交易信号', en: 'Scan to join our community for the latest news and trading signals' },

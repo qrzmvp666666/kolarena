@@ -8,7 +8,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, RefreshCw } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Search, Filter, RefreshCw, Calendar as CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { zhCN, enUS } from 'date-fns/locale';
 
 // Coin types for filtering
 const coinTypes = ['ALL', 'BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'BNB'];
@@ -64,6 +68,12 @@ const LeaderboardContent = () => {
   const [returnRateFilter, setReturnRateFilter] = useState('all');
   const [winRateFilter, setWinRateFilter] = useState('all');
   const [maxLossFilter, setMaxLossFilter] = useState('all');
+  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'year' | 'custom'>('month');
+  const [customDateRange, setCustomDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: undefined,
+    to: undefined,
+  });
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   // Filtered data
   const filteredData = useMemo(() => {
@@ -99,7 +109,19 @@ const LeaderboardContent = () => {
     setReturnRateFilter('all');
     setWinRateFilter('all');
     setMaxLossFilter('all');
+    setTimeRange('month');
+    setCustomDateRange({ from: undefined, to: undefined });
   };
+
+  const getTimeRangeLabel = () => {
+    if (timeRange === 'custom' && customDateRange.from && customDateRange.to) {
+      const locale = language === 'zh' ? zhCN : enUS;
+      return `${format(customDateRange.from, 'MM/dd', { locale })} - ${format(customDateRange.to, 'MM/dd', { locale })}`;
+    }
+    return t(`timeRange_${timeRange}`);
+  };
+
+  const { language } = useLanguage();
 
   return (
     <div className="min-h-screen bg-background text-foreground font-mono relative">
@@ -261,6 +283,83 @@ const LeaderboardContent = () => {
                 <SelectItem value="high">{t('highRisk')}</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Time Range Filter */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{t('timeRange')}:</span>
+            <div className="flex items-center gap-1">
+              {(['week', 'month', 'quarter', 'year'] as const).map((range) => (
+                <button
+                  key={range}
+                  onClick={() => setTimeRange(range)}
+                  className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
+                    timeRange === range
+                      ? 'bg-accent-orange text-white'
+                      : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
+                  }`}
+                >
+                  {t(`timeRange_${range}`)}
+                </button>
+              ))}
+              <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    className={`px-3 py-1.5 text-xs rounded-md transition-colors flex items-center gap-1.5 ${
+                      timeRange === 'custom'
+                        ? 'bg-accent-orange text-white'
+                        : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
+                    }`}
+                  >
+                    <CalendarIcon className="w-3 h-3" />
+                    {timeRange === 'custom' && customDateRange.from && customDateRange.to
+                      ? getTimeRangeLabel()
+                      : t('timeRange_custom')}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-4" align="start">
+                  <div className="space-y-4">
+                    <div className="text-sm font-medium text-foreground">{t('selectDateRange')}</div>
+                    <div className="grid gap-4">
+                      <div className="space-y-2">
+                        <label className="text-xs text-muted-foreground">{t('startDate')}</label>
+                        <Calendar
+                          mode="single"
+                          selected={customDateRange.from}
+                          onSelect={(date) => setCustomDateRange(prev => ({ ...prev, from: date }))}
+                          locale={language === 'zh' ? zhCN : enUS}
+                          className="rounded-md border"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs text-muted-foreground">{t('endDate')}</label>
+                        <Calendar
+                          mode="single"
+                          selected={customDateRange.to}
+                          onSelect={(date) => setCustomDateRange(prev => ({ ...prev, to: date }))}
+                          locale={language === 'zh' ? zhCN : enUS}
+                          className="rounded-md border"
+                          disabled={(date) => customDateRange.from ? date < customDateRange.from : false}
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        if (customDateRange.from && customDateRange.to) {
+                          setTimeRange('custom');
+                          setIsCalendarOpen(false);
+                        }
+                      }}
+                      disabled={!customDateRange.from || !customDateRange.to}
+                    >
+                      {t('confirm')}
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
         </div>
 
