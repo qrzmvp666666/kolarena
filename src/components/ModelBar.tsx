@@ -14,7 +14,7 @@ const ModelBar = ({ visibleModels, onToggleModel }: ModelBarProps) => {
           <button
             key={model.id}
             onClick={() => onToggleModel(model.id)}
-            className={`flex-1 flex flex-col items-start justify-center px-3 py-2 font-mono text-xs whitespace-nowrap transition-all min-w-0 ${
+            className={`flex-1 flex flex-col items-start justify-center px-4 py-4 font-mono text-xs whitespace-nowrap transition-all min-w-0 ${
               index !== models.length - 1 ? 'border-r border-border' : ''
             } ${
               isActive 
@@ -22,10 +22,10 @@ const ModelBar = ({ visibleModels, onToggleModel }: ModelBarProps) => {
                 : 'opacity-40 hover:opacity-60 bg-muted/30'
             }`}
           >
-            <span className="flex items-center gap-1.5 text-muted-foreground w-full">
+            <span className="flex items-center gap-2 text-muted-foreground w-full">
               {/* Avatar with person image */}
               <div 
-                className="w-5 h-5 rounded-full flex-shrink-0 overflow-hidden border"
+                className="w-6 h-6 rounded-full flex-shrink-0 overflow-hidden border"
                 style={{ borderColor: model.color }}
               >
                 <img 
@@ -34,9 +34,9 @@ const ModelBar = ({ visibleModels, onToggleModel }: ModelBarProps) => {
                   className="w-full h-full object-cover"
                 />
               </div>
-              <span className="font-medium uppercase tracking-wide truncate text-[10px]">{model.name}</span>
+              <span className="font-medium uppercase tracking-wide truncate text-xs">{model.name}</span>
             </span>
-            <span className="text-foreground font-semibold text-sm mt-0.5">
+            <span className="text-foreground font-semibold text-base mt-1">
               ${model.value.toLocaleString()}
             </span>
           </button>
