@@ -667,9 +667,15 @@ const LeaderboardContent = () => {
                       <tr key={row.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                         <td className="px-4 py-3 text-foreground font-medium">{index + 1}</td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
+                          <div 
+                            className="flex items-center gap-2 cursor-pointer hover:text-accent-orange transition-colors"
+                            onClick={() => {
+                              setSelectedKol(row.id);
+                              setActiveTab('advanced');
+                            }}
+                          >
                             <span>{row.icon}</span>
-                            <span className="text-foreground font-medium">{row.name}</span>
+                            <span className="text-foreground font-medium hover:text-accent-orange">{row.name}</span>
                           </div>
                         </td>
                         <td className="px-4 py-3 text-center text-muted-foreground">{row.mainCoin}</td>
@@ -721,13 +727,20 @@ const LeaderboardContent = () => {
                   {filteredData.slice(0, 8).map((item) => {
                     const heightPercent = (item.accountValue / maxValue) * 100;
                     return (
-                      <div key={item.id} className="flex-1 flex flex-col items-center gap-2">
+                      <div 
+                        key={item.id} 
+                        className="flex-1 flex flex-col items-center gap-2 cursor-pointer group"
+                        onClick={() => {
+                          setSelectedKol(item.id);
+                          setActiveTab('advanced');
+                        }}
+                      >
                         <div className="text-xs font-medium text-foreground">
                           ${item.accountValue.toLocaleString()}
                         </div>
                         <div className="w-full flex justify-center">
                           <div 
-                            className="w-12 rounded-t-sm transition-all duration-500"
+                            className="w-12 rounded-t-sm transition-all duration-500 group-hover:opacity-80"
                             style={{ 
                               height: `${heightPercent * 1.2}px`, 
                               backgroundColor: item.color,
@@ -736,12 +749,12 @@ const LeaderboardContent = () => {
                           />
                         </div>
                         <div 
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-sm group-hover:scale-110 transition-transform"
                           style={{ backgroundColor: item.color + '33' }}
                         >
                           {item.icon}
                         </div>
-                        <div className="text-[10px] text-muted-foreground text-center truncate w-full">
+                        <div className="text-[10px] text-muted-foreground text-center truncate w-full group-hover:text-accent-orange transition-colors">
                           {item.shortName}
                         </div>
                       </div>
