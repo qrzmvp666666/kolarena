@@ -49,9 +49,14 @@ const SignalCard = ({ signal }: SignalCardProps) => {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg p-4 hover:border-foreground/20 transition-colors">
+    <div className="bg-card border border-border rounded-lg p-4 hover:border-foreground/20 transition-colors relative">
+      {/* Signal Type Badge - Top Right */}
+      <span className={`absolute top-3 right-3 text-xs px-2 py-1 rounded border ${getSignalTypeStyle(signal.signalType)}`}>
+        {getSignalTypeLabel(signal.signalType)}
+      </span>
+
       {/* Header */}
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start mb-3 pr-16">
         <div className="flex items-center gap-3">
           <img 
             src={signal.avatar} 
@@ -66,9 +71,6 @@ const SignalCard = ({ signal }: SignalCardProps) => {
             </div>
           </div>
         </div>
-        <span className={`text-xs px-2 py-1 rounded border ${getSignalTypeStyle(signal.signalType)}`}>
-          {getSignalTypeLabel(signal.signalType)}
-        </span>
       </div>
 
       {/* Coin Badge & Signal Count */}
