@@ -214,6 +214,10 @@ export const translations: Translations = {
   securePayment: { zh: '安全支付保障', en: 'Secure payment protection' },
   instantActivation: { zh: '即时开通会员', en: 'Instant activation' },
   cancelAnytime: { zh: '随时可取消订阅', en: 'Cancel anytime' },
+  cryptoPayment: { zh: '加密货币支付', en: 'Crypto Payment' },
+  payAmount: { zh: '支付金额', en: 'Amount' },
+  widgetLoadError: { zh: '无法加载支付组件', en: 'Unable to load payment widget' },
+  securePaymentNote: { zh: '由 NOWPayments 提供安全加密货币支付服务', en: 'Secure crypto payment powered by NOWPayments' },
   
   // Redemption
   redemptionCenter: { zh: '兑换中心', en: 'Redemption Center' },

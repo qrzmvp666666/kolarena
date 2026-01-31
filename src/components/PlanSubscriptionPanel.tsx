@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { CreditCard, Bitcoin, Check, Zap, TrendingUp, Shield, Clock, Users, MessageSquare, BarChart3, Star, Crown } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
@@ -5,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import CryptoPaymentModal from './CryptoPaymentModal';
 
 type PlanType = 'monthly' | 'quarterly' | 'yearly';
 
@@ -17,12 +19,19 @@ interface PlanFeature {
 const PlanSubscriptionPanel = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const [cryptoModalOpen, setCryptoModalOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<{ name: string; price: number } | null>(null);
 
-  const handlePayment = (plan: PlanType, method: 'stripe' | 'crypto') => {
+  const handleStripePayment = (planName: string) => {
     toast({
       title: t('paymentNotAvailable'),
-      description: method === 'stripe' ? 'Stripe integration coming soon' : 'Crypto payment coming soon',
+      description: 'Stripe integration coming soon',
     });
+  };
+
+  const handleCryptoPayment = (planName: string, price: number) => {
+    setSelectedPlan({ name: planName, price });
+    setCryptoModalOpen(true);
   };
 
   const commonFeatures: PlanFeature[] = [
@@ -165,14 +174,14 @@ const PlanSubscriptionPanel = () => {
                 <Button 
                   className="w-full gap-2 text-xs h-9" 
                   variant="outline"
-                  onClick={() => handlePayment(plan.type, 'stripe')}
+                  onClick={() => handleStripePayment(plan.name)}
                 >
                   <CreditCard className="w-3.5 h-3.5" />
                   {t('payWithStripe')}
                 </Button>
                 <Button 
                   className="w-full gap-2 text-xs h-9"
-                  onClick={() => handlePayment(plan.type, 'crypto')}
+                  onClick={() => handleCryptoPayment(plan.name, plan.price)}
                 >
                   <Bitcoin className="w-3.5 h-3.5" />
                   {t('payWithCrypto')}
@@ -198,6 +207,16 @@ const PlanSubscriptionPanel = () => {
           <span>{t('cancelAnytime')}</span>
         </div>
       </div>
+
+      {/* Crypto Payment Modal */}
+      {selectedPlan && (
+        <CryptoPaymentModal
+          open={cryptoModalOpen}
+          onOpenChange={setCryptoModalOpen}
+          planName={selectedPlan.name}
+          price={selectedPlan.price}
+        />
+      )}
     </div>
   );
 };
