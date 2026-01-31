@@ -319,29 +319,29 @@ const LeaderboardContent = () => {
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-4" align="start">
                   <div className="space-y-4">
-                    <div className="text-sm font-medium text-foreground">{t('selectDateRange')}</div>
-                    <div className="flex gap-4">
-                      <div className="space-y-2">
-                        <label className="text-xs text-muted-foreground">{t('startDate')}</label>
-                        <Calendar
-                          mode="single"
-                          selected={customDateRange.from}
-                          onSelect={(date) => setCustomDateRange(prev => ({ ...prev, from: date }))}
-                          locale={language === 'zh' ? zhCN : enUS}
-                          className="rounded-md border pointer-events-auto"
-                        />
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-foreground">{t('selectDateRange')}</span>
+                      <div className="flex gap-6 text-xs text-muted-foreground">
+                        <span>{t('startDate')}</span>
+                        <span>{t('endDate')}</span>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-xs text-muted-foreground">{t('endDate')}</label>
-                        <Calendar
-                          mode="single"
-                          selected={customDateRange.to}
-                          onSelect={(date) => setCustomDateRange(prev => ({ ...prev, to: date }))}
-                          locale={language === 'zh' ? zhCN : enUS}
-                          className="rounded-md border pointer-events-auto"
-                          disabled={(date) => customDateRange.from ? date < customDateRange.from : false}
-                        />
-                      </div>
+                    </div>
+                    <div className="flex border border-border rounded-lg overflow-hidden">
+                      <Calendar
+                        mode="single"
+                        selected={customDateRange.from}
+                        onSelect={(date) => setCustomDateRange(prev => ({ ...prev, from: date }))}
+                        locale={language === 'zh' ? zhCN : enUS}
+                        className="pointer-events-auto border-r border-border"
+                      />
+                      <Calendar
+                        mode="single"
+                        selected={customDateRange.to}
+                        onSelect={(date) => setCustomDateRange(prev => ({ ...prev, to: date }))}
+                        locale={language === 'zh' ? zhCN : enUS}
+                        className="pointer-events-auto"
+                        disabled={(date) => customDateRange.from ? date < customDateRange.from : false}
+                      />
                     </div>
                     <Button
                       size="sm"
