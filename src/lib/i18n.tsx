@@ -199,6 +199,22 @@ export const translations: Translations = {
   paymentProcessing: { zh: '正在处理支付...', en: 'Processing payment...' },
   paymentNotAvailable: { zh: '支付功能即将上线', en: 'Payment coming soon' },
   
+  // Subscription Panel
+  subscriptionPlans: { zh: '套餐订阅', en: 'Subscription Plans' },
+  subscriptionDesc: { zh: '选择适合您的会员套餐，解锁更多专业功能', en: 'Choose a plan that suits you and unlock more features' },
+  includedFeatures: { zh: '包含功能', en: 'Included Features' },
+  exclusive: { zh: '专属', en: 'Exclusive' },
+  featureSignals: { zh: '实时交易信号推送', en: 'Real-time trading signals' },
+  featureCharts: { zh: '专业行情图表分析', en: 'Professional chart analysis' },
+  featureChat: { zh: 'AI 智能助手对话', en: 'AI assistant chat' },
+  featurePriority: { zh: '优先信号推送', en: 'Priority signal alerts' },
+  featureAdvanced: { zh: '高级策略分析', en: 'Advanced strategy analysis' },
+  featureVipGroup: { zh: 'VIP 专属社群', en: 'VIP exclusive community' },
+  featureExclusive: { zh: '独家市场研报', en: 'Exclusive market reports' },
+  securePayment: { zh: '安全支付保障', en: 'Secure payment protection' },
+  instantActivation: { zh: '即时开通会员', en: 'Instant activation' },
+  cancelAnytime: { zh: '随时可取消订阅', en: 'Cancel anytime' },
+  
   // Redemption
   redemptionCenter: { zh: '兑换中心', en: 'Redemption Center' },
   redeemCode: { zh: '兑换码', en: 'Redeem Code' },

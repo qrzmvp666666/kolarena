@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CreditCard, Wallet, Bitcoin, Clock, CheckCircle, XCircle, Gift, Ticket, Zap, Star } from 'lucide-react';
+import { CreditCard, Wallet, Bitcoin, Clock, CheckCircle, XCircle, Gift, Ticket, Zap, Star, Crown } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import TopNav from '@/components/TopNav';
 import { Button } from '@/components/ui/button';
@@ -7,8 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import PlanSubscriptionPanel from '@/components/PlanSubscriptionPanel';
 
-type TabType = 'purchases' | 'accounts' | 'redemption';
+type TabType = 'subscription' | 'purchases' | 'accounts' | 'redemption';
 
 type PlanType = 'monthly' | 'quarterly' | 'yearly';
 
@@ -142,7 +143,7 @@ const mockAccounts: TradingAccount[] = [
 const Account = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<TabType>('purchases');
+  const [activeTab, setActiveTab] = useState<TabType>('subscription');
   const [danmakuEnabled, setDanmakuEnabled] = useState(true);
   const [redeemCode, setRedeemCode] = useState('');
   const [isRedeeming, setIsRedeeming] = useState(false);
@@ -168,39 +169,6 @@ const Account = () => {
     setRedeemCode('');
     setIsRedeeming(false);
   };
-
-  const handlePayment = (plan: PlanType, method: 'stripe' | 'crypto') => {
-    toast({
-      title: t('paymentNotAvailable'),
-      description: method === 'stripe' ? 'Stripe integration coming soon' : 'Crypto payment coming soon',
-    });
-  };
-
-  const plans = [
-    {
-      type: 'monthly' as PlanType,
-      price: 10,
-      period: t('perMonth'),
-      badge: null,
-      color: 'blue',
-    },
-    {
-      type: 'quarterly' as PlanType,
-      price: 28,
-      period: t('perQuarter'),
-      badge: t('mostPopular'),
-      color: 'purple',
-      save: '7%',
-    },
-    {
-      type: 'yearly' as PlanType,
-      price: 99,
-      period: t('perYear'),
-      badge: t('bestValue'),
-      color: 'yellow',
-      save: '18%',
-    },
-  ];
 
   const getRedemptionStatusBadge = (status: 'success' | 'expired' | 'used') => {
     switch (status) {
@@ -315,6 +283,17 @@ const Account = () => {
           
           <nav className="space-y-1">
             <button
+              onClick={() => setActiveTab('subscription')}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md font-mono text-sm transition-colors ${
+                activeTab === 'subscription'
+                  ? 'bg-accent text-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+              }`}
+            >
+              <Crown className="w-4 h-4" />
+              {t('subscriptionPlans')}
+            </button>
+            <button
               onClick={() => setActiveTab('purchases')}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-md font-mono text-sm transition-colors ${
                 activeTab === 'purchases'
@@ -350,73 +329,15 @@ const Account = () => {
           </nav>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-6 overflow-y-auto">
+          {activeTab === 'subscription' && (
+            <PlanSubscriptionPanel />
+          )}
+
           {activeTab === 'purchases' && (
             <div>
-              <h1 className="font-mono text-xl font-semibold mb-6">{t('choosePlan')}</h1>
+              <h1 className="font-mono text-xl font-semibold mb-6">{t('purchaseRecords')}</h1>
               
-              {/* Plan Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                {plans.map((plan) => (
-                  <Card 
-                    key={plan.type}
-                    className={`relative overflow-hidden transition-all hover:shadow-lg ${
-                      plan.badge ? 'ring-2 ring-primary' : ''
-                    }`}
-                  >
-                    {plan.badge && (
-                      <div className="absolute top-0 right-0">
-                        <Badge className={`rounded-none rounded-bl-lg ${
-                          plan.color === 'purple' ? 'bg-purple-500' : 'bg-yellow-500'
-                        } text-white`}>
-                          <Star className="w-3 h-3 mr-1" />
-                          {plan.badge}
-                        </Badge>
-                      </div>
-                    )}
-                    <CardHeader className="pb-2">
-                      <CardTitle className="font-mono text-lg flex items-center gap-2">
-                        {plan.type === 'monthly' && t('planMonthly')}
-                        {plan.type === 'quarterly' && t('planQuarterly')}
-                        {plan.type === 'yearly' && t('planYearly')}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-3xl font-bold font-mono">{plan.price}</span>
-                        <span className="text-muted-foreground">USDT</span>
-                        <span className="text-sm text-muted-foreground">{plan.period}</span>
-                      </div>
-                      {plan.save && (
-                        <Badge variant="outline" className="border-green-500 text-green-500">
-                          {t('saveMoney')} {plan.save}
-                        </Badge>
-                      )}
-                      <div className="space-y-2 pt-2">
-                        <Button 
-                          className="w-full gap-2" 
-                          variant="outline"
-                          onClick={() => handlePayment(plan.type, 'stripe')}
-                        >
-                          <CreditCard className="w-4 h-4" />
-                          {t('payWithStripe')}
-                        </Button>
-                        <Button 
-                          className="w-full gap-2"
-                          onClick={() => handlePayment(plan.type, 'crypto')}
-                        >
-                          <Bitcoin className="w-4 h-4" />
-                          {t('payWithCrypto')}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              {/* Purchase Records */}
-              <h2 className="font-mono text-lg font-semibold mb-4">{t('purchaseRecords')}</h2>
               <div className="space-y-4">
                 {mockPurchases.map((purchase) => (
                   <div
