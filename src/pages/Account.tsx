@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { CreditCard, Wallet, Bitcoin, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { CreditCard, Wallet, Bitcoin, Clock, CheckCircle, XCircle, Gift, Ticket } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import TopNav from '@/components/TopNav';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
-type TabType = 'purchases' | 'accounts';
+type TabType = 'purchases' | 'accounts' | 'redemption';
 
 interface PurchaseRecord {
   id: string;
@@ -29,7 +31,45 @@ interface TradingAccount {
   balance: string;
 }
 
+interface RedemptionRecord {
+  id: string;
+  code: string;
+  date: string;
+  reward: string;
+  rewardType: 'membership' | 'credits' | 'vip';
+  duration?: string;
+  status: 'success' | 'expired' | 'used';
+}
+
 // Mock data
+const mockRedemptions: RedemptionRecord[] = [
+  {
+    id: '1',
+    code: 'PROMO2024VIP',
+    date: '2024-01-20 10:30',
+    reward: 'Pro会员',
+    rewardType: 'membership',
+    duration: '30天',
+    status: 'success',
+  },
+  {
+    id: '2',
+    code: 'WELCOME100',
+    date: '2024-01-15 16:45',
+    reward: '100积分',
+    rewardType: 'credits',
+    status: 'success',
+  },
+  {
+    id: '3',
+    code: 'NEWYEAR2024',
+    date: '2024-01-01 00:05',
+    reward: 'VIP体验',
+    rewardType: 'vip',
+    duration: '7天',
+    status: 'success',
+  },
+];
 const mockPurchases: PurchaseRecord[] = [
   {
     id: '1',
@@ -98,8 +138,70 @@ const mockAccounts: TradingAccount[] = [
 
 const Account = () => {
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<TabType>('purchases');
   const [danmakuEnabled, setDanmakuEnabled] = useState(true);
+  const [redeemCode, setRedeemCode] = useState('');
+  const [isRedeeming, setIsRedeeming] = useState(false);
+
+  const handleRedeem = async () => {
+    if (!redeemCode.trim()) {
+      toast({
+        title: t('redeemError'),
+        description: t('enterRedeemCode'),
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setIsRedeeming(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    toast({
+      title: t('redeemSuccess'),
+      description: t('redeemSuccessDesc'),
+    });
+    setRedeemCode('');
+    setIsRedeeming(false);
+  };
+
+  const getRedemptionStatusBadge = (status: 'success' | 'expired' | 'used') => {
+    switch (status) {
+      case 'success':
+        return (
+          <Badge variant="outline" className="border-green-500 text-green-500 gap-1">
+            <CheckCircle className="w-3 h-3" />
+            {t('redeemStatusSuccess')}
+          </Badge>
+        );
+      case 'expired':
+        return (
+          <Badge variant="outline" className="border-red-500 text-red-500 gap-1">
+            <XCircle className="w-3 h-3" />
+            {t('redeemStatusExpired')}
+          </Badge>
+        );
+      case 'used':
+        return (
+          <Badge variant="outline" className="border-muted-foreground text-muted-foreground gap-1">
+            <Clock className="w-3 h-3" />
+            {t('redeemStatusUsed')}
+          </Badge>
+        );
+    }
+  };
+
+  const getRewardTypeBadge = (type: 'membership' | 'credits' | 'vip') => {
+    switch (type) {
+      case 'membership':
+        return <Badge className="bg-primary/20 text-primary border-0">{t('rewardMembership')}</Badge>;
+      case 'credits':
+        return <Badge className="bg-yellow-500/20 text-yellow-500 border-0">{t('rewardCredits')}</Badge>;
+      case 'vip':
+        return <Badge className="bg-purple-500/20 text-purple-500 border-0">{t('rewardVip')}</Badge>;
+    }
+  };
 
   const getStatusBadge = (status: 'completed' | 'pending' | 'failed') => {
     switch (status) {
@@ -174,6 +276,17 @@ const Account = () => {
             >
               <Wallet className="w-4 h-4" />
               {t('tradingAccounts')}
+            </button>
+            <button
+              onClick={() => setActiveTab('redemption')}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md font-mono text-sm transition-colors ${
+                activeTab === 'redemption'
+                  ? 'bg-accent text-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+              }`}
+            >
+              <Gift className="w-4 h-4" />
+              {t('redemptionCenter')}
             </button>
           </nav>
         </div>
@@ -272,6 +385,77 @@ const Account = () => {
                 <div className="text-center text-muted-foreground py-12">
                   <Wallet className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>{t('noTradingAccounts')}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'redemption' && (
+            <div>
+              <h1 className="font-mono text-xl font-semibold mb-6">{t('redemptionCenter')}</h1>
+              
+              {/* Redeem Code Input */}
+              <div className="bg-card border border-border rounded-lg p-6 mb-6">
+                <h2 className="font-mono font-medium mb-4 flex items-center gap-2">
+                  <Ticket className="w-5 h-5" />
+                  {t('redeemCode')}
+                </h2>
+                <p className="text-sm text-muted-foreground mb-4">{t('redeemCodeDesc')}</p>
+                <div className="flex gap-3">
+                  <Input
+                    placeholder={t('enterRedeemCode')}
+                    value={redeemCode}
+                    onChange={(e) => setRedeemCode(e.target.value.toUpperCase())}
+                    className="font-mono flex-1"
+                    maxLength={20}
+                  />
+                  <Button 
+                    onClick={handleRedeem} 
+                    disabled={isRedeeming || !redeemCode.trim()}
+                    className="gap-2"
+                  >
+                    <Gift className="w-4 h-4" />
+                    {isRedeeming ? t('redeeming') : t('redeem')}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Redemption Records */}
+              <h2 className="font-mono font-medium mb-4">{t('redemptionRecords')}</h2>
+              <div className="space-y-4">
+                {mockRedemptions.map((record) => (
+                  <div
+                    key={record.id}
+                    className="bg-card border border-border rounded-lg p-4 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                        <Ticket className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <div className="font-mono font-medium flex items-center gap-2">
+                          {record.code}
+                          {getRewardTypeBadge(record.rewardType)}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {record.reward}
+                          {record.duration && ` • ${record.duration}`}
+                          {' • '}{record.date}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      {getRedemptionStatusBadge(record.status)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {mockRedemptions.length === 0 && (
+                <div className="text-center text-muted-foreground py-12">
+                  <Gift className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>{t('noRedemptionRecords')}</p>
                 </div>
               )}
             </div>
