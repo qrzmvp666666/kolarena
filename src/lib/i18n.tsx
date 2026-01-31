@@ -180,6 +180,14 @@ export const translations: Translations = {
   noPurchaseRecords: { zh: '暂无购买记录', en: 'No purchase records' },
   noTradingAccounts: { zh: '暂无交易账户', en: 'No trading accounts' },
   
+  // Plan Types
+  planMonthly: { zh: '月费会员', en: 'Monthly' },
+  planQuarterly: { zh: '季度会员', en: 'Quarterly' },
+  planYearly: { zh: '年费会员', en: 'Yearly' },
+  planPriceMonthly: { zh: '10 USDT', en: '10 USDT' },
+  planPriceQuarterly: { zh: '28 USDT', en: '28 USDT' },
+  planPriceYearly: { zh: '99 USDT', en: '99 USDT' },
+  
   // Redemption
   redemptionCenter: { zh: '兑换中心', en: 'Redemption Center' },
   redeemCode: { zh: '兑换码', en: 'Redeem Code' },
