@@ -452,10 +452,12 @@ const LeaderboardContent = () => {
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">{t('selectTrader')}:</span>
                 <Select value={selectedKol} onValueChange={setSelectedKol}>
-                  <SelectTrigger className="w-[180px] h-9 bg-card border-border">
-                    <SelectValue />
+                  <SelectTrigger className="w-[200px] h-9 bg-card border-border">
+                    <SelectValue placeholder={leaderboardData[0]?.name}>
+                      {leaderboardData.find(t => t.id === selectedKol)?.icon} {leaderboardData.find(t => t.id === selectedKol)?.name}
+                    </SelectValue>
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-popover border border-border z-50">
                     {leaderboardData.map(trader => (
                       <SelectItem key={trader.id} value={trader.id}>
                         <div className="flex items-center gap-2">
