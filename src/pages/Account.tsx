@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { CreditCard, Wallet, ChevronLeft, Bitcoin, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { CreditCard, Wallet, Bitcoin, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import TopNav from '@/components/TopNav';
 import { Button } from '@/components/ui/button';
@@ -99,7 +98,6 @@ const mockAccounts: TradingAccount[] = [
 
 const Account = () => {
   const { t } = useLanguage();
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('purchases');
   const [danmakuEnabled, setDanmakuEnabled] = useState(true);
 
@@ -152,16 +150,6 @@ const Account = () => {
       <div className="flex flex-1">
         {/* Sidebar */}
         <div className="w-64 border-r border-border bg-card p-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mb-4 gap-2 text-muted-foreground hover:text-foreground"
-            onClick={() => navigate('/')}
-          >
-            <ChevronLeft className="w-4 h-4" />
-            {t('backToHome')}
-          </Button>
-          
           <h2 className="font-mono text-lg font-semibold mb-4 px-2">{t('myAccount')}</h2>
           
           <nav className="space-y-1">
