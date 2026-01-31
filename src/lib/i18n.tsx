@@ -113,7 +113,7 @@ export const translations: Translations = {
   confirm: { zh: '确认', en: 'Confirm' },
 
   // Advanced Analysis
-  selectTrader: { zh: '选择交易员', en: 'Select Trader' },
+  selectTrader: { zh: 'KOL', en: 'KOL' },
   profitTrend: { zh: '收益趋势', en: 'Profit Trend' },
   coinDistribution: { zh: '币种收益占比', en: 'Coin Distribution' },
   tradeHistory: { zh: '交易记录', en: 'Trade History' },
