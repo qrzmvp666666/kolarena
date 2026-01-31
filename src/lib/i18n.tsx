@@ -179,6 +179,25 @@ export const translations: Translations = {
   balance: { zh: '余额', en: 'Balance' },
   noPurchaseRecords: { zh: '暂无购买记录', en: 'No purchase records' },
   noTradingAccounts: { zh: '暂无交易账户', en: 'No trading accounts' },
+  
+  // Redemption
+  redemptionCenter: { zh: '兑换中心', en: 'Redemption Center' },
+  redeemCode: { zh: '兑换码', en: 'Redeem Code' },
+  redeemCodeDesc: { zh: '输入您的兑换码以获取会员权益、积分或其他奖励', en: 'Enter your redemption code to get membership benefits, credits or other rewards' },
+  enterRedeemCode: { zh: '请输入兑换码', en: 'Enter redemption code' },
+  redeem: { zh: '立即兑换', en: 'Redeem' },
+  redeeming: { zh: '兑换中...', en: 'Redeeming...' },
+  redeemSuccess: { zh: '兑换成功', en: 'Redemption Successful' },
+  redeemSuccessDesc: { zh: '奖励已发放到您的账户', en: 'Reward has been added to your account' },
+  redeemError: { zh: '兑换失败', en: 'Redemption Failed' },
+  redemptionRecords: { zh: '兑换记录', en: 'Redemption Records' },
+  noRedemptionRecords: { zh: '暂无兑换记录', en: 'No redemption records' },
+  redeemStatusSuccess: { zh: '已兑换', en: 'Redeemed' },
+  redeemStatusExpired: { zh: '已过期', en: 'Expired' },
+  redeemStatusUsed: { zh: '已使用', en: 'Used' },
+  rewardMembership: { zh: '会员', en: 'Membership' },
+  rewardCredits: { zh: '积分', en: 'Credits' },
+  rewardVip: { zh: 'VIP', en: 'VIP' },
 };
 
 interface LanguageContextType {
