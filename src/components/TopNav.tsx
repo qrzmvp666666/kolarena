@@ -45,116 +45,124 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
   };
 
   return (
-    <div className="w-full flex justify-center py-4 px-4">
-      <nav className="flex items-center justify-between px-6 py-3 rounded-full bg-card/80 backdrop-blur-xl border border-border/50 shadow-lg max-w-4xl w-full">
-        {/* Logo */}
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold tracking-tight text-foreground">
-            Kol<span className="text-accent-purple">Arena</span>
-          </span>
-        </div>
+    <nav className="flex items-center justify-between px-6 py-3 border-b border-border bg-card">
+      {/* Logo */}
+      <div className="flex items-center gap-2">
+        <span className="text-xl font-bold tracking-tight text-foreground">
+          Kol<span className="text-accent-purple">Arena</span>
+        </span>
+      </div>
 
-        {/* Center Navigation */}
-        <div className="flex items-center gap-6">
-          <Link 
-            to="/" 
-            className={`font-mono text-sm transition-colors ${
-              location.pathname === '/' ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {t('live')}
-          </Link>
-          <a href="#" className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors">
-            {t('leaderboard')}
-          </a>
-          <Link 
-            to="/signals" 
-            className={`font-mono text-sm transition-colors ${
-              location.pathname === '/signals' ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {t('models')}
-          </Link>
-          <a 
-            href="#" 
-            className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {t('aboutUs')}
-          </a>
-        </div>
+      {/* Center Navigation */}
+      <div className="flex items-center gap-6">
+        <Link 
+          to="/" 
+          className={`font-mono text-sm transition-colors ${
+            location.pathname === '/' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          {t('live')}
+        </Link>
+        <span className="text-muted-foreground">|</span>
+        <a href="#" className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors">
+          {t('leaderboard')}
+        </a>
+        <span className="text-muted-foreground">|</span>
+        <Link 
+          to="/signals" 
+          className={`font-mono text-sm transition-colors ${
+            location.pathname === '/signals' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          {t('models')}
+        </Link>
+        <span className="text-muted-foreground">|</span>
+        <a 
+          href="#" 
+          className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {t('joinWaitlist')}
+        </a>
+        <span className="text-muted-foreground">|</span>
+        <a 
+          href="#" 
+          className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {t('aboutUs')}
+        </a>
+      </div>
 
-        {/* Right Side - Controls & User */}
-        <div className="flex items-center gap-2">
-          {/* Language Toggle */}
+      {/* Right Side - Controls & User */}
+      <div className="flex items-center gap-3">
+        {/* Language Toggle */}
+        <button
+          onClick={toggleLanguage}
+          className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-accent transition-colors font-mono text-xs"
+          aria-label="Toggle language"
+          title={language === 'zh' ? 'Switch to English' : '切换到中文'}
+        >
+          <Globe size={16} />
+          <span>{language === 'zh' ? '中文' : 'EN'}</span>
+        </button>
+        
+        {!hideDanmakuToggle && (
           <button
-            onClick={toggleLanguage}
-            className="flex items-center gap-1 px-2 py-1 rounded-full hover:bg-accent/50 transition-colors font-mono text-xs"
-            aria-label="Toggle language"
-            title={language === 'zh' ? 'Switch to English' : '切换到中文'}
+            onClick={onToggleDanmaku}
+            className="p-2 rounded-md hover:bg-accent transition-colors"
+            aria-label="Toggle danmaku"
+            title={danmakuEnabled ? t('closeDanmaku') : t('openDanmaku')}
           >
-            <Globe size={14} />
-            <span>{language === 'zh' ? '中文' : 'EN'}</span>
+            {danmakuEnabled ? <MessageSquare size={18} /> : <MessageSquareOff size={18} />}
           </button>
-          
-          {!hideDanmakuToggle && (
+        )}
+        
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-md hover:bg-accent transition-colors"
+          aria-label="Toggle theme"
+        >
+          {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+        </button>
+
+        {/* User Section */}
+        <div className="ml-2 pl-3 border-l border-border">
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-accent rounded-md px-2 py-1 transition-colors">
+                <img 
+                  src={user.avatar} 
+                  alt={user.name}
+                  className="w-7 h-7 rounded-full border border-border"
+                />
+                <span className="font-mono text-sm text-foreground">{user.name}</span>
+                <ChevronDown size={14} className="text-muted-foreground" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="font-mono">
+                <DropdownMenuItem onClick={handleLogout} className="gap-2 cursor-pointer">
+                  <LogOut size={14} />
+                  {t('logout')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
             <button
-              onClick={onToggleDanmaku}
-              className="p-2 rounded-full hover:bg-accent/50 transition-colors"
-              aria-label="Toggle danmaku"
-              title={danmakuEnabled ? t('closeDanmaku') : t('openDanmaku')}
+              onClick={() => setLoginModalOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-border bg-transparent hover:bg-accent text-foreground font-mono text-sm transition-colors"
             >
-              {danmakuEnabled ? <MessageSquare size={16} /> : <MessageSquareOff size={16} />}
+              <User size={16} />
+              {t('loginRegister')}
             </button>
           )}
-          
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-full hover:bg-accent/50 transition-colors"
-            aria-label="Toggle theme"
-          >
-            {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
-          </button>
-
-          {/* User Section */}
-          <div className="ml-1 pl-2 border-l border-border/50">
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-accent/50 rounded-full px-2 py-1 transition-colors">
-                  <img 
-                    src={user.avatar} 
-                    alt={user.name}
-                    className="w-6 h-6 rounded-full border border-border/50"
-                  />
-                  <span className="font-mono text-sm text-foreground">{user.name}</span>
-                  <ChevronDown size={12} className="text-muted-foreground" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="font-mono">
-                  <DropdownMenuItem onClick={handleLogout} className="gap-2 cursor-pointer">
-                    <LogOut size={14} />
-                    {t('logout')}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <button
-                onClick={() => setLoginModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-foreground text-background hover:bg-foreground/90 font-mono text-sm transition-colors"
-              >
-                <User size={14} />
-                {t('loginRegister')}
-              </button>
-            )}
-          </div>
-
-          {/* Login Modal */}
-          <LoginModal
-            open={loginModalOpen}
-            onOpenChange={setLoginModalOpen}
-            onLogin={handleLogin}
-          />
         </div>
-      </nav>
-    </div>
+
+        {/* Login Modal */}
+        <LoginModal
+          open={loginModalOpen}
+          onOpenChange={setLoginModalOpen}
+          onLogin={handleLogin}
+        />
+      </div>
+    </nav>
   );
 };
 
