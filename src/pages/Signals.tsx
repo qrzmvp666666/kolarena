@@ -3,10 +3,11 @@ import TopNav from '@/components/TopNav';
 import TickerBar from '@/components/TickerBar';
 import { useLanguage } from '@/lib/i18n';
 import SignalCard from '@/components/SignalCard';
-import { Search, Filter, RefreshCw } from 'lucide-react';
+import { Search, RefreshCw, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Mock signal data - generate more traders
 const traderNames = [
@@ -61,11 +62,22 @@ const SignalsContent = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'subscribed' | 'unsubscribed'>('all');
   const [marketType, setMarketType] = useState<'futures' | 'spot'>('futures');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedPair, setSelectedPair] = useState<string>('all');
+  const [selectedSignalType, setSelectedSignalType] = useState<string>('all');
+  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'year' | 'custom'>('month');
 
   const tabs = [
     { id: 'all' as const, label: t('signalAll'), count: 1000 },
     { id: 'subscribed' as const, label: t('signalSubscribed'), count: 0 },
     { id: 'unsubscribed' as const, label: t('signalUnsubscribed'), count: 1000 },
+  ];
+
+  const timeRanges = [
+    { id: 'week' as const, label: t('timeRange_week') },
+    { id: 'month' as const, label: t('timeRange_month') },
+    { id: 'quarter' as const, label: t('timeRange_quarter') },
+    { id: 'year' as const, label: t('timeRange_year') },
+    { id: 'custom' as const, label: t('timeRange_custom') },
   ];
 
   return (
@@ -84,8 +96,8 @@ const SignalsContent = () => {
           <p className="text-xs text-muted-foreground">{t('signalSummary')}</p>
         </div>
 
-        {/* Filter Bar */}
-        <div className="flex items-center justify-between mb-6">
+        {/* Filter Bar - Row 1 */}
+        <div className="flex items-center justify-between mb-4">
           {/* Left: Market Type Toggle + Tabs */}
           <div className="flex items-center gap-4">
             {/* Market Type Toggle */}
@@ -151,13 +163,67 @@ const SignalsContent = () => {
               />
             </div>
             <Button variant="outline" size="sm" className="gap-2">
-              <Filter className="w-4 h-4" />
-              {t('filter')}
-            </Button>
-            <Button variant="outline" size="sm" className="gap-2">
               <RefreshCw className="w-4 h-4" />
               {t('refresh')}
             </Button>
+          </div>
+        </div>
+
+        {/* Filter Bar - Row 2: Dropdowns + Time Range */}
+        <div className="flex items-center justify-between mb-6">
+          {/* Left: Dropdown Filters */}
+          <div className="flex items-center gap-4">
+            {/* Trading Pair Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{t('tradingPair')}:</span>
+              <Select value={selectedPair} onValueChange={setSelectedPair}>
+                <SelectTrigger className="w-28 h-8 text-xs bg-card border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  <SelectItem value="all">{t('allPairs')}</SelectItem>
+                  {coinTypes.map(coin => (
+                    <SelectItem key={coin} value={coin}>{coin}/USDT</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Signal Type Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{t('signalType')}:</span>
+              <Select value={selectedSignalType} onValueChange={setSelectedSignalType}>
+                <SelectTrigger className="w-24 h-8 text-xs bg-card border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  <SelectItem value="all">{t('allTypes')}</SelectItem>
+                  <SelectItem value="long">{t('signalLong')}</SelectItem>
+                  <SelectItem value="short">{t('signalShort')}</SelectItem>
+                  <SelectItem value="spot">{t('signalSpot')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Right: Time Range Tabs */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{t('timeRange')}:</span>
+            <div className="flex items-center rounded-lg border border-border overflow-hidden">
+              {timeRanges.map(range => (
+                <button
+                  key={range.id}
+                  onClick={() => setTimeRange(range.id)}
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                    timeRange === range.id
+                      ? 'bg-accent-orange text-white'
+                      : 'bg-card text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {range.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

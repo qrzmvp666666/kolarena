@@ -74,6 +74,10 @@ export const translations: Translations = {
   futures: { zh: '合约', en: 'Futures' },
   spot: { zh: '现货', en: 'Spot' },
   comingSoon: { zh: '即将推出', en: 'Coming Soon' },
+  signalType: { zh: '信号类型', en: 'Signal Type' },
+  tradingPair: { zh: '交易对', en: 'Trading Pair' },
+  allPairs: { zh: '全部', en: 'All' },
+  allTypes: { zh: '全部', en: 'All' },
 
   // Leaderboard Page
   competition: { zh: '比赛', en: 'Competition' },
