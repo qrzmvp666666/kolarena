@@ -163,6 +163,22 @@ export const translations: Translations = {
   aboutFeature6Desc: { zh: '基于多维度指标的专业交易员评级系统', en: 'Professional trader rating system based on multi-dimensional metrics' },
   aboutTeamTitle: { zh: '我们的团队', en: 'Our Team' },
   aboutTeamDesc: { zh: '我们是一支由资深交易员、区块链开发者和金融分析师组成的团队，拥有多年加密货币市场经验。我们深知交易者的痛点，致力于打造最可靠的交易员追踪平台。', en: 'We are a team of experienced traders, blockchain developers, and financial analysts with years of experience in the cryptocurrency market. We understand traders\' pain points and are committed to building the most reliable trader tracking platform.' },
+  
+  // Account Page
+  myAccount: { zh: '我的账户', en: 'My Account' },
+  purchaseRecords: { zh: '购买记录', en: 'Purchase Records' },
+  tradingAccounts: { zh: '交易账户', en: 'Trading Accounts' },
+  backToHome: { zh: '返回首页', en: 'Back to Home' },
+  completed: { zh: '已完成', en: 'Completed' },
+  pending: { zh: '待处理', en: 'Pending' },
+  failed: { zh: '失败', en: 'Failed' },
+  active: { zh: '活跃', en: 'Active' },
+  inactive: { zh: '未激活', en: 'Inactive' },
+  addAccount: { zh: '添加账户', en: 'Add Account' },
+  created: { zh: '创建于', en: 'Created' },
+  balance: { zh: '余额', en: 'Balance' },
+  noPurchaseRecords: { zh: '暂无购买记录', en: 'No purchase records' },
+  noTradingAccounts: { zh: '暂无交易账户', en: 'No trading accounts' },
 };
 
 interface LanguageContextType {
