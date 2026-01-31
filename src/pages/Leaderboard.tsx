@@ -116,15 +116,14 @@ const generateTradeHistory = (traderName: string) => {
 interface AdvancedAnalysisProps {
   traders: typeof leaderboardData;
   t: (key: string) => string;
+  selectedTrader: string;
 }
 
-const AdvancedAnalysisContent = ({ traders, t }: AdvancedAnalysisProps) => {
-  const [selectedTrader, setSelectedTrader] = useState(traders[0]?.id || '');
-  
+const AdvancedAnalysisContent = ({ traders, t, selectedTrader }: AdvancedAnalysisProps) => {
   const currentTrader = traders.find(tr => tr.id === selectedTrader) || traders[0];
   const profitTrendData = useMemo(() => generateProfitTrendData(selectedTrader), [selectedTrader]);
   const coinDistribution = useMemo(() => generateCoinDistribution(), [selectedTrader]);
-  const tradeHistory = useMemo(() => generateTradeHistory(currentTrader?.name || ''), [selectedTrader]);
+  const tradeHistory = useMemo(() => generateTradeHistory(currentTrader?.name || ''), [selectedTrader, currentTrader?.name]);
 
   if (!currentTrader) {
     return (
@@ -136,47 +135,25 @@ const AdvancedAnalysisContent = ({ traders, t }: AdvancedAnalysisProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Trader Selector & Stats */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-muted-foreground">{t('selectTrader')}:</span>
-          <Select value={selectedTrader} onValueChange={setSelectedTrader}>
-            <SelectTrigger className="w-[200px] h-9 bg-card border-border">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {traders.map(trader => (
-                <SelectItem key={trader.id} value={trader.id}>
-                  <div className="flex items-center gap-2">
-                    <span>{trader.icon}</span>
-                    <span>{trader.name}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Stats Cards Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="border border-border rounded-lg p-4 bg-card">
+          <div className="text-xs text-muted-foreground mb-1">{t('totalTrades')}</div>
+          <div className="text-2xl font-bold text-foreground">{currentTrader.trades}</div>
         </div>
-        
-        {/* Quick Stats */}
-        <div className="flex items-center gap-6">
-          <div className="text-center">
-            <div className="text-xs text-muted-foreground">{t('totalTrades')}</div>
-            <div className="text-lg font-bold text-foreground">{currentTrader.trades}</div>
+        <div className="border border-border rounded-lg p-4 bg-card">
+          <div className="text-xs text-muted-foreground mb-1">{t('winRate')}</div>
+          <div className="text-2xl font-bold text-foreground">{currentTrader.winRate}%</div>
+        </div>
+        <div className="border border-border rounded-lg p-4 bg-card">
+          <div className="text-xs text-muted-foreground mb-1">{t('totalPnL')}</div>
+          <div className={`text-2xl font-bold ${currentTrader.totalPnL >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+            {currentTrader.totalPnL >= 0 ? '+' : ''}${currentTrader.totalPnL.toLocaleString()}
           </div>
-          <div className="text-center">
-            <div className="text-xs text-muted-foreground">{t('winRate')}</div>
-            <div className="text-lg font-bold text-foreground">{currentTrader.winRate}%</div>
-          </div>
-          <div className="text-center">
-            <div className="text-xs text-muted-foreground">{t('totalPnL')}</div>
-            <div className={`text-lg font-bold ${currentTrader.totalPnL >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
-              {currentTrader.totalPnL >= 0 ? '+' : ''}${currentTrader.totalPnL.toLocaleString()}
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="text-xs text-muted-foreground">{t('profitFactor')}</div>
-            <div className="text-lg font-bold text-foreground">{(Math.random() * 1.5 + 0.8).toFixed(2)}</div>
-          </div>
+        </div>
+        <div className="border border-border rounded-lg p-4 bg-card">
+          <div className="text-xs text-muted-foreground mb-1">{t('profitFactor')}</div>
+          <div className="text-2xl font-bold text-foreground">{(Math.random() * 1.5 + 0.8).toFixed(2)}</div>
         </div>
       </div>
 
@@ -328,7 +305,7 @@ const AdvancedAnalysisContent = ({ traders, t }: AdvancedAnalysisProps) => {
 
 
 const LeaderboardContent = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [activeTab, setActiveTab] = useState<'overall' | 'advanced'>('overall');
   const [marketType, setMarketType] = useState<'futures' | 'spot'>('futures');
   const [searchQuery, setSearchQuery] = useState('');
@@ -342,6 +319,7 @@ const LeaderboardContent = () => {
     to: undefined,
   });
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [selectedKol, setSelectedKol] = useState(leaderboardData[0]?.id || '');
 
   // Filtered data
   const filteredData = useMemo(() => {
@@ -389,7 +367,7 @@ const LeaderboardContent = () => {
     return t(`timeRange_${timeRange}`);
   };
 
-  const { language } = useLanguage();
+  
 
   return (
     <div className="min-h-screen bg-background text-foreground font-mono relative">
@@ -468,26 +446,52 @@ const LeaderboardContent = () => {
             </button>
           </div>
 
-          {/* Search & Actions */}
+          {/* Search & Actions - Show KOL selector when in advanced tab */}
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder={t('searchTrader')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 w-48 bg-card border-border"
-              />
-            </div>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Filter className="w-4 h-4" />
-              {t('filter')}
-            </Button>
-            <Button variant="outline" size="sm" className="gap-2" onClick={handleRefresh}>
-              <RefreshCw className="w-4 h-4" />
-              {t('refresh')}
-            </Button>
+            {activeTab === 'advanced' && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">{t('selectTrader')}:</span>
+                <Select value={selectedKol} onValueChange={setSelectedKol}>
+                  <SelectTrigger className="w-[180px] h-9 bg-card border-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {leaderboardData.map(trader => (
+                      <SelectItem key={trader.id} value={trader.id}>
+                        <div className="flex items-center gap-2">
+                          <span>{trader.icon}</span>
+                          <span>{trader.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {activeTab === 'overall' && (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder={t('searchTrader')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 w-48 bg-card border-border"
+                />
+              </div>
+            )}
+            {activeTab === 'overall' && (
+              <>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Filter className="w-4 h-4" />
+                  {t('filter')}
+                </Button>
+                <Button variant="outline" size="sm" className="gap-2" onClick={handleRefresh}>
+                  <RefreshCw className="w-4 h-4" />
+                  {t('refresh')}
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
@@ -751,7 +755,7 @@ const LeaderboardContent = () => {
             </div>
           </>
         ) : (
-          <AdvancedAnalysisContent traders={filteredData} t={t} />
+          <AdvancedAnalysisContent traders={filteredData} t={t} selectedTrader={selectedKol} />
         )}
       </div>
     </div>
