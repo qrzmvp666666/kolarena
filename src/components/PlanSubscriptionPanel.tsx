@@ -129,19 +129,6 @@ const PlanSubscriptionPanel = () => {
               )}
             </p>
             
-            {/* CTA Button */}
-            <Button 
-              className={`w-full mb-6 ${
-                plan.isPopular 
-                  ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
-                  : 'bg-muted hover:bg-muted/80 text-foreground'
-              }`}
-              onClick={() => handleCryptoPayment(plan.name, plan.price)}
-            >
-              <Bitcoin className="w-4 h-4 mr-2" />
-              {t('getStarted')}
-            </Button>
-            
             {/* Description */}
             <p className="text-sm text-muted-foreground mb-6">{plan.description}</p>
             
@@ -179,15 +166,28 @@ const PlanSubscriptionPanel = () => {
               )}
             </div>
             
-            {/* Secondary Payment Button */}
-            <Button 
-              variant="ghost"
-              className="w-full mt-4 text-muted-foreground hover:text-foreground"
-              onClick={() => handleStripePayment(plan.name)}
-            >
-              <CreditCard className="w-4 h-4 mr-2" />
-              {t('payWithStripe')}
-            </Button>
+            {/* Payment Buttons - Together at bottom */}
+            <div className="space-y-2 mt-6 pt-6 border-t border-border">
+              <Button 
+                className={`w-full ${
+                  plan.isPopular 
+                    ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
+                    : 'bg-muted hover:bg-muted/80 text-foreground'
+                }`}
+                onClick={() => handleCryptoPayment(plan.name, plan.price)}
+              >
+                <Bitcoin className="w-4 h-4 mr-2" />
+                {t('payWithCrypto')}
+              </Button>
+              <Button 
+                variant="outline"
+                className="w-full"
+                onClick={() => handleStripePayment(plan.name)}
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                {t('payWithStripe')}
+              </Button>
+            </div>
           </div>
         ))}
       </div>
