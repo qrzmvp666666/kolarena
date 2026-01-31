@@ -136,23 +136,38 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
         {/* User Section */}
         <div className="ml-2 pl-3 border-l border-border">
           {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-accent rounded-md px-2 py-1 transition-colors">
-                <img 
-                  src={user.avatar} 
-                  alt={user.name}
-                  className="w-7 h-7 rounded-full border border-border"
-                />
-                <span className="font-mono text-sm text-foreground">{user.name}</span>
-                <ChevronDown size={14} className="text-muted-foreground" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="font-mono">
-                <DropdownMenuItem onClick={handleLogout} className="gap-2 cursor-pointer">
-                  <LogOut size={14} />
-                  {t('logout')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/account"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-accent text-foreground font-mono text-sm transition-colors"
+              >
+                <User size={16} />
+                {t('myAccount')}
+              </Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-accent rounded-md px-2 py-1 transition-colors">
+                  <img 
+                    src={user.avatar} 
+                    alt={user.name}
+                    className="w-7 h-7 rounded-full border border-border"
+                  />
+                  <span className="font-mono text-sm text-foreground">{user.name}</span>
+                  <ChevronDown size={14} className="text-muted-foreground" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="font-mono">
+                  <DropdownMenuItem asChild className="gap-2 cursor-pointer">
+                    <Link to="/account">
+                      <User size={14} />
+                      {t('myAccount')}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout} className="gap-2 cursor-pointer">
+                    <LogOut size={14} />
+                    {t('logout')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           ) : (
             <button
               onClick={() => setLoginModalOpen(true)}
