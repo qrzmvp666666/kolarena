@@ -251,6 +251,19 @@ export const translations: Translations = {
   redemptionStep2: { zh: '在上方输入框输入兑换码', en: 'Enter the code in the input field above' },
   redemptionStep3: { zh: '点击「立即兑换」完成兑换', en: 'Click "Redeem" to complete' },
   redemptionStep4: { zh: '奖励将自动发放到您的账户', en: 'Rewards will be added to your account automatically' },
+
+  // New Plan Descriptions
+  planMonthlyDesc: { zh: '适合短期体验用户', en: 'For short-term users' },
+  planQuarterlyDesc: { zh: '适合初创团队和成长中的交易者', en: 'For startups and growing traders' },
+  planYearlyDesc: { zh: '适合高需求专业交易者', en: 'For the most demanding traders' },
+  featuresTitle: { zh: '基础功能', en: 'Features' },
+  featuresTitlePlus: { zh: '包含基础功能，另加', en: 'All features in Monthly, plus' },
+  featuresTitlePremium: { zh: '包含季度功能，另加', en: 'All features in Quarterly, plus' },
+  basicFeatures: { zh: '基础功能套餐', en: 'Basic features included' },
+  getStarted: { zh: '立即订阅', en: 'Get started' },
+  enterprisePlan: { zh: '企业定制方案', en: 'Enterprise Plan' },
+  enterpriseDesc: { zh: '为您的团队或平台获取定制资源和专属权益', en: 'Get custom resources and exclusive benefits for your team or platform' },
+  contactUs: { zh: '联系我们', en: 'Contact Us' },
 };
 
 interface LanguageContextType {
