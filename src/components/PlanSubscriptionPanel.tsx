@@ -91,11 +91,12 @@ const PlanSubscriptionPanel = () => {
         <p className="text-sm text-muted-foreground">{t('subscriptionDesc')}</p>
       </div>
 
-      <div className="space-y-4">
+      {/* Horizontal 3-column layout */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {plans.map((plan) => (
           <Card 
             key={plan.type}
-            className={`relative overflow-hidden transition-all hover:shadow-lg bg-gradient-to-br ${plan.gradient} ${plan.borderColor}`}
+            className={`relative overflow-hidden transition-all hover:shadow-lg bg-gradient-to-br ${plan.gradient} ${plan.borderColor} flex flex-col`}
           >
             {plan.badge && (
               <div className="absolute top-0 right-0">
@@ -107,48 +108,48 @@ const PlanSubscriptionPanel = () => {
             )}
             
             <CardHeader className="pb-3">
-              <CardTitle className="font-mono text-lg flex items-center gap-2">
-                <div className={`w-8 h-8 rounded-full bg-background/50 flex items-center justify-center ${plan.iconColor}`}>
-                  {plan.type === 'monthly' && <Zap className="w-4 h-4" />}
-                  {plan.type === 'quarterly' && <TrendingUp className="w-4 h-4" />}
-                  {plan.type === 'yearly' && <Crown className="w-4 h-4" />}
+              <CardTitle className="font-mono text-base flex items-center gap-2">
+                <div className={`w-7 h-7 rounded-full bg-background/50 flex items-center justify-center ${plan.iconColor}`}>
+                  {plan.type === 'monthly' && <Zap className="w-3.5 h-3.5" />}
+                  {plan.type === 'quarterly' && <TrendingUp className="w-3.5 h-3.5" />}
+                  {plan.type === 'yearly' && <Crown className="w-3.5 h-3.5" />}
                 </div>
                 {plan.name}
               </CardTitle>
-              <div className="flex items-baseline gap-1 mt-2">
-                <span className="text-3xl font-bold font-mono">{plan.price}</span>
-                <span className="text-muted-foreground">USDT</span>
-                <span className="text-sm text-muted-foreground">{plan.period}</span>
+              <div className="flex items-baseline gap-1 mt-2 flex-wrap">
+                <span className="text-2xl font-bold font-mono">{plan.price}</span>
+                <span className="text-muted-foreground text-sm">USDT</span>
+                <span className="text-xs text-muted-foreground">{plan.period}</span>
                 {plan.save && (
-                  <Badge variant="outline" className="ml-2 border-green-500 text-green-500 text-xs">
+                  <Badge variant="outline" className="ml-1 border-green-500 text-green-500 text-[10px] px-1.5 py-0">
                     {t('saveMoney')} {plan.save}
                   </Badge>
                 )}
               </div>
             </CardHeader>
             
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 flex-1 flex flex-col">
               <Separator className="bg-border/50" />
               
               {/* Features List */}
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <div className="space-y-2 flex-1">
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                   {t('includedFeatures')}
                 </p>
-                <ul className="space-y-2">
+                <ul className="space-y-1.5">
                   {plan.features.map((feature, index) => (
                     <li 
                       key={index}
-                      className={`flex items-center gap-2 text-sm ${
+                      className={`flex items-center gap-1.5 text-xs ${
                         feature.highlight ? 'text-primary font-medium' : 'text-foreground'
                       }`}
                     >
                       <div className={`flex-shrink-0 ${feature.highlight ? 'text-primary' : 'text-muted-foreground'}`}>
                         {feature.icon}
                       </div>
-                      {feature.text}
+                      <span className="truncate">{feature.text}</span>
                       {feature.highlight && (
-                        <Badge variant="outline" className="text-[10px] px-1 py-0 border-primary/50 text-primary">
+                        <Badge variant="outline" className="text-[8px] px-1 py-0 border-primary/50 text-primary flex-shrink-0">
                           {t('exclusive')}
                         </Badge>
                       )}
@@ -160,20 +161,20 @@ const PlanSubscriptionPanel = () => {
               <Separator className="bg-border/50" />
               
               {/* Payment Buttons */}
-              <div className="space-y-2">
+              <div className="space-y-2 mt-auto">
                 <Button 
-                  className="w-full gap-2" 
+                  className="w-full gap-2 text-xs h-9" 
                   variant="outline"
                   onClick={() => handlePayment(plan.type, 'stripe')}
                 >
-                  <CreditCard className="w-4 h-4" />
+                  <CreditCard className="w-3.5 h-3.5" />
                   {t('payWithStripe')}
                 </Button>
                 <Button 
-                  className="w-full gap-2"
+                  className="w-full gap-2 text-xs h-9"
                   onClick={() => handlePayment(plan.type, 'crypto')}
                 >
-                  <Bitcoin className="w-4 h-4" />
+                  <Bitcoin className="w-3.5 h-3.5" />
                   {t('payWithCrypto')}
                 </Button>
               </div>
@@ -182,8 +183,8 @@ const PlanSubscriptionPanel = () => {
         ))}
       </div>
 
-      {/* Payment Info */}
-      <div className="bg-muted/30 rounded-lg p-4 space-y-2">
+      {/* Payment Info - Horizontal on larger screens */}
+      <div className="bg-muted/30 rounded-lg p-4 flex flex-wrap gap-4 md:gap-8 justify-center">
         <div className="flex items-center gap-2 text-sm">
           <Shield className="w-4 h-4 text-green-500" />
           <span>{t('securePayment')}</span>
