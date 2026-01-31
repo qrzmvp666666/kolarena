@@ -7,7 +7,7 @@ interface ModelBarProps {
 
 const ModelBar = ({ visibleModels, onToggleModel }: ModelBarProps) => {
   return (
-    <div className="flex items-stretch border-t border-border bg-card w-full">
+    <div className="flex items-stretch border-t border-border bg-card w-full mb-3">
       {models.map((model, index) => {
         const isActive = visibleModels.includes(model.id);
         return (
