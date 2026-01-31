@@ -89,19 +89,19 @@ const SignalCard = ({ signal }: SignalCardProps) => {
 
       {/* Trading Pair & Price with Signal Type */}
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-baseline gap-1">
-          <span className="text-lg font-bold text-foreground">{signal.pair.split('/')[0]}</span>
-          <span className="text-sm text-muted-foreground">/{signal.pair.split('/')[1]}</span>
-        </div>
         <div className="flex items-center gap-2">
+          <div className="flex items-baseline gap-1">
+            <span className="text-lg font-bold text-foreground">{signal.pair.split('/')[0]}</span>
+            <span className="text-sm text-muted-foreground">/{signal.pair.split('/')[1]}</span>
+          </div>
           {/* Signal Type Badge */}
-          <span className={`text-xs px-2 py-1 rounded border self-center ${getSignalTypeStyle(signal.signalType)}`}>
+          <span className={`text-xs px-2 py-1 rounded border ${getSignalTypeStyle(signal.signalType)}`}>
             {getSignalTypeLabel(signal.signalType)}
           </span>
-          <div className="text-right">
-            <div className="text-xs text-muted-foreground">{t('entryPrice')}</div>
-            <div className="text-xl font-bold text-accent-orange">{signal.entryPrice}</div>
-          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-xs text-muted-foreground">{t('entryPrice')}</div>
+          <div className="text-xl font-bold text-accent-orange">{signal.entryPrice}</div>
         </div>
       </div>
 
