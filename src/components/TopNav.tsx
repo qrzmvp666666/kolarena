@@ -64,9 +64,14 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
           {t('live')}
         </Link>
         <span className="text-muted-foreground">|</span>
-        <a href="#" className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <Link 
+          to="/leaderboard" 
+          className={`font-mono text-sm transition-colors ${
+            location.pathname === '/leaderboard' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
           {t('leaderboard')}
-        </a>
+        </Link>
         <span className="text-muted-foreground">|</span>
         <Link 
           to="/signals" 
