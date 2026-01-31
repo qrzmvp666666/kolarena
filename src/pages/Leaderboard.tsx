@@ -491,145 +491,147 @@ const LeaderboardContent = () => {
           </div>
         </div>
 
-        {/* Filter Options Row */}
-        <div className="flex items-center gap-4 mb-4 flex-wrap">
-          {/* Coin Filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{t('coinType')}:</span>
-            <Select value={coinFilter} onValueChange={setCoinFilter}>
-              <SelectTrigger className="w-[100px] h-8 font-mono text-xs bg-card border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="font-mono text-xs">
-                {coinTypes.map(coin => (
-                  <SelectItem key={coin} value={coin}>{coin === 'ALL' ? t('all') : coin}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Filter Options Row - Only show for overall tab */}
+        {activeTab === 'overall' && (
+          <div className="flex items-center gap-4 mb-4 flex-wrap">
+            {/* Coin Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{t('coinType')}:</span>
+              <Select value={coinFilter} onValueChange={setCoinFilter}>
+                <SelectTrigger className="w-[100px] h-8 font-mono text-xs bg-card border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="font-mono text-xs">
+                  {coinTypes.map(coin => (
+                    <SelectItem key={coin} value={coin}>{coin === 'ALL' ? t('all') : coin}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Return Rate Filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{t('returnRate')}:</span>
-            <Select value={returnRateFilter} onValueChange={setReturnRateFilter}>
-              <SelectTrigger className="w-[100px] h-8 font-mono text-xs bg-card border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="font-mono text-xs">
-                <SelectItem value="all">{t('all')}</SelectItem>
-                <SelectItem value="positive">{t('positive')}</SelectItem>
-                <SelectItem value="negative">{t('negative')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            {/* Return Rate Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{t('returnRate')}:</span>
+              <Select value={returnRateFilter} onValueChange={setReturnRateFilter}>
+                <SelectTrigger className="w-[100px] h-8 font-mono text-xs bg-card border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="font-mono text-xs">
+                  <SelectItem value="all">{t('all')}</SelectItem>
+                  <SelectItem value="positive">{t('positive')}</SelectItem>
+                  <SelectItem value="negative">{t('negative')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Win Rate Filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{t('winRate')}:</span>
-            <Select value={winRateFilter} onValueChange={setWinRateFilter}>
-              <SelectTrigger className="w-[100px] h-8 font-mono text-xs bg-card border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="font-mono text-xs">
-                <SelectItem value="all">{t('all')}</SelectItem>
-                <SelectItem value="high">{'>'}30%</SelectItem>
-                <SelectItem value="low">{'<'}30%</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            {/* Win Rate Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{t('winRate')}:</span>
+              <Select value={winRateFilter} onValueChange={setWinRateFilter}>
+                <SelectTrigger className="w-[100px] h-8 font-mono text-xs bg-card border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="font-mono text-xs">
+                  <SelectItem value="all">{t('all')}</SelectItem>
+                  <SelectItem value="high">{'>'}30%</SelectItem>
+                  <SelectItem value="low">{'<'}30%</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Max Loss Filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{t('maxLoss')}:</span>
-            <Select value={maxLossFilter} onValueChange={setMaxLossFilter}>
-              <SelectTrigger className="w-[120px] h-8 font-mono text-xs bg-card border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="font-mono text-xs">
-                <SelectItem value="all">{t('all')}</SelectItem>
-                <SelectItem value="low">{t('lowRisk')}</SelectItem>
-                <SelectItem value="high">{t('highRisk')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            {/* Max Loss Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{t('maxLoss')}:</span>
+              <Select value={maxLossFilter} onValueChange={setMaxLossFilter}>
+                <SelectTrigger className="w-[120px] h-8 font-mono text-xs bg-card border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="font-mono text-xs">
+                  <SelectItem value="all">{t('all')}</SelectItem>
+                  <SelectItem value="low">{t('lowRisk')}</SelectItem>
+                  <SelectItem value="high">{t('highRisk')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Time Range Filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{t('timeRange')}:</span>
-            <div className="flex items-center gap-1">
-              {(['week', 'month', 'quarter', 'year'] as const).map((range) => (
-                <button
-                  key={range}
-                  onClick={() => setTimeRange(range)}
-                  className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
-                    timeRange === range
-                      ? 'bg-accent-orange text-white'
-                      : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
-                  }`}
-                >
-                  {t(`timeRange_${range}`)}
-                </button>
-              ))}
-              <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                <PopoverTrigger asChild>
+            {/* Time Range Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{t('timeRange')}:</span>
+              <div className="flex items-center gap-1">
+                {(['week', 'month', 'quarter', 'year'] as const).map((range) => (
                   <button
-                    className={`px-3 py-1.5 text-xs rounded-md transition-colors flex items-center gap-1.5 ${
-                      timeRange === 'custom'
+                    key={range}
+                    onClick={() => setTimeRange(range)}
+                    className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
+                      timeRange === range
                         ? 'bg-accent-orange text-white'
                         : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
                     }`}
                   >
-                    <CalendarIcon className="w-3 h-3" />
-                    {timeRange === 'custom' && customDateRange.from && customDateRange.to
-                      ? getTimeRangeLabel()
-                      : t('timeRange_custom')}
+                    {t(`timeRange_${range}`)}
                   </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-4" align="start">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-foreground">{t('selectDateRange')}</span>
-                      <div className="flex gap-6 text-xs text-muted-foreground">
-                        <span>{t('startDate')}</span>
-                        <span>{t('endDate')}</span>
-                      </div>
-                    </div>
-                    <div className="flex border border-border rounded-lg overflow-hidden">
-                      <Calendar
-                        mode="single"
-                        selected={customDateRange.from}
-                        onSelect={(date) => setCustomDateRange(prev => ({ ...prev, from: date }))}
-                        locale={language === 'zh' ? zhCN : enUS}
-                        className="pointer-events-auto border-r border-border"
-                      />
-                      <Calendar
-                        mode="single"
-                        selected={customDateRange.to}
-                        onSelect={(date) => setCustomDateRange(prev => ({ ...prev, to: date }))}
-                        locale={language === 'zh' ? zhCN : enUS}
-                        className="pointer-events-auto"
-                        disabled={(date) => customDateRange.from ? date < customDateRange.from : false}
-                      />
-                    </div>
-                    <Button
-                      size="sm"
-                      className="w-full"
-                      onClick={() => {
-                        if (customDateRange.from && customDateRange.to) {
-                          setTimeRange('custom');
-                          setIsCalendarOpen(false);
-                        }
-                      }}
-                      disabled={!customDateRange.from || !customDateRange.to}
+                ))}
+                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      className={`px-3 py-1.5 text-xs rounded-md transition-colors flex items-center gap-1.5 ${
+                        timeRange === 'custom'
+                          ? 'bg-accent-orange text-white'
+                          : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
+                      }`}
                     >
-                      {t('confirm')}
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
+                      <CalendarIcon className="w-3 h-3" />
+                      {timeRange === 'custom' && customDateRange.from && customDateRange.to
+                        ? getTimeRangeLabel()
+                        : t('timeRange_custom')}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-4" align="start">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-foreground">{t('selectDateRange')}</span>
+                        <div className="flex gap-6 text-xs text-muted-foreground">
+                          <span>{t('startDate')}</span>
+                          <span>{t('endDate')}</span>
+                        </div>
+                      </div>
+                      <div className="flex border border-border rounded-lg overflow-hidden">
+                        <Calendar
+                          mode="single"
+                          selected={customDateRange.from}
+                          onSelect={(date) => setCustomDateRange(prev => ({ ...prev, from: date }))}
+                          locale={language === 'zh' ? zhCN : enUS}
+                          className="pointer-events-auto border-r border-border"
+                        />
+                        <Calendar
+                          mode="single"
+                          selected={customDateRange.to}
+                          onSelect={(date) => setCustomDateRange(prev => ({ ...prev, to: date }))}
+                          locale={language === 'zh' ? zhCN : enUS}
+                          className="pointer-events-auto"
+                          disabled={(date) => customDateRange.from ? date < customDateRange.from : false}
+                        />
+                      </div>
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={() => {
+                          if (customDateRange.from && customDateRange.to) {
+                            setTimeRange('custom');
+                            setIsCalendarOpen(false);
+                          }
+                        }}
+                        disabled={!customDateRange.from || !customDateRange.to}
+                      >
+                        {t('confirm')}
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Content based on active tab */}
         {activeTab === 'overall' ? (
