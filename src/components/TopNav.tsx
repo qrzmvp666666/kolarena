@@ -49,11 +49,11 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
   return (
     <nav className="flex items-center justify-between px-6 py-3 border-b border-border bg-card">
       {/* Logo */}
-      <div className="flex items-center gap-2">
-        <span className="text-xl font-bold tracking-tight text-foreground">
+      <Link to="/" className="flex items-center gap-2">
+        <span className="text-xl font-bold tracking-tight text-foreground logo-shine">
           Kol<span className="text-accent-purple">Arena</span>
         </span>
-      </div>
+      </Link>
 
       {/* Center Navigation */}
       <div className="flex items-center gap-6">
