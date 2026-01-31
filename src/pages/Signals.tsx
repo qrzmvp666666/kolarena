@@ -169,44 +169,41 @@ const SignalsContent = () => {
           </div>
         </div>
 
-        {/* Filter Bar - Row 2: Dropdowns + Time Range */}
-        <div className="flex items-center justify-between mb-6">
-          {/* Left: Dropdown Filters */}
-          <div className="flex items-center gap-4">
-            {/* Trading Pair Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{t('tradingPair')}:</span>
-              <Select value={selectedPair} onValueChange={setSelectedPair}>
-                <SelectTrigger className="w-28 h-8 text-xs bg-card border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border z-50">
-                  <SelectItem value="all">{t('allPairs')}</SelectItem>
-                  {coinTypes.map(coin => (
-                    <SelectItem key={coin} value={coin}>{coin}/USDT</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Signal Type Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{t('signalType')}:</span>
-              <Select value={selectedSignalType} onValueChange={setSelectedSignalType}>
-                <SelectTrigger className="w-24 h-8 text-xs bg-card border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border z-50">
-                  <SelectItem value="all">{t('allTypes')}</SelectItem>
-                  <SelectItem value="long">{t('signalLong')}</SelectItem>
-                  <SelectItem value="short">{t('signalShort')}</SelectItem>
-                  <SelectItem value="spot">{t('signalSpot')}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        {/* Filter Bar - Row 2: All Filters on Left */}
+        <div className="flex items-center gap-6 mb-6">
+          {/* Trading Pair Filter */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{t('tradingPair')}:</span>
+            <Select value={selectedPair} onValueChange={setSelectedPair}>
+              <SelectTrigger className="w-28 h-8 text-xs bg-card border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border z-50">
+                <SelectItem value="all">{t('allPairs')}</SelectItem>
+                {coinTypes.map(coin => (
+                  <SelectItem key={coin} value={coin}>{coin}/USDT</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Right: Time Range Tabs */}
+          {/* Signal Type Filter */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{t('signalType')}:</span>
+            <Select value={selectedSignalType} onValueChange={setSelectedSignalType}>
+              <SelectTrigger className="w-24 h-8 text-xs bg-card border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border z-50">
+                <SelectItem value="all">{t('allTypes')}</SelectItem>
+                <SelectItem value="long">{t('signalLong')}</SelectItem>
+                <SelectItem value="short">{t('signalShort')}</SelectItem>
+                <SelectItem value="spot">{t('signalSpot')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Time Range Tabs */}
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">{t('timeRange')}:</span>
             <div className="flex items-center rounded-lg border border-border overflow-hidden">
