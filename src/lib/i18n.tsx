@@ -187,6 +187,17 @@ export const translations: Translations = {
   planPriceMonthly: { zh: '10 USDT', en: '10 USDT' },
   planPriceQuarterly: { zh: '28 USDT', en: '28 USDT' },
   planPriceYearly: { zh: '99 USDT', en: '99 USDT' },
+  choosePlan: { zh: '选择套餐', en: 'Choose Plan' },
+  perMonth: { zh: '/月', en: '/month' },
+  perQuarter: { zh: '/季度', en: '/quarter' },
+  perYear: { zh: '/年', en: '/year' },
+  payWithStripe: { zh: 'Stripe 支付', en: 'Pay with Stripe' },
+  payWithCrypto: { zh: '加密货币支付', en: 'Pay with Crypto' },
+  mostPopular: { zh: '最受欢迎', en: 'Most Popular' },
+  bestValue: { zh: '最划算', en: 'Best Value' },
+  saveMoney: { zh: '省', en: 'Save' },
+  paymentProcessing: { zh: '正在处理支付...', en: 'Processing payment...' },
+  paymentNotAvailable: { zh: '支付功能即将上线', en: 'Payment coming soon' },
   
   // Redemption
   redemptionCenter: { zh: '兑换中心', en: 'Redemption Center' },
