@@ -114,3 +114,53 @@ All colors MUST be HSL.
 .animate-danmaku {
   animation: danmaku linear forwards;
 }
+
+/* Logo shine animation */
+@keyframes logo-shine {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.logo-shine {
+  position: relative;
+  display: inline-block;
+}
+
+.logo-shine::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    transparent 40%,
+    hsl(0 0% 100% / 0.4) 50%,
+    transparent 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-position: -200% center;
+  pointer-events: none;
+  animation: logo-shine 3s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+.dark .logo-shine::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    transparent 40%,
+    hsl(280 100% 70% / 0.5) 50%,
+    transparent 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-position: -200% center;
+}
