@@ -320,7 +320,7 @@ const LeaderboardContent = () => {
                 <PopoverContent className="w-auto p-4" align="start">
                   <div className="space-y-4">
                     <div className="text-sm font-medium text-foreground">{t('selectDateRange')}</div>
-                    <div className="grid gap-4">
+                    <div className="flex gap-4">
                       <div className="space-y-2">
                         <label className="text-xs text-muted-foreground">{t('startDate')}</label>
                         <Calendar
@@ -328,7 +328,7 @@ const LeaderboardContent = () => {
                           selected={customDateRange.from}
                           onSelect={(date) => setCustomDateRange(prev => ({ ...prev, from: date }))}
                           locale={language === 'zh' ? zhCN : enUS}
-                          className="rounded-md border"
+                          className="rounded-md border pointer-events-auto"
                         />
                       </div>
                       <div className="space-y-2">
@@ -338,7 +338,7 @@ const LeaderboardContent = () => {
                           selected={customDateRange.to}
                           onSelect={(date) => setCustomDateRange(prev => ({ ...prev, to: date }))}
                           locale={language === 'zh' ? zhCN : enUS}
-                          className="rounded-md border"
+                          className="rounded-md border pointer-events-auto"
                           disabled={(date) => customDateRange.from ? date < customDateRange.from : false}
                         />
                       </div>
