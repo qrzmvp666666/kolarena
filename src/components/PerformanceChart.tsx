@@ -5,9 +5,10 @@ import { useMemo } from 'react';
 interface PerformanceChartProps {
   visibleModels: string[];
   displayMode: '$' | '%';
+  timeRange: string;
 }
 
-const PerformanceChart = ({ visibleModels, displayMode }: PerformanceChartProps) => {
+const PerformanceChart = ({ visibleModels, displayMode, timeRange }: PerformanceChartProps) => {
   const formatYAxis = (value: number) => {
     if (displayMode === '%') {
       const returnRate = ((value - 10000) / 10000) * 100;
@@ -49,13 +50,29 @@ const PerformanceChart = ({ visibleModels, displayMode }: PerformanceChartProps)
     return null;
   };
 
+  // Filter chart data based on time range
+  const filteredChartData = useMemo(() => {
+    const now = new Date();
+    const totalDataPoints = chartData.length;
+    
+    if (timeRange === '7D') {
+      // Show last ~30% of data (simulating 7 days)
+      const startIndex = Math.floor(totalDataPoints * 0.3);
+      return chartData.slice(startIndex);
+    } else if (timeRange === '1M') {
+      // Show all data (simulating 1 month)
+      return chartData;
+    }
+    return chartData;
+  }, [timeRange]);
+
   // Get last data point for labels and calculate Y positions
-  const lastDataPoint = chartData[chartData.length - 1];
-  
+  const lastDataPoint = filteredChartData[filteredChartData.length - 1];
+
   // Chart domain configuration
   const yMin = 6000;
   const yMax = 14500;
-  
+
   // Calculate avatar positions based on chart values
   const avatarPositions = useMemo(() => {
     return models
@@ -77,7 +94,7 @@ const PerformanceChart = ({ visibleModels, displayMode }: PerformanceChartProps)
     <div className="h-full w-full relative">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
-          data={chartData}
+          data={filteredChartData}
           margin={{ top: 20, right: 100, left: 20, bottom: 20 }}
         >
           <CartesianGrid strokeDasharray="1 1" stroke="hsl(var(--border))" opacity={0.3} />

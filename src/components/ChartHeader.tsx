@@ -44,24 +44,24 @@ const ChartHeader = ({ timeRange, onTimeRangeChange, displayMode, onDisplayModeC
       <div className="flex items-center gap-2">
         <div className="flex border border-border rounded overflow-hidden">
           <button
-            onClick={() => onTimeRangeChange('ALL')}
+            onClick={() => onTimeRangeChange('7D')}
             className={`px-3 py-1 font-mono text-sm transition-colors ${
-              timeRange === 'ALL' 
-                ? 'bg-accent-orange/10 text-accent-orange font-semibold' 
+              timeRange === '7D'
+                ? 'bg-accent-orange/10 text-accent-orange font-semibold'
                 : 'bg-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
-            {t('all')}
+            最近7天
           </button>
           <button
-            onClick={() => onTimeRangeChange('72H')}
+            onClick={() => onTimeRangeChange('1M')}
             className={`px-3 py-1 font-mono text-sm transition-colors ${
-              timeRange === '72H' 
-                ? 'bg-accent-orange/10 text-accent-orange font-semibold' 
+              timeRange === '1M'
+                ? 'bg-accent-orange/10 text-accent-orange font-semibold'
                 : 'bg-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
-            72H
+            最近一个月
           </button>
         </div>
       </div>

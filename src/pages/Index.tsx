@@ -9,7 +9,7 @@ import Danmaku from '@/components/Danmaku';
 import { models } from '@/lib/chartData';
 
 const Index = () => {
-  const [timeRange, setTimeRange] = useState('ALL');
+  const [timeRange, setTimeRange] = useState('7D');
   const [visibleModels, setVisibleModels] = useState<string[]>(models.map(m => m.id));
   const [danmakuEnabled, setDanmakuEnabled] = useState(true);
   const [displayMode, setDisplayMode] = useState<'$' | '%'>('$');
@@ -45,7 +45,7 @@ const Index = () => {
           
           {/* Chart Area - fills remaining space */}
           <div className="flex-1 p-4 min-h-0">
-            <PerformanceChart visibleModels={visibleModels} displayMode={displayMode} />
+            <PerformanceChart visibleModels={visibleModels} displayMode={displayMode} timeRange={timeRange} />
           </div>
           
           {/* Model Bar - fixed at bottom of main content */}
