@@ -12,6 +12,7 @@ const Index = () => {
   const [timeRange, setTimeRange] = useState('ALL');
   const [visibleModels, setVisibleModels] = useState<string[]>(models.map(m => m.id));
   const [danmakuEnabled, setDanmakuEnabled] = useState(true);
+  const [displayMode, setDisplayMode] = useState<'$' | '%'>('$');
 
   const handleToggleModel = (modelId: string) => {
     setVisibleModels(prev => 
@@ -35,11 +36,16 @@ const Index = () => {
       <div className="flex h-[calc(100vh-88px)]">
         {/* Main Content with Chart and ModelBar */}
         <div className="flex-1 flex flex-col min-h-0 min-w-0">
-          <ChartHeader timeRange={timeRange} onTimeRangeChange={setTimeRange} />
+          <ChartHeader 
+            timeRange={timeRange} 
+            onTimeRangeChange={setTimeRange}
+            displayMode={displayMode}
+            onDisplayModeChange={setDisplayMode}
+          />
           
           {/* Chart Area - fills remaining space */}
           <div className="flex-1 p-4 min-h-0">
-            <PerformanceChart visibleModels={visibleModels} />
+            <PerformanceChart visibleModels={visibleModels} displayMode={displayMode} />
           </div>
           
           {/* Model Bar - fixed at bottom of main content */}

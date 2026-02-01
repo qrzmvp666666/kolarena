@@ -1,13 +1,13 @@
-import { useState } from 'react';
 import { useLanguage } from '@/lib/i18n';
 
 interface ChartHeaderProps {
   timeRange: string;
   onTimeRangeChange: (range: string) => void;
+  displayMode: '$' | '%';
+  onDisplayModeChange: (mode: '$' | '%') => void;
 }
 
-const ChartHeader = ({ timeRange, onTimeRangeChange }: ChartHeaderProps) => {
-  const [displayMode, setDisplayMode] = useState<'$' | '%'>('$');
+const ChartHeader = ({ timeRange, onTimeRangeChange, displayMode, onDisplayModeChange }: ChartHeaderProps) => {
   const { t } = useLanguage();
 
   return (
@@ -15,20 +15,20 @@ const ChartHeader = ({ timeRange, onTimeRangeChange }: ChartHeaderProps) => {
       <div className="flex items-center gap-2">
         <div className="flex border border-border rounded overflow-hidden">
           <button
-            onClick={() => setDisplayMode('$')}
+            onClick={() => onDisplayModeChange('$')}
             className={`px-3 py-1 font-mono text-sm transition-colors ${
-              displayMode === '$' 
-                ? 'bg-accent-orange/10 text-accent-orange font-semibold' 
+              displayMode === '$'
+                ? 'bg-accent-orange/10 text-accent-orange font-semibold'
                 : 'bg-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             $
           </button>
           <button
-            onClick={() => setDisplayMode('%')}
+            onClick={() => onDisplayModeChange('%')}
             className={`px-3 py-1 font-mono text-sm transition-colors ${
-              displayMode === '%' 
-                ? 'bg-accent-orange/10 text-accent-orange font-semibold' 
+              displayMode === '%'
+                ? 'bg-accent-orange/10 text-accent-orange font-semibold'
                 : 'bg-transparent text-muted-foreground hover:text-foreground'
             }`}
           >

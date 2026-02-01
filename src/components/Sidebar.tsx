@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -33,7 +32,6 @@ interface Comment {
 }
 
 const Sidebar = () => {
-  const [filterModel, setFilterModel] = useState('all');
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false); // TODO: 接入实际登录状态
   const [commentInput, setCommentInput] = useState('');
@@ -121,25 +119,6 @@ const Sidebar = () => {
           </TabsTrigger>
         </TabsList>
 
-        <div className="p-3 border-b border-border">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-muted-foreground">{t('filter')}:</span>
-            <Select value={filterModel} onValueChange={setFilterModel}>
-              <SelectTrigger className="w-[140px] h-8 font-mono text-xs bg-background border-border">
-                <SelectValue placeholder={t('allModels')} />
-              </SelectTrigger>
-              <SelectContent className="font-mono text-xs">
-                <SelectItem value="all">{t('allModels')}</SelectItem>
-                {models.map((model) => (
-                  <SelectItem key={model.id} value={model.id}>
-                    {model.icon} {model.shortName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
         <TabsContent value="trades" className="flex-1 p-4 mt-0">
           <div className="flex items-center justify-center h-full text-muted-foreground font-mono text-sm">
             {t('noCompletedTrades')}
@@ -191,14 +170,14 @@ const Sidebar = () => {
           </div>
           
           {/* Comment Input Area */}
-          <div className="p-4 border-t border-border bg-card">
+          <div className="px-4 py-6 border-t border-border bg-card flex items-center min-h-[90px]">
             {isLoggedIn ? (
-              <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2 w-full">
                 <Input
                   placeholder={t('writeComment')}
                   value={commentInput}
                   onChange={(e) => setCommentInput(e.target.value)}
-                  className="flex-1 min-h-[60px] h-auto font-mono text-sm bg-background border-border py-3"
+                  className="flex-1 h-[52px] font-mono text-sm bg-background border-border"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey && commentInput.trim()) {
                       e.preventDefault();
@@ -223,7 +202,7 @@ const Sidebar = () => {
                 />
                 <Button 
                   size="sm" 
-                  className="h-[60px] px-4"
+                  className="h-[52px] px-4"
                   disabled={!commentInput.trim()}
                   onClick={() => {
                     if (commentInput.trim()) {
@@ -249,17 +228,20 @@ const Sidebar = () => {
                 </Button>
               </div>
             ) : (
-              <Button 
-                variant="outline" 
-                className="w-full h-[60px] font-mono text-sm gap-2"
-                onClick={() => {
-                  // TODO: 打开登录弹窗
-                  setIsLoggedIn(true); // 临时：点击即登录，用于演示
-                }}
-              >
-                <LogIn className="w-4 h-4" />
-                {t('loginToComment')}
-              </Button>
+              <div className="relative w-full">
+                <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-lg blur-lg opacity-70" />
+                <Button 
+                  variant="outline" 
+                  className="relative w-full h-[52px] font-mono text-sm gap-2 bg-background/60 backdrop-blur-md border-primary/40 hover:bg-primary/20 hover:border-primary/60 transition-all duration-300 shadow-xl hover:shadow-primary/30"
+                  onClick={() => {
+                    // TODO: 打开登录弹窗
+                    setIsLoggedIn(true); // 临时：点击即登录，用于演示
+                  }}
+                >
+                  <LogIn className="w-4 h-4 text-primary" />
+                  <span className="text-primary font-semibold">{t('loginToComment')}</span>
+                </Button>
+              </div>
             )}
           </div>
         </TabsContent>

@@ -1,6 +1,8 @@
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { models, chartData } from '@/lib/chartData';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface CryptoPrice {
   symbol: string;
@@ -22,6 +24,29 @@ const TickerBar = () => {
   const { t } = useLanguage();
   const [prices, setPrices] = useState(initialPrices);
   const [flashingIndex, setFlashingIndex] = useState<number | null>(null);
+
+  // Calculate highest and lowest performers based on latest chart data
+  const { highest, lowest } = useMemo(() => {
+    const latestData = chartData[chartData.length - 1];
+    if (!latestData) return { highest: null, lowest: null };
+
+    const modelValues = models.map(model => {
+      const value = latestData[model.id as keyof typeof latestData] as number;
+      const startValue = 10000;
+      const returnRate = ((value - startValue) / startValue) * 100;
+      return {
+        ...model,
+        value,
+        returnRate
+      };
+    });
+
+    const sorted = [...modelValues].sort((a, b) => b.value - a.value);
+    return {
+      highest: sorted[0],
+      lowest: sorted[sorted.length - 1]
+    };
+  }, []);
 
   // Simulate real-time price updates
   useEffect(() => {
@@ -56,6 +81,11 @@ const TickerBar = () => {
     }
   };
 
+  const formatReturnRate = (rate: number) => {
+    const sign = rate >= 0 ? '+' : '';
+    return `${sign}${rate.toFixed(2)}%`;
+  };
+
   return (
     <div className="flex items-center justify-between px-4 py-2 bg-secondary border-b border-border text-xs">
       {/* Crypto Prices */}
@@ -87,27 +117,37 @@ const TickerBar = () => {
 
       {/* Performance Indicators */}
       <div className="flex items-center gap-6">
-        <div className="flex items-center gap-2 font-mono">
-          <span className="text-muted-foreground">{t('highest')}:</span>
-          <span className="text-accent-purple">🟣</span>
-          <span className="text-foreground">DEEPSEEK CHAT V3.1</span>
-          <span className="text-foreground font-medium">$13,628.83</span>
-          <span className="flex items-center gap-0.5 text-accent-green">
-            <TrendingUp size={12} />
-            +36.29%
-          </span>
-        </div>
+        {highest && (
+          <div className="flex items-center gap-2 font-mono">
+            <span className="text-muted-foreground">{t('highest')}:</span>
+            <Avatar className="w-5 h-5 rounded-full border-2" style={{ borderColor: highest.color }}>
+              <AvatarImage src={highest.avatar} alt={highest.name} />
+              <AvatarFallback className="text-[8px]">{highest.shortName.slice(0, 2)}</AvatarFallback>
+            </Avatar>
+            <span className="text-foreground">{highest.name}</span>
+            <span className="text-foreground font-medium">{formatPrice(highest.value)}</span>
+            <span className="flex items-center gap-0.5 text-accent-green">
+              <TrendingUp size={12} />
+              {formatReturnRate(highest.returnRate)}
+            </span>
+          </div>
+        )}
         
-        <div className="flex items-center gap-2 font-mono">
-          <span className="text-muted-foreground">{t('lowest')}:</span>
-          <span className="text-accent-orange">🟠</span>
-          <span className="text-foreground">GEMINI 2.5 PRO</span>
-          <span className="text-foreground font-medium">$6,753.27</span>
-          <span className="flex items-center gap-0.5 text-accent-red">
-            <TrendingDown size={12} />
-            -32.47%
-          </span>
-        </div>
+        {lowest && (
+          <div className="flex items-center gap-2 font-mono">
+            <span className="text-muted-foreground">{t('lowest')}:</span>
+            <Avatar className="w-5 h-5 rounded-full border-2" style={{ borderColor: lowest.color }}>
+              <AvatarImage src={lowest.avatar} alt={lowest.name} />
+              <AvatarFallback className="text-[8px]">{lowest.shortName.slice(0, 2)}</AvatarFallback>
+            </Avatar>
+            <span className="text-foreground">{lowest.name}</span>
+            <span className="text-foreground font-medium">{formatPrice(lowest.value)}</span>
+            <span className="flex items-center gap-0.5 text-accent-red">
+              <TrendingDown size={12} />
+              {formatReturnRate(lowest.returnRate)}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

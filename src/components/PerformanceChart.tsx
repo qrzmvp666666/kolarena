@@ -4,10 +4,16 @@ import { useMemo } from 'react';
 
 interface PerformanceChartProps {
   visibleModels: string[];
+  displayMode: '$' | '%';
 }
 
-const PerformanceChart = ({ visibleModels }: PerformanceChartProps) => {
+const PerformanceChart = ({ visibleModels, displayMode }: PerformanceChartProps) => {
   const formatYAxis = (value: number) => {
+    if (displayMode === '%') {
+      const returnRate = ((value - 10000) / 10000) * 100;
+      const sign = returnRate >= 0 ? '+' : '';
+      return `${sign}${returnRate.toFixed(0)}%`;
+    }
     return `$${value.toLocaleString()}`;
   };
 
@@ -21,12 +27,22 @@ const PerformanceChart = ({ visibleModels }: PerformanceChartProps) => {
       return (
         <div className="bg-card border border-border p-3 font-mono text-xs">
           <p className="text-muted-foreground mb-2">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <p key={index} style={{ color: entry.color }} className="flex justify-between gap-4">
-              <span>{entry.name.toUpperCase()}</span>
-              <span>${entry.value.toLocaleString()}</span>
-            </p>
-          ))}
+          {payload.map((entry: any, index: number) => {
+            const value = entry.value as number;
+            const returnRate = ((value - 10000) / 10000) * 100;
+            const sign = returnRate >= 0 ? '+' : '';
+            return (
+              <p key={index} style={{ color: entry.color }} className="flex justify-between gap-4">
+                <span>{entry.name.toUpperCase()}</span>
+                <span>
+                  {displayMode === '%' 
+                    ? `${sign}${returnRate.toFixed(2)}%`
+                    : `$${value.toLocaleString()}`
+                  }
+                </span>
+              </p>
+            );
+          })}
         </div>
       );
     }
@@ -154,7 +170,10 @@ const PerformanceChart = ({ visibleModels }: PerformanceChartProps) => {
                 className="text-xs font-semibold"
                 style={{ color: model.color }}
               >
-                ${model.value.toLocaleString()}
+                {displayMode === '%' 
+                  ? `${((model.value - 10000) / 10000) >= 0 ? '+' : ''}${(((model.value - 10000) / 10000) * 100).toFixed(2)}%`
+                  : `$${model.value.toLocaleString()}`
+                }
               </span>
             </div>
           </div>
