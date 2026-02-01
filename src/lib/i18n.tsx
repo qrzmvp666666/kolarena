@@ -46,6 +46,8 @@ export const translations: Translations = {
   noCompletedTrades: { zh: '暂无已完成交易', en: 'No completed trades yet' },
   noPendingOrders: { zh: '暂无未完成订单', en: 'No pending orders yet' },
   clickToExpand: { zh: '点击展开', en: 'click to expand' },
+  writeComment: { zh: '写下你的评论...', en: 'Write your comment...' },
+  loginToComment: { zh: '登录后评论', en: 'Login to comment' },
   
   // TickerBar
   highest: { zh: '最高', en: 'HIGHEST' },
