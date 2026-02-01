@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import { models, chartData } from '@/lib/chartData';
 
 interface ModelBarProps {
@@ -7,22 +8,30 @@ interface ModelBarProps {
 }
 
 const ModelBar = ({ visibleModels, onToggleModel }: ModelBarProps) => {
-  // Sort models by latest chart data value (descending)
-  const sortedModels = useMemo(() => {
-    const latestData = chartData[chartData.length - 1];
-    if (!latestData) return models;
+  // Get latest data and calculate return rates
+  const { sortedModels, latestData } = useMemo(() => {
+    const latest = chartData[chartData.length - 1];
+    if (!latest) return { sortedModels: models, latestData: null };
 
-    return [...models].sort((a, b) => {
-      const valueA = latestData[a.id as keyof typeof latestData] as number;
-      const valueB = latestData[b.id as keyof typeof latestData] as number;
-      return valueB - valueA; // Descending order
+    const modelsWithData = models.map(model => {
+      const value = latest[model.id as keyof typeof latest] as number;
+      const returnRate = ((value - 10000) / 10000) * 100;
+      return {
+        ...model,
+        value,
+        returnRate
+      };
     });
+
+    const sorted = [...modelsWithData].sort((a, b) => b.value - a.value);
+    return { sortedModels: sorted, latestData: latest };
   }, []);
 
   return (
     <div className="flex items-stretch border-t border-border bg-card w-full mb-3">
       {sortedModels.map((model, index) => {
         const isActive = visibleModels.includes(model.id);
+        const isPositive = model.returnRate >= 0;
         return (
           <button
             key={model.id}
@@ -51,6 +60,10 @@ const ModelBar = ({ visibleModels, onToggleModel }: ModelBarProps) => {
             </span>
             <span className="text-foreground font-semibold text-base mt-1">
               ${model.value.toLocaleString()}
+            </span>
+            <span className={`flex items-center gap-1 text-xs mt-1 ${isPositive ? 'text-accent-green' : 'text-accent-red'}`}>
+              {isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+              {isPositive ? '+' : ''}{model.returnRate.toFixed(2)}%
             </span>
           </button>
         );
