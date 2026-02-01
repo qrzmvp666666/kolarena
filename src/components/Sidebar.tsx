@@ -114,12 +114,6 @@ const Sidebar = () => {
             {t('pendingOrders')}
           </TabsTrigger>
           <TabsTrigger 
-            value="positions" 
-            className="flex-1 rounded-none border-r border-border py-2 px-1 font-mono text-[10px] text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold whitespace-nowrap overflow-hidden text-ellipsis"
-          >
-            {t('positions')}
-          </TabsTrigger>
-          <TabsTrigger 
             value="trades" 
             className="flex-1 rounded-none py-2 px-1 font-mono text-[10px] text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold whitespace-nowrap overflow-hidden text-ellipsis"
           >
@@ -155,27 +149,6 @@ const Sidebar = () => {
         <TabsContent value="pending" className="flex-1 p-4 mt-0">
           <div className="flex items-center justify-center h-full text-muted-foreground font-mono text-sm">
             {t('noPendingOrders')}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="positions" className="flex-1 p-4 mt-0">
-          <div className="font-mono text-xs space-y-2">
-            <div className="flex justify-between py-2 border-b border-border">
-              <span>ETH</span>
-              <span className="text-accent-green">+12.5%</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-border">
-              <span>BTC</span>
-              <span className="text-accent-green">+8.2%</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-border">
-              <span>SOL</span>
-              <span className="text-accent-green">+15.7%</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-border">
-              <span>XRP</span>
-              <span className="text-accent-red">-2.1%</span>
-            </div>
           </div>
         </TabsContent>
         
