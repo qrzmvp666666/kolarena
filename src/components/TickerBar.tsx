@@ -1,29 +1,28 @@
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wifi, WifiOff } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { models, chartData } from '@/lib/chartData';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useBinanceWebSocket } from '@/hooks/useBinanceWebSocket';
 
-interface CryptoPrice {
+interface CryptoConfig {
   symbol: string;
-  price: number;
   icon: string;
   color: string;
 }
 
-const initialPrices: CryptoPrice[] = [
-  { symbol: 'BTC', price: 110222.50, icon: '/crypto/btc.svg', color: '#F7931A' },
-  { symbol: 'ETH', price: 4039.15, icon: '/crypto/eth.svg', color: '#627EEA' },
-  { symbol: 'SOL', price: 191.67, icon: '/crypto/sol.svg', color: '#00FFA3' },
-  { symbol: 'BNB', price: 1124.15, icon: '/crypto/bnb.svg', color: '#F3BA2F' },
-  { symbol: 'DOGE', price: 0.2001, icon: '/crypto/doge.svg', color: '#C2A633' },
-  { symbol: 'XRP', price: 2.44, icon: '/crypto/xrp.svg', color: '#23292F' },
+const cryptoConfigs: CryptoConfig[] = [
+  { symbol: 'BTCUSDT', icon: '/crypto/btc.svg', color: '#F7931A' },
+  { symbol: 'ETHUSDT', icon: '/crypto/eth.svg', color: '#627EEA' },
+  { symbol: 'SOLUSDT', icon: '/crypto/sol.svg', color: '#00FFA3' },
+  { symbol: 'BNBUSDT', icon: '/crypto/bnb.svg', color: '#F3BA2F' },
+  { symbol: 'DOGEUSDT', icon: '/crypto/doge.svg', color: '#C2A633' },
+  { symbol: 'XRPUSDT', icon: '/crypto/xrp.svg', color: '#23292F' },
 ];
 
 const TickerBar = () => {
   const { t } = useLanguage();
-  const [prices, setPrices] = useState(initialPrices);
-  const [flashingIndex, setFlashingIndex] = useState<number | null>(null);
+  const { prices, priceChanges, isConnected, isFallback } = useBinanceWebSocket();
 
   // Calculate highest and lowest performers based on latest chart data
   const { highest, lowest } = useMemo(() => {
@@ -48,30 +47,8 @@ const TickerBar = () => {
     };
   }, []);
 
-  // Simulate real-time price updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const randomIndex = Math.floor(Math.random() * prices.length);
-      setFlashingIndex(randomIndex);
-      
-      setPrices(prev => prev.map((crypto, index) => {
-        if (index === randomIndex) {
-          // Random price fluctuation between -0.5% and +0.5%
-          const change = (Math.random() - 0.5) * 0.01;
-          const newPrice = crypto.price * (1 + change);
-          return { ...crypto, price: newPrice };
-        }
-        return crypto;
-      }));
-
-      // Remove flash after animation
-      setTimeout(() => setFlashingIndex(null), 300);
-    }, 1500);
-
-    return () => clearInterval(interval);
-  }, []);
-
   const formatPrice = (price: number) => {
+    if (!price) return '$0.00';
     if (price < 1) {
       return `$${price.toFixed(4)}`;
     } else if (price < 100) {
@@ -86,33 +63,56 @@ const TickerBar = () => {
     return `${sign}${rate.toFixed(2)}%`;
   };
 
+  const getDisplaySymbol = (fullSymbol: string) => {
+    return fullSymbol.replace('USDT', '');
+  };
+
+  const getPriceChangeColor = (symbol: string) => {
+    const change = priceChanges[symbol];
+    if (!change || change.direction === 'none') return 'text-foreground';
+    return change.direction === 'up' ? 'text-green-500' : 'text-red-500';
+  };
+
   return (
     <div className="flex items-center justify-between px-4 py-2 bg-secondary border-b border-border text-xs">
       {/* Crypto Prices */}
       <div className="flex items-center gap-6">
-        {prices.map((crypto, index) => (
-          <div 
-            key={crypto.symbol} 
-            className="flex items-center gap-2 font-mono"
-          >
-            <img 
-              src={crypto.icon} 
-              alt={crypto.symbol}
-              className="w-4 h-4"
-              style={{ filter: 'drop-shadow(0 0 2px rgba(255,255,255,0.3))' }}
-            />
-            <span className="text-muted-foreground">{crypto.symbol}</span>
-            <span 
-              className={`font-medium transition-colors duration-300 ${
-                flashingIndex === index 
-                  ? 'text-accent-green' 
-                  : 'text-foreground'
-              }`}
+        {/* Connection Status */}
+        <div className="flex items-center gap-1.5">
+          {isConnected ? (
+            <Wifi size={14} className="text-green-500" />
+          ) : (
+            <WifiOff size={14} className="text-yellow-500" />
+          )}
+          {isFallback && (
+            <span className="text-yellow-500 text-[10px]">HTTP</span>
+          )}
+        </div>
+
+        {cryptoConfigs.map((config) => {
+          const tickerData = prices[config.symbol];
+          const price = tickerData?.price || 0;
+
+          return (
+            <div 
+              key={config.symbol} 
+              className="flex items-center gap-2 font-mono"
             >
-              {formatPrice(crypto.price)}
-            </span>
-          </div>
-        ))}
+              <img 
+                src={config.icon} 
+                alt={config.symbol}
+                className="w-4 h-4"
+                style={{ filter: 'drop-shadow(0 0 2px rgba(255,255,255,0.3))' }}
+              />
+              <span className="text-muted-foreground">{getDisplaySymbol(config.symbol)}</span>
+              <span 
+                className={`font-medium transition-colors duration-300 ${getPriceChangeColor(config.symbol)}`}
+              >
+                {formatPrice(price)}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
       {/* Performance Indicators */}
