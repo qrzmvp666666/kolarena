@@ -97,7 +97,7 @@ const Sidebar = () => {
 
   return (
     <div className="w-[380px] border-l border-border bg-card flex flex-col h-full">
-      <Tabs defaultValue="pending" className="flex flex-col h-full">
+      <Tabs defaultValue="comments" className="flex flex-col h-full">
         <TabsList className="w-full rounded-none border-b border-border bg-transparent p-0 h-auto flex-shrink-0">
           <TabsTrigger 
             value="comments" 

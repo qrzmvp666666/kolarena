@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sun, Moon, MessageSquare, MessageSquareOff, Globe, User, LogOut, ChevronDown } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import LoginModal from '@/components/LoginModal';
 import CommunityModal from '@/components/CommunityModal';
+import { supabase } from '@/lib/supabase';
 
 interface TopNavProps {
   danmakuEnabled: boolean;
@@ -18,8 +19,7 @@ interface TopNavProps {
   hideDanmakuToggle?: boolean;
 }
 
-// Mock user state - replace with real auth later
-interface MockUser {
+interface UserData {
   name: string;
   avatar: string;
 }
@@ -29,16 +29,42 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
   const { language, setLanguage, t } = useLanguage();
   const location = useLocation();
   
-  // Mock login state - set to null for logged out, or user object for logged in
-  const [user, setUser] = useState<MockUser | null>(null);
+  const [user, setUser] = useState<UserData | null>(null);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [communityModalOpen, setCommunityModalOpen] = useState(false);
+
+  useEffect(() => {
+    // Check active sessions and sets the user
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser({
+          name: session.user.email?.split('@')[0] || 'User',
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.id}&backgroundColor=b6e3f4`
+        });
+      }
+    });
+
+    // Listen for changes on auth state (sign in, sign out, etc.)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser({
+          name: session.user.email?.split('@')[0] || 'User',
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.id}&backgroundColor=b6e3f4`
+        });
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   
-  const handleLogin = (loggedInUser: MockUser) => {
+  const handleLogin = (loggedInUser: UserData) => {
     setUser(loggedInUser);
   };
   
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
   };
 
