@@ -3,15 +3,17 @@ import TopNav from '@/components/TopNav';
 import TickerBar from '@/components/TickerBar';
 import { useLanguage } from '@/lib/i18n';
 import SignalCard from '@/components/SignalCard';
-import { Search, RefreshCw, ChevronDown } from 'lucide-react';
+import SignalListCard from '@/components/SignalListCard';
+import { Search, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Mock signal data - generate more traders
 const traderNames = [
-  'CryptoMaster', 'ETH_Whale', 'GoldAnalyst', 'AltCoinKing', 'Carrysolo668', 
+  'CryptoMaster', 'ETH_Whale', 'GoldAnalyst', 'AltCoinKing', 'Carrysolo668',
   'TraderNick', 'BitcoinBull', 'SolanaSniper', 'DefiDegen', 'WhaleWatcher',
   'MoonHunter', 'DiamondHands', 'CryptoQueen', 'BlockchainBob', 'TokenTitan',
   'SatoshiFan', 'EtherKing', 'ChartMaster', 'TrendTrader', 'ProfitPro',
@@ -32,7 +34,7 @@ const generateMockSignals = (count: number) => {
     const coinType = coinTypes[Math.floor(Math.random() * coinTypes.length)];
     const hasTP = Math.random() > 0.3;
     const hasSL = Math.random() > 0.3;
-    
+
     return {
       id: String(i + 1),
       author: traderNames[i % traderNames.length],
@@ -42,10 +44,10 @@ const generateMockSignals = (count: number) => {
       coinType,
       signalCount7d: Math.floor(Math.random() * 15) + 1,
       pair: `${coinType}/USDT`,
-      entryPrice: coinType === 'BTC' ? String(Math.floor(Math.random() * 20000) + 80000) 
+      entryPrice: coinType === 'BTC' ? String(Math.floor(Math.random() * 20000) + 80000)
         : coinType === 'ETH' ? String(Math.floor(Math.random() * 500) + 1500)
-        : coinType === 'SOL' ? String(Math.floor(Math.random() * 50) + 150)
-        : String((Math.random() * 100).toFixed(2)),
+          : coinType === 'SOL' ? String(Math.floor(Math.random() * 50) + 150)
+            : String((Math.random() * 100).toFixed(2)),
       takeProfit: hasTP ? String(Math.floor(Math.random() * 10000) + 50000) : null,
       stopLoss: hasSL ? String(Math.floor(Math.random() * 5000) + 70000) : null,
       leverage: Math.random() > 0.7 ? `${Math.floor(Math.random() * 20) + 5}x` : null,
@@ -55,11 +57,97 @@ const generateMockSignals = (count: number) => {
   });
 };
 
+// Generate mock active signals for list view
+const generateMockActiveSignals = (count: number) => {
+  return Array.from({ length: count }, (_, i) => {
+    const signalType = Math.random() > 0.5 ? 'long' : 'short';
+    const coinType = coinTypes[Math.floor(Math.random() * coinTypes.length)];
+    const hasTP = Math.random() > 0.2;
+    const hasSL = Math.random() > 0.2;
+
+    const now = new Date();
+    const orderDate = new Date(now.getTime() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000));
+    const orderTimeStr = orderDate.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    }).replace(/\//g, '/');
+
+    return {
+      id: `active-${i + 1}`,
+      author: traderNames[i % traderNames.length],
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=active${i}`,
+      pair: `${coinType}/USDT 永续`,
+      signalType: signalType as 'long' | 'short',
+      leverage: `${Math.floor(Math.random() * 15) + 5}x`,
+      entryPrice: coinType === 'BTC' ? String(Math.floor(Math.random() * 20000) + 80000)
+        : coinType === 'ETH' ? String(Math.floor(Math.random() * 500) + 1500)
+          : coinType === 'SOL' ? String(Math.floor(Math.random() * 50) + 150)
+            : String((Math.random() * 100).toFixed(2)),
+      positionMode: Math.random() > 0.5 ? '全仓' : '逐仓',
+      orderTime: orderTimeStr,
+      takeProfit: hasTP ? String(Math.floor(Math.random() * 5000) + 100000) : null,
+      stopLoss: hasSL ? String(Math.floor(Math.random() * 5000) + 70000) : null,
+      profitRatio: '0:0',
+    };
+  });
+};
+
+// Generate mock history signals for list view
+const generateMockHistorySignals = (count: number) => {
+  return Array.from({ length: count }, (_, i) => {
+    const signalType = Math.random() > 0.5 ? 'long' : 'short';
+    const coinType = coinTypes[Math.floor(Math.random() * coinTypes.length)];
+    const hasTP = Math.random() > 0.2;
+    const hasSL = Math.random() > 0.2;
+    const isProfit = Math.random() > 0.4;
+
+    const now = new Date();
+    const orderDate = new Date(now.getTime() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000));
+    const orderTimeStr = orderDate.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    }).replace(/\//g, '/');
+
+    const profitValue = isProfit
+      ? `+${(Math.random() * 50).toFixed(1)}%`
+      : `-${(Math.random() * 30).toFixed(1)}%`;
+
+    return {
+      id: `history-${i + 1}`,
+      author: traderNames[i % traderNames.length],
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=history${i}`,
+      pair: `${coinType}/USDT 永续`,
+      signalType: signalType as 'long' | 'short',
+      leverage: `${Math.floor(Math.random() * 15) + 5}x`,
+      entryPrice: coinType === 'BTC' ? String(Math.floor(Math.random() * 20000) + 80000)
+        : coinType === 'ETH' ? String(Math.floor(Math.random() * 500) + 1500)
+          : coinType === 'SOL' ? String(Math.floor(Math.random() * 50) + 150)
+            : String((Math.random() * 100).toFixed(2)),
+      positionMode: Math.random() > 0.5 ? '全仓' : '逐仓',
+      orderTime: orderTimeStr,
+      takeProfit: hasTP ? String(Math.floor(Math.random() * 5000) + 100000) : null,
+      stopLoss: hasSL ? String(Math.floor(Math.random() * 5000) + 70000) : null,
+      profitRatio: profitValue,
+    };
+  });
+};
+
 const mockSignals = generateMockSignals(25);
+const mockActiveSignals = generateMockActiveSignals(20);
+const mockHistorySignals = generateMockHistorySignals(30);
 
 const SignalsContent = () => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'all' | 'subscribed' | 'unsubscribed'>('all');
+  const [listTab, setListTab] = useState<'active' | 'history'>('active');
   const [marketType, setMarketType] = useState<'futures' | 'spot'>('futures');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPair, setSelectedPair] = useState<string>('all');
@@ -83,11 +171,11 @@ const SignalsContent = () => {
   return (
     <div className="min-h-screen bg-background text-foreground font-mono relative">
       {/* Top Navigation - no danmaku on signals page */}
-      <TopNav danmakuEnabled={false} onToggleDanmaku={() => {}} hideDanmakuToggle />
-      
+      <TopNav danmakuEnabled={false} onToggleDanmaku={() => { }} hideDanmakuToggle />
+
       {/* Ticker Bar */}
       <TickerBar />
-      
+
       {/* Main Content */}
       <div className="px-6 py-3">
         {/* Header */}
@@ -104,11 +192,10 @@ const SignalsContent = () => {
             <div className="flex items-center rounded-lg border border-border overflow-hidden">
               <button
                 onClick={() => setMarketType('futures')}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                  marketType === 'futures'
+                className={`px-4 py-2 text-sm font-medium transition-colors ${marketType === 'futures'
                     ? 'bg-accent-orange text-white'
                     : 'bg-card text-muted-foreground hover:text-foreground'
-                }`}
+                  }`}
               >
                 {t('futures')}
               </button>
@@ -134,16 +221,14 @@ const SignalsContent = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
-                  activeTab === tab.id
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${activeTab === tab.id
                     ? 'bg-card border-accent-orange text-foreground'
                     : 'bg-transparent border-border text-muted-foreground hover:border-foreground/30'
-                }`}
+                  }`}
               >
                 <span className="text-sm">{tab.label}</span>
-                <span className={`text-xs px-1.5 py-0.5 rounded ${
-                  activeTab === tab.id ? 'bg-accent-orange/20 text-accent-orange' : 'bg-muted text-muted-foreground'
-                }`}>
+                <span className={`text-xs px-1.5 py-0.5 rounded ${activeTab === tab.id ? 'bg-accent-orange/20 text-accent-orange' : 'bg-muted text-muted-foreground'
+                  }`}>
                   {tab.count}
                 </span>
               </button>
@@ -211,11 +296,10 @@ const SignalsContent = () => {
                 <button
                   key={range.id}
                   onClick={() => setTimeRange(range.id)}
-                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                    timeRange === range.id
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${timeRange === range.id
                       ? 'bg-accent-orange text-white'
                       : 'bg-card text-muted-foreground hover:text-foreground'
-                  }`}
+                    }`}
                 >
                   {range.label}
                 </button>
@@ -224,12 +308,56 @@ const SignalsContent = () => {
           </div>
         </div>
 
-        {/* Signal Grid - 5 columns */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {mockSignals.map(signal => (
-            <SignalCard key={signal.id} signal={signal} />
-          ))}
-        </div>
+        {/* Signal Tabs: Card View vs List View */}
+        <Tabs defaultValue="cards" className="w-full">
+          <TabsList className="mb-4 bg-transparent border-b border-border rounded-none p-0 h-auto w-full justify-start">
+            <TabsTrigger
+              value="cards"
+              className="rounded-none border-b-2 border-transparent py-2 px-4 font-mono text-sm text-muted-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold"
+            >
+              {t('signalCards')}
+            </TabsTrigger>
+            <TabsTrigger
+              value="active"
+              className="rounded-none border-b-2 border-transparent py-2 px-4 font-mono text-sm text-muted-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold"
+            >
+              {t('activeSignals')}
+            </TabsTrigger>
+            <TabsTrigger
+              value="history"
+              className="rounded-none border-b-2 border-transparent py-2 px-4 font-mono text-sm text-muted-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold"
+            >
+              {t('historySignals')}
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Card View Content */}
+          <TabsContent value="cards" className="mt-0 h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {mockSignals.map(signal => (
+                <SignalCard key={signal.id} signal={signal} />
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* Active Signals List View */}
+          <TabsContent value="active" className="mt-0 h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-2">
+            <div className="space-y-3">
+              {mockActiveSignals.map(signal => (
+                <SignalListCard key={signal.id} signal={signal} isHistory={false} />
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* History Signals List View */}
+          <TabsContent value="history" className="mt-0 h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-2">
+            <div className="space-y-3">
+              {mockHistorySignals.map(signal => (
+                <SignalListCard key={signal.id} signal={signal} isHistory={true} />
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
