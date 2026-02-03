@@ -45,14 +45,14 @@ export const translations: Translations = {
   all: { zh: '全部', en: 'ALL' },
   
   // Sidebar tabs
-  completedTrades: { zh: '已完成交易', en: 'COMPLETED TRADES' },
-  pendingOrders: { zh: '未完成订单', en: 'PENDING ORDERS' },
+  completedTrades: { zh: '历史信号', en: 'HISTORY SIGNALS' },
+  pendingOrders: { zh: '有效信号', en: 'ACTIVE SIGNALS' },
   positions: { zh: '持仓', en: 'POSITIONS' },
   comments: { zh: '评论内容', en: 'COMMENTS' },
   filter: { zh: '筛选', en: 'FILTER' },
   allModels: { zh: '全部模型', en: 'ALL MODELS' },
-  noCompletedTrades: { zh: '暂无已完成交易', en: 'No completed trades yet' },
-  noPendingOrders: { zh: '暂无未完成订单', en: 'No pending orders yet' },
+  noCompletedTrades: { zh: '暂无历史信号', en: 'No history signals yet' },
+  noPendingOrders: { zh: '暂无有效信号', en: 'No active signals yet' },
   clickToExpand: { zh: '点击展开', en: 'click to expand' },
   writeComment: { zh: '写下你的评论...', en: 'Write your comment...' },
   loginToComment: { zh: '登录后评论', en: 'Login to comment' },

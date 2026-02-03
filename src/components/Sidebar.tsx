@@ -304,7 +304,7 @@ const Sidebar = () => {
 
                   {/* Pair & Type & Leverage */}
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="font-mono text-base font-bold text-foreground">{trade.pair}</span>
+                    <span className="font-mono text-sm font-medium text-foreground">{trade.pair}</span>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded border ${getSignalTypeStyle(trade.signalType)}`}>
                       {getSignalTypeLabel(trade.signalType)}
                     </span>
@@ -317,15 +317,15 @@ const Sidebar = () => {
                   <div className="grid grid-cols-3 gap-2 mb-2">
                     <div>
                       <div className="text-[10px] text-muted-foreground">{t('entryPrice')}</div>
-                      <div className="font-mono text-sm font-bold text-foreground">{trade.entryPrice}</div>
+                      <div className="font-mono text-xs font-medium text-foreground">{trade.entryPrice}</div>
                     </div>
                     <div>
                       <div className="text-[10px] text-muted-foreground">{t('positionMode')}</div>
-                      <div className="font-mono text-sm font-bold text-foreground">{trade.positionMode}</div>
+                      <div className="font-mono text-xs font-medium text-foreground">{trade.positionMode}</div>
                     </div>
                     <div>
                       <div className="text-[10px] text-muted-foreground">{t('returnRate')}</div>
-                      <div className={`font-mono text-sm font-bold ${trade.isProfit ? 'text-accent-green' : 'text-accent-red'}`}>
+                      <div className={`font-mono text-xs font-medium ${trade.isProfit ? 'text-accent-green' : 'text-accent-red'}`}>
                         {trade.returnRate}
                       </div>
                     </div>
@@ -335,19 +335,19 @@ const Sidebar = () => {
                   <div className="grid grid-cols-3 gap-2 mb-2">
                     <div>
                       <div className="text-[10px] text-muted-foreground">{t('takeProfit')}</div>
-                      <div className="text-sm font-semibold text-accent-green">
-                        {trade.takeProfit || '-'}
+                      <div className="text-xs font-semibold text-accent-green">
+                        {trade.takeProfit || t('notProvided')}
                       </div>
                     </div>
                     <div>
                       <div className="text-[10px] text-muted-foreground">{t('stopLoss')}</div>
-                      <div className="text-sm font-semibold text-accent-red">
-                        {trade.stopLoss || '-'}
+                      <div className="text-xs font-semibold text-accent-red">
+                        {trade.stopLoss || t('notProvided')}
                       </div>
                     </div>
                     <div>
                       <div className="text-[10px] text-muted-foreground">{t('profitRatio')}</div>
-                      <div className="text-sm font-semibold text-yellow-500">
+                      <div className="text-xs font-semibold text-foreground">
                         {trade.profitRatio}
                       </div>
                     </div>
