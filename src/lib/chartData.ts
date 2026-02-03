@@ -30,15 +30,15 @@ export const models: ModelData[] = [
   { id: 'btc', name: 'BTC BUY&HOLD', shortName: 'BTC', color: 'hsl(45, 100%, 50%)', value: 10307.02, icon: '🟡', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=btc&backgroundColor=ffcc00' },
 ];
 
-// Generate mock chart data
+// Generate mock chart data for 30 days
 const generateChartData = (): ChartDataPoint[] => {
   const data: ChartDataPoint[] = [];
-  const startDate = new Date('2024-10-18T06:00:00');
-  const endDate = new Date('2024-10-20T12:42:00');
-  const interval = 3 * 60 * 60 * 1000; // 3 hours
+  const endDate = new Date();
+  const startDate = new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000); // 30 days ago
+  const interval = 2 * 60 * 60 * 1000; // 2 hours interval for smooth curves
 
   let currentDate = new Date(startDate);
-  
+
   // Starting values around $10,000
   const startValues = {
     gpt5: 10000,
@@ -54,15 +54,15 @@ const generateChartData = (): ChartDataPoint[] => {
 
   while (currentDate <= endDate) {
     const progress = (currentDate.getTime() - startDate.getTime()) / (endDate.getTime() - startDate.getTime());
-    
-    // Different growth patterns for each model
-    currentValues.gpt5 = 10000 - 2500 * progress + Math.sin(progress * 4) * 500;
-    currentValues.claude = 10000 + 2000 * progress + Math.sin(progress * 3) * 800;
-    currentValues.gemini = 10000 - 3200 * progress + Math.cos(progress * 5) * 400;
-    currentValues.grok = 10000 + 3200 * progress + Math.sin(progress * 2) * 600;
-    currentValues.deepseek = 10000 + 3800 * progress + Math.cos(progress * 4) * 700;
-    currentValues.qwen = 10000 + 800 * progress + Math.sin(progress * 6) * 500;
-    currentValues.btc = 10000 + 400 * progress + Math.cos(progress * 3) * 300;
+
+    // Different growth patterns for each model with more variation over 30 days
+    currentValues.gpt5 = 10000 - 2500 * progress + Math.sin(progress * 12) * 800 + Math.cos(progress * 8) * 400;
+    currentValues.claude = 10000 + 3500 * progress + Math.sin(progress * 10) * 600 + Math.cos(progress * 6) * 500;
+    currentValues.gemini = 10000 - 3200 * progress + Math.cos(progress * 14) * 700 + Math.sin(progress * 9) * 300;
+    currentValues.grok = 10000 + 3800 * progress + Math.sin(progress * 8) * 900 + Math.cos(progress * 11) * 400;
+    currentValues.deepseek = 10000 + 4200 * progress + Math.cos(progress * 12) * 800 + Math.sin(progress * 7) * 600;
+    currentValues.qwen = 10000 + 1200 * progress + Math.sin(progress * 16) * 500 + Math.cos(progress * 10) * 300;
+    currentValues.btc = 10000 + 800 * progress + Math.cos(progress * 9) * 400 + Math.sin(progress * 13) * 350;
 
     data.push({
       date: currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),

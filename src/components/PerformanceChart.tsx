@@ -1,5 +1,5 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
-import { chartData, models } from '@/lib/chartData';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, LabelList } from 'recharts';
+import { chartData, models, ModelData } from '@/lib/chartData';
 import { useMemo } from 'react';
 
 interface PerformanceChartProps {
@@ -21,6 +21,58 @@ const PerformanceChart = ({ visibleModels, displayMode, timeRange }: Performance
   const formatXAxis = (value: string) => {
     const parts = value.split(' ');
     return parts.slice(0, 2).join(' ');
+  };
+
+  // Custom dot component to show avatar at the end of each line
+  const CustomDot = (props: any) => {
+    const { cx, cy, payload, dataKey } = props;
+    const model = models.find(m => m.id === dataKey);
+
+    // Only show avatar on the last data point
+    const isLastPoint = payload === filteredChartData[filteredChartData.length - 1];
+
+    if (!isLastPoint || !model || !visibleModels.includes(model.id)) return null;
+
+    const value = payload[dataKey] as number;
+    const returnRate = ((value - 10000) / 10000) * 100;
+
+    return (
+      <g>
+        {/* Outer glow */}
+        <circle cx={cx} cy={cy} r="28" fill={model.color} opacity="0.2" />
+        <circle cx={cx} cy={cy} r="22" fill={model.color} opacity="0.4" />
+        {/* Avatar circle */}
+        <circle cx={cx} cy={cy} r="18" fill={model.color} stroke={model.color} strokeWidth="2" />
+        {/* Avatar image clipped to circle */}
+        <defs>
+          <clipPath id={`avatar-clip-${model.id}`}>
+            <circle cx={cx} cy={cy} r="15" />
+          </clipPath>
+        </defs>
+        <image
+          x={cx - 15}
+          y={cy - 15}
+          width="30"
+          height="30"
+          href={model.avatar}
+          clipPath={`url(#avatar-clip-${model.id})`}
+        />
+        {/* Value label to the right of avatar */}
+        <text
+          x={cx + 28}
+          y={cy + 5}
+          fill={model.color}
+          fontSize="12"
+          fontFamily="JetBrains Mono"
+          fontWeight="600"
+        >
+          {displayMode === '%'
+            ? `${returnRate >= 0 ? '+' : ''}${returnRate.toFixed(2)}%`
+            : `$${value.toLocaleString()}`
+          }
+        </text>
+      </g>
+    );
   };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -53,42 +105,59 @@ const PerformanceChart = ({ visibleModels, displayMode, timeRange }: Performance
   // Filter chart data based on time range
   const filteredChartData = useMemo(() => {
     const now = new Date();
-    const totalDataPoints = chartData.length;
-    
+
     if (timeRange === '7D') {
-      // Show last ~30% of data (simulating 7 days)
-      const startIndex = Math.floor(totalDataPoints * 0.3);
-      return chartData.slice(startIndex);
+      // Show last 7 days of data
+      const sevenDaysAgo = now.getTime() - 7 * 24 * 60 * 60 * 1000;
+      return chartData.filter(d => d.timestamp >= sevenDaysAgo);
     } else if (timeRange === '1M') {
-      // Show all data (simulating 1 month)
+      // Show all data (30 days)
       return chartData;
     }
     return chartData;
   }, [timeRange]);
 
-  // Get last data point for labels and calculate Y positions
-  const lastDataPoint = filteredChartData[filteredChartData.length - 1];
+  // Generate X-axis ticks based on time range - must match data date format
+  const xAxisTicks = useMemo(() => {
+    const now = new Date();
+
+    if (timeRange === '7D') {
+      // Find the first data point for each of the last 7 days
+      const ticks: string[] = [];
+      const seenDates = new Set<string>();
+
+      // Iterate through filtered data to find first occurrence of each day
+      for (const dataPoint of filteredChartData) {
+        const dateStr = dataPoint.date.split(',')[0]; // Get "Feb 3" from "Feb 3, 14:30"
+        if (!seenDates.has(dateStr) && seenDates.size < 7) {
+          seenDates.add(dateStr);
+          ticks.push(dataPoint.date);
+        }
+      }
+      return ticks;
+    } else {
+      // For 1M, show every 5 days
+      const ticks: string[] = [];
+      const seenDates = new Set<string>();
+      let count = 0;
+
+      for (const dataPoint of filteredChartData) {
+        const dateStr = dataPoint.date.split(',')[0];
+        if (!seenDates.has(dateStr)) {
+          seenDates.add(dateStr);
+          if (count % 5 === 0) {
+            ticks.push(dataPoint.date);
+          }
+          count++;
+        }
+      }
+      return ticks;
+    }
+  }, [timeRange, filteredChartData]);
 
   // Chart domain configuration
   const yMin = 6000;
   const yMax = 14500;
-
-  // Calculate avatar positions based on chart values
-  const avatarPositions = useMemo(() => {
-    return models
-      .filter(model => visibleModels.includes(model.id))
-      .map(model => {
-        const value = lastDataPoint[model.id as keyof typeof lastDataPoint] as number;
-        // Calculate percentage position from bottom (inverted for CSS)
-        const percentage = ((value - yMin) / (yMax - yMin)) * 100;
-        return {
-          ...model,
-          value,
-          topPercentage: 100 - percentage,
-        };
-      })
-      .sort((a, b) => a.value - b.value); // Sort by value for proper stacking
-  }, [visibleModels, lastDataPoint]);
 
   return (
     <div className="h-full w-full relative">
@@ -98,13 +167,15 @@ const PerformanceChart = ({ visibleModels, displayMode, timeRange }: Performance
           margin={{ top: 20, right: 100, left: 20, bottom: 20 }}
         >
           <CartesianGrid strokeDasharray="1 1" stroke="hsl(var(--border))" opacity={0.3} />
-          <XAxis 
-            dataKey="date" 
+          <XAxis
+            dataKey="date"
             tickFormatter={formatXAxis}
             stroke="hsl(var(--muted-foreground))"
             tick={{ fontSize: 10, fontFamily: 'JetBrains Mono' }}
             tickLine={false}
             axisLine={{ stroke: 'hsl(var(--border))' }}
+            ticks={xAxisTicks}
+            interval={0}
           />
           <YAxis 
             tickFormatter={formatYAxis}
@@ -127,7 +198,7 @@ const PerformanceChart = ({ visibleModels, displayMode, timeRange }: Performance
                 name={model.shortName}
                 stroke={model.color}
                 strokeWidth={2}
-                dot={false}
+                dot={<CustomDot />}
                 activeDot={{ r: 4, strokeWidth: 2 }}
               />
             )
@@ -135,67 +206,7 @@ const PerformanceChart = ({ visibleModels, displayMode, timeRange }: Performance
         </LineChart>
       </ResponsiveContainer>
       
-      {/* Avatar markers at end of lines */}
-      <div 
-        className="absolute flex flex-col gap-0"
-        style={{ 
-          right: '4px',
-          top: '20px',
-          bottom: '20px',
-        }}
-      >
-        {avatarPositions.map((model) => (
-          <div
-            key={model.id}
-            className="absolute flex items-center gap-2 transition-all duration-300"
-            style={{ 
-              top: `${model.topPercentage}%`,
-              transform: 'translateY(-50%)',
-              right: 0,
-            }}
-          >
-            {/* Avatar circle with person image + pulse effect */}
-            <div className="relative">
-              {/* Pulse ring */}
-              <div 
-                className="absolute inset-0 rounded-full animate-ping opacity-30"
-                style={{ backgroundColor: model.color }}
-              />
-              {/* Static outer glow */}
-              <div 
-                className="absolute -inset-1 rounded-full opacity-40 blur-sm"
-                style={{ backgroundColor: model.color }}
-              />
-              {/* Avatar */}
-              <div 
-                className="relative w-8 h-8 rounded-full flex items-center justify-center shadow-lg border-2 overflow-hidden"
-                style={{ 
-                  borderColor: model.color,
-                  backgroundColor: model.color,
-                }}
-              >
-                <img 
-                  src={model.avatar} 
-                  alt={model.shortName}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
-            {/* Value label */}
-            <div className="flex flex-col items-start font-mono">
-              <span 
-                className="text-xs font-semibold"
-                style={{ color: model.color }}
-              >
-                {displayMode === '%' 
-                  ? `${((model.value - 10000) / 10000) >= 0 ? '+' : ''}${(((model.value - 10000) / 10000) * 100).toFixed(2)}%`
-                  : `$${model.value.toLocaleString()}`
-                }
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
+
     </div>
   );
 };
