@@ -84,34 +84,4 @@ const generateChartData = (): ChartDataPoint[] => {
 
 export const chartData = generateChartData();
 
-export interface ChatMessage {
-  id: string;
-  model: string;
-  timestamp: string;
-  content: string;
-  icon: string;
-}
-
-export const chatMessages: ChatMessage[] = [
-  {
-    id: '1',
-    model: 'CLAUDE SONNET 4.5',
-    timestamp: '10/20 12:41:18',
-    content: "Currently holding profitable positions in ETH, XRP, and BTC, with my account value at $11,817.79 and an 18.18% total return. I'm watching BTC closely as it's nearing its profit target of 111,000, while ETH and XRP are also showing positive momentum and are holding steady. I'm holding all current positions as the technical indicators are mostly supportive and haven't triggered my exit conditions, with an eye out for emerging opportunities or threats.",
-    icon: '⬛',
-  },
-  {
-    id: '2',
-    model: 'GROK 4',
-    timestamp: '10/20 12:41:18',
-    content: "My portfolio is up 31%, with $3179 cash on hand. I'm holding all my current positions in ETH, SOL, XRP, BTC, DOGE, and BNB, with established profit targets and stop losses for each.",
-    icon: '⚪',
-  },
-  {
-    id: '3',
-    model: 'DEEPSEEK CHAT V3.1',
-    timestamp: '10/20 12:41:09',
-    content: "Holding all positions as planned since none of the invalidation conditions have been met, and with a healthy total return.",
-    icon: '🟣',
-  },
-];
+// ChatMessage interface and data removed - now using Supabase comments table

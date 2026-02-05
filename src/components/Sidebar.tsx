@@ -5,8 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send, LogIn, ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
-import { danmakuMessages, danmakuColors } from '@/lib/danmakuMessages';
 import { useUser } from '@/contexts/UserContext';
+import { supabase } from '@/lib/supabase';
 
 // Mock user data for demo
 const mockUsers = [
@@ -25,12 +25,11 @@ const mockUsers = [
 const coinTypes = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'BNB'];
 
 interface Comment {
-  id: string;
+  id: number;
   text: string;
   timestamp: string;
-  color: string;
   userName: string;
-  userAvatar: string;
+  userAvatar: string | null;
 }
 
 interface PendingOrder {
@@ -169,55 +168,64 @@ const mockCompletedTrades = generateMockCompletedTrades(20);
 const Sidebar = () => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentInput, setCommentInput] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguage();
   const { user } = useUser();
 
-  // Initialize comments and auto-scroll
-  useEffect(() => {
-    const initialComments: Comment[] = danmakuMessages.slice(0, 15).map((text, index) => {
-      const user = mockUsers[index % mockUsers.length];
-      return {
-        id: `comment-${Date.now()}-${index}`,
-        text,
-        timestamp: new Date(Date.now() - index * 5000).toLocaleTimeString('zh-CN', {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        }),
-        color: danmakuColors[index % danmakuColors.length],
-        userName: user.name,
-        userAvatar: user.avatar,
-      };
-    });
+  // 获取评论
+  const fetchComments = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_comments', {
+        p_target_type: 'global',
+        p_target_id: null,
+        p_limit: 50
+      });
 
-    setComments(initialComments);
-
-    const addInterval = setInterval(() => {
-      setComments(prev => {
-        const randomMessage = danmakuMessages[Math.floor(Math.random() * danmakuMessages.length)];
-        const user = mockUsers[Math.floor(Math.random() * mockUsers.length)];
-        const newComment: Comment = {
-          id: `comment-${Date.now()}`,
-          text: randomMessage,
-          timestamp: new Date().toLocaleTimeString('zh-CN', {
+      if (error) throw error;
+      if (data) {
+        const formattedComments: Comment[] = data.map((comment: any) => ({
+          id: comment.id,
+          text: comment.content,
+          timestamp: new Date(comment.created_at).toLocaleTimeString('zh-CN', {
             hour: '2-digit',
             minute: '2-digit',
             second: '2-digit'
           }),
-          color: danmakuColors[Math.floor(Math.random() * danmakuColors.length)],
-          userName: user.name,
-          userAvatar: user.avatar,
-        };
-        const updated = [newComment, ...prev];
-        if (updated.length > 50) {
-          return updated.slice(0, 50);
-        }
-        return updated;
-      });
-    }, 3000);
+          userName: comment.user_display_name || 'Anonymous',
+          userAvatar: comment.user_avatar_url
+        }));
+        setComments(formattedComments);
+      }
+    } catch (error) {
+      console.error('获取评论失败:', error);
+    }
+  };
 
-    return () => clearInterval(addInterval);
+  // 初始化加载和实时订阅
+  useEffect(() => {
+    fetchComments();
+
+    // 订阅评论表的变化
+    const channel = supabase
+      .channel('sidebar-comments')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'comments',
+          filter: 'target_type=eq.global'
+        },
+        () => {
+          fetchComments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {
@@ -250,19 +258,19 @@ const Sidebar = () => {
         <TabsList className="w-full rounded-none border-b border-border bg-transparent p-0 h-auto flex-shrink-0">
           <TabsTrigger
             value="comments"
-            className="flex-1 rounded-none border-r border-border py-2 px-1 font-mono text-[10px] text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold whitespace-nowrap overflow-hidden text-ellipsis"
+            className="flex-1 rounded-none border-r border-border py-2 px-1 font-mono text-sm text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold whitespace-nowrap overflow-hidden text-ellipsis"
           >
             {t('comments')}
           </TabsTrigger>
           <TabsTrigger
             value="pending"
-            className="flex-1 rounded-none border-r border-border py-2 px-1 font-mono text-[10px] text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold whitespace-nowrap overflow-hidden text-ellipsis"
+            className="flex-1 rounded-none border-r border-border py-2 px-1 font-mono text-sm text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold whitespace-nowrap overflow-hidden text-ellipsis"
           >
             {t('pendingOrders')}
           </TabsTrigger>
           <TabsTrigger
             value="trades"
-            className="flex-1 rounded-none py-2 px-1 font-mono text-[10px] text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold whitespace-nowrap overflow-hidden text-ellipsis"
+            className="flex-1 rounded-none py-2 px-1 font-mono text-sm text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold whitespace-nowrap overflow-hidden text-ellipsis"
           >
             {t('completedTrades')}
           </TabsTrigger>
@@ -462,7 +470,7 @@ const Sidebar = () => {
                 >
                   <div className="flex items-start gap-3">
                     <Avatar className="w-8 h-8 flex-shrink-0">
-                      <AvatarImage src={comment.userAvatar} alt={comment.userName} />
+                      <AvatarImage src={comment.userAvatar || undefined} alt={comment.userName} />
                       <AvatarFallback className="text-xs">{comment.userName.slice(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
@@ -470,10 +478,7 @@ const Sidebar = () => {
                         <span className="font-mono text-xs font-semibold text-foreground truncate">
                           {comment.userName}
                         </span>
-                        <span
-                          className="font-mono text-[10px]"
-                          style={{ color: comment.color }}
-                        >
+                        <span className="font-mono text-[10px] text-muted-foreground">
                           {comment.timestamp}
                         </span>
                       </div>
@@ -496,46 +501,49 @@ const Sidebar = () => {
                   value={commentInput}
                   onChange={(e) => setCommentInput(e.target.value)}
                   className="flex-1 h-[52px] font-mono text-sm bg-background border-border"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey && commentInput.trim()) {
+                  disabled={isSubmitting}
+                  onKeyDown={async (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey && commentInput.trim() && !isSubmitting) {
                       e.preventDefault();
-                      const newComment: Comment = {
-                        id: `comment-${Date.now()}`,
-                        text: commentInput.trim(),
-                        timestamp: new Date().toLocaleTimeString('zh-CN', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          second: '2-digit'
-                        }),
-                        color: danmakuColors[Math.floor(Math.random() * danmakuColors.length)],
-                        userName: user.name,
-                        userAvatar: user.avatar,
-                      };
-                      setComments(prev => [newComment, ...prev].slice(0, 50));
-                      setCommentInput('');
+                      setIsSubmitting(true);
+                      try {
+                        const { error } = await supabase.rpc('create_comment', {
+                          p_target_type: 'global',
+                          p_target_id: null,
+                          p_content: commentInput.trim(),
+                          p_display_time: new Date().toISOString()
+                        });
+                        if (error) throw error;
+                        setCommentInput('');
+                      } catch (error) {
+                        console.error('创建评论失败:', error);
+                      } finally {
+                        setIsSubmitting(false);
+                      }
                     }
                   }}
                 />
                 <Button
                   size="sm"
                   className="h-[52px] px-4"
-                  disabled={!commentInput.trim()}
-                  onClick={() => {
-                    if (commentInput.trim()) {
-                      const newComment: Comment = {
-                        id: `comment-${Date.now()}`,
-                        text: commentInput.trim(),
-                        timestamp: new Date().toLocaleTimeString('zh-CN', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          second: '2-digit'
-                        }),
-                        color: danmakuColors[Math.floor(Math.random() * danmakuColors.length)],
-                        userName: user.name,
-                        userAvatar: user.avatar,
-                      };
-                      setComments(prev => [newComment, ...prev].slice(0, 50));
-                      setCommentInput('');
+                  disabled={!commentInput.trim() || isSubmitting}
+                  onClick={async () => {
+                    if (commentInput.trim() && !isSubmitting) {
+                      setIsSubmitting(true);
+                      try {
+                        const { error } = await supabase.rpc('create_comment', {
+                          p_target_type: 'global',
+                          p_target_id: null,
+                          p_content: commentInput.trim(),
+                          p_display_time: new Date().toISOString()
+                        });
+                        if (error) throw error;
+                        setCommentInput('');
+                      } catch (error) {
+                        console.error('创建评论失败:', error);
+                      } finally {
+                        setIsSubmitting(false);
+                      }
                     }
                   }}
                 >
@@ -548,9 +556,6 @@ const Sidebar = () => {
                 <Button
                   variant="outline"
                   className="relative w-full h-[52px] font-mono text-sm gap-2 bg-background/60 backdrop-blur-md border-primary/40 hover:bg-primary/20 hover:border-primary/60 transition-all duration-300 shadow-xl hover:shadow-primary/30"
-                  onClick={() => {
-                    setIsLoggedIn(true);
-                  }}
                 >
                   <LogIn className="w-4 h-4 text-primary" />
                   <span className="text-primary font-semibold">{t('loginToComment')}</span>

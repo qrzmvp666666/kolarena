@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { supabase } from '@/lib/supabase';
 
 interface DanmakuMessage {
   id: string;
@@ -9,28 +10,12 @@ interface DanmakuMessage {
   fontSize: number;
 }
 
-const messages = [
-  "DEEPSEEK 又涨了！🚀",
-  "GPT-5 回调了，抄底吗？",
-  "CLAUDE 稳如老狗 💪",
-  "GROK 冲冲冲！",
-  "BTC 永远滴神",
-  "这波我看好 QWEN",
-  "GEMINI 跌麻了 😭",
-  "AI 交易真香",
-  "谁在抄底 GPT-5？",
-  "DEEPSEEK YYDS",
-  "跟着 AI 赚钱 💰",
-  "这行情太刺激了",
-  "CLAUDE 信仰充值",
-  "今天又是赚钱的一天",
-  "BTC 什么时候破 120K？",
-  "AI 模型打架谁赢？",
-  "GROK 起飞了 ✈️",
-  "观望中...",
-  "冲就完了！",
-  "稳住，我们能赢",
-];
+interface Comment {
+  id: number;
+  content: string;
+  display_time: string;
+  user_display_name: string;
+}
 
 const colors = [
   'hsl(168, 100%, 50%)',  // cyan
@@ -44,36 +29,89 @@ const colors = [
 const Danmaku = () => {
   const [danmakuList, setDanmakuList] = useState<DanmakuMessage[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
-  const idCounter = useRef(0);
+  const processedComments = useRef<Set<number>>(new Set());
 
-  useEffect(() => {
-    const addDanmaku = () => {
-      const newDanmaku: DanmakuMessage = {
-        id: `danmaku-${idCounter.current++}`,
-        text: messages[Math.floor(Math.random() * messages.length)],
-        top: Math.random() * 80 + 5, // 5% to 85% from top
-        color: colors[Math.floor(Math.random() * colors.length)],
-        speed: Math.random() * 8 + 12, // 12-20 seconds
-        fontSize: Math.random() * 4 + 14, // 14-18px
-      };
+  // 添加弹幕到屏幕
+  const addDanmaku = (comment: Comment) => {
+    // 避免重复添加
+    if (processedComments.current.has(comment.id)) return;
+    processedComments.current.add(comment.id);
 
-      setDanmakuList(prev => [...prev, newDanmaku]);
-
-      // Remove after animation completes
-      setTimeout(() => {
-        setDanmakuList(prev => prev.filter(d => d.id !== newDanmaku.id));
-      }, newDanmaku.speed * 1000);
+    const speed = Math.random() * 8 + 12; // 12-20 seconds
+    
+    const newDanmaku: DanmakuMessage = {
+      id: `danmaku-${comment.id}`,
+      text: comment.content,
+      top: Math.random() * 80 + 5, // 5% to 85% from top
+      color: colors[Math.floor(Math.random() * colors.length)],
+      speed: speed,
+      fontSize: Math.random() * 4 + 14, // 14-18px
     };
 
-    // Add initial danmaku
-    for (let i = 0; i < 5; i++) {
-      setTimeout(() => addDanmaku(), i * 500);
-    }
+    setDanmakuList(prev => [...prev, newDanmaku]);
 
-    // Add new danmaku periodically
-    const interval = setInterval(addDanmaku, 2000);
+    // Remove after animation completes
+    setTimeout(() => {
+      setDanmakuList(prev => prev.filter(d => d.id !== newDanmaku.id));
+      processedComments.current.delete(comment.id);
+    }, speed * 1000);
+  };
 
-    return () => clearInterval(interval);
+  // 初始加载和实时订阅
+  useEffect(() => {
+    // 获取最近的评论作为初始弹幕
+    const fetchInitialComments = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_comments', {
+          p_target_type: 'global',
+          p_target_id: null,
+          p_limit: 20
+        });
+
+        if (error) throw error;
+        if (data) {
+          // 随机延迟显示初始弹幕
+          data.forEach((comment: Comment, index: number) => {
+            setTimeout(() => addDanmaku(comment), index * 500);
+          });
+        }
+      } catch (error) {
+        console.error('获取弹幕失败:', error);
+      }
+    };
+
+    fetchInitialComments();
+
+    // 订阅新评论
+    const channel = supabase
+      .channel('danmaku-comments')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'comments',
+          filter: 'target_type=eq.global'
+        },
+        async (payload) => {
+          console.log('新弹幕:', payload);
+          // 获取完整的评论信息（包含用户名）
+          const { data, error } = await supabase.rpc('get_comments', {
+            p_target_type: 'global',
+            p_target_id: null,
+            p_limit: 1
+          });
+
+          if (!error && data && data.length > 0) {
+            addDanmaku(data[0]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (
