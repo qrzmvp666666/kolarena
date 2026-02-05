@@ -657,7 +657,7 @@ const LeaderboardContent = () => {
                       <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('winRate')}</th>
                       <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('maxProfit')}</th>
                       <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('maxLoss')}</th>
-                      <th className="px-4 py-3 text-right font-semibold text-muted-foreground">TRADES</th>
+                      <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('tradingDays')}</th>
                     </tr>
                   </thead>
                   <tbody>
