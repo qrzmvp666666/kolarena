@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 interface LoginModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onLogin: (user: { name: string; avatar: string }) => void;
+  onLogin?: () => void;
 }
 
 const LoginModal = ({ open, onOpenChange, onLogin }: LoginModalProps) => {
@@ -88,10 +88,9 @@ const LoginModal = ({ open, onOpenChange, onLogin }: LoginModalProps) => {
       if (error) throw error;
 
       if (data.user) {
-        onLogin({
-          name: data.user.email?.split('@')[0] || 'User',
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.user.id}&backgroundColor=b6e3f4`
-        });
+        if (onLogin) {
+          onLogin();
+        }
         onOpenChange(false);
         // Reset form
         setEmail('');

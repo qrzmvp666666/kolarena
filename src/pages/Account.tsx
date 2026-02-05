@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { CreditCard, Wallet, Bitcoin, Clock, CheckCircle, XCircle, Gift, Ticket, Zap, Star, Crown, Info, ArrowRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { CreditCard, Wallet, Bitcoin, Clock, CheckCircle, XCircle, Gift, Ticket, Zap, Star, Crown, Info, ArrowRight, User } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
+import { useUser } from '@/contexts/UserContext';
 import TopNav from '@/components/TopNav';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,8 +9,10 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PlanSubscriptionPanel from '@/components/PlanSubscriptionPanel';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { supabase } from '@/lib/supabase';
 
-type TabType = 'subscription' | 'purchases' | 'accounts' | 'redemption';
+type TabType = 'subscription' | 'purchases' | 'accounts' | 'redemption' | 'settings';
 
 type PlanType = 'monthly' | 'quarterly' | 'yearly';
 
@@ -143,10 +146,19 @@ const mockAccounts: TradingAccount[] = [
 const Account = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const { user: contextUser, updateAvatar: updateContextAvatar } = useUser();
   const [activeTab, setActiveTab] = useState<TabType>('subscription');
   const [danmakuEnabled, setDanmakuEnabled] = useState(true);
   const [redeemCode, setRedeemCode] = useState('');
   const [isRedeeming, setIsRedeeming] = useState(false);
+  const [newPassword, setNewPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+
+  const userId = contextUser?.id || '';
+  const email = contextUser?.email || '';
+  const avatarUrl = contextUser?.avatar || '';
 
   const handleRedeem = async () => {
     if (!redeemCode.trim()) {
@@ -168,6 +180,117 @@ const Account = () => {
     });
     setRedeemCode('');
     setIsRedeeming(false);
+  };
+
+  const handleUpdateAvatar = async (file: File) => {
+    if (!userId || !file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: t('error'),
+        description: t('invalidFileType'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: t('error'),
+        description: t('fileTooLarge'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // Update auth metadata
+      const { error: authError } = await supabase.auth.updateUser({
+        data: { avatar_url: publicUrl },
+      });
+      if (authError) throw authError;
+
+      // Update user profile
+      const { error: profileError } = await supabase
+        .from('users')
+        .update({ avatar_url: publicUrl })
+        .eq('auth_user_id', userId);
+      if (profileError) throw profileError;
+
+      // Update context
+      updateContextAvatar(publicUrl);
+      
+      toast({
+        title: t('avatarUpdated'),
+      });
+    } catch (error: any) {
+      toast({
+        title: t('error'),
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleUpdateAvatar(file);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!newPassword || !confirmPassword) return;
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: t('error'),
+        description: t('passwordMismatch'),
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsSavingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      if (error) throw error;
+
+      setNewPassword('');
+      setConfirmPassword('');
+      toast({
+        title: t('passwordUpdated'),
+      });
+    } catch (error: any) {
+      toast({
+        title: t('error'),
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingPassword(false);
+    }
   };
 
   const getRedemptionStatusBadge = (status: 'success' | 'expired' | 'used') => {
@@ -325,6 +448,17 @@ const Account = () => {
             >
               <Gift className="w-4 h-4" />
               {t('redemptionCenter')}
+            </button>
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md font-mono text-sm transition-colors ${
+                activeTab === 'settings'
+                  ? 'bg-accent text-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+              }`}
+            >
+              <User className="w-4 h-4" />
+              {t('accountSettings')}
             </button>
           </nav>
         </div>
@@ -544,6 +678,72 @@ const Account = () => {
                   <p>{t('noRedemptionRecords')}</p>
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="space-y-6">
+              <h1 className="font-mono text-xl font-semibold">{t('accountSettings')}</h1>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-mono text-sm">{t('profile')}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex items-center gap-6">
+                    <div className="relative group">
+                      <Avatar className="h-20 w-20">
+                        <AvatarImage src={avatarUrl} alt={email || 'avatar'} />
+                        <AvatarFallback>{email?.slice(0, 2).toUpperCase() || 'U'}</AvatarFallback>
+                      </Avatar>
+                      <label 
+                        htmlFor="avatar-upload" 
+                        className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-full"
+                      >
+                        <span className="text-white text-xs">{isUploadingAvatar ? t('uploading') : t('changeAvatar')}</span>
+                      </label>
+                      <input
+                        id="avatar-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleAvatarChange}
+                        disabled={isUploadingAvatar}
+                      />
+                    </div>
+                    <div className="space-y-2 flex-1">
+                      <div className="text-sm text-muted-foreground">{t('emailAddress')}</div>
+                      <div className="font-mono">{email || t('notProvided')}</div>
+                      <p className="text-xs text-muted-foreground">{t('avatarHint')}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-mono text-sm">{t('passwordSettings')}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Input
+                    type="password"
+                    placeholder={t('newPassword')}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="font-mono"
+                  />
+                  <Input
+                    type="password"
+                    placeholder={t('confirmPassword')}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="font-mono"
+                  />
+                  <Button onClick={handleUpdatePassword} disabled={isSavingPassword || !newPassword || !confirmPassword}>
+                    {isSavingPassword ? t('saving') : t('updatePassword')}
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           )}
         </div>
