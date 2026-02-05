@@ -548,21 +548,6 @@ const LeaderboardContent = () => {
         {/* Filter Options Row - Only show for overall tab */}
         {activeTab === 'overall' && (
           <div className="flex items-center gap-4 mb-4 flex-wrap">
-            {/* Coin Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{t('coinType')}:</span>
-              <Select value={coinFilter} onValueChange={setCoinFilter}>
-                <SelectTrigger className="w-[100px] h-8 font-mono text-xs bg-card border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="font-mono text-xs">
-                  {coinTypes.map(coin => (
-                    <SelectItem key={coin} value={coin}>{coin === 'ALL' ? t('all') : coin}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Return Rate Filter */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">{t('returnRate')}:</span>
