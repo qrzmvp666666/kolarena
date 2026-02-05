@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send, LogIn, ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import { danmakuMessages, danmakuColors } from '@/lib/danmakuMessages';
+import { useUser } from '@/contexts/UserContext';
 
 // Mock user data for demo
 const mockUsers = [
@@ -167,10 +168,10 @@ const mockCompletedTrades = generateMockCompletedTrades(20);
 
 const Sidebar = () => {
   const [comments, setComments] = useState<Comment[]>([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [commentInput, setCommentInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguage();
+  const { user } = useUser();
 
   // Initialize comments and auto-scroll
   useEffect(() => {
@@ -488,7 +489,7 @@ const Sidebar = () => {
 
           {/* Comment Input Area */}
           <div className="px-4 py-6 border-t border-border bg-card flex items-center min-h-[90px]">
-            {isLoggedIn ? (
+            {user ? (
               <div className="flex items-start gap-2 w-full">
                 <Input
                   placeholder={t('writeComment')}
@@ -498,7 +499,6 @@ const Sidebar = () => {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey && commentInput.trim()) {
                       e.preventDefault();
-                      const currentUser = mockUsers[0];
                       const newComment: Comment = {
                         id: `comment-${Date.now()}`,
                         text: commentInput.trim(),
@@ -508,8 +508,8 @@ const Sidebar = () => {
                           second: '2-digit'
                         }),
                         color: danmakuColors[Math.floor(Math.random() * danmakuColors.length)],
-                        userName: currentUser.name,
-                        userAvatar: currentUser.avatar,
+                        userName: user.name,
+                        userAvatar: user.avatar,
                       };
                       setComments(prev => [newComment, ...prev].slice(0, 50));
                       setCommentInput('');
@@ -522,7 +522,6 @@ const Sidebar = () => {
                   disabled={!commentInput.trim()}
                   onClick={() => {
                     if (commentInput.trim()) {
-                      const currentUser = mockUsers[0];
                       const newComment: Comment = {
                         id: `comment-${Date.now()}`,
                         text: commentInput.trim(),
@@ -532,8 +531,8 @@ const Sidebar = () => {
                           second: '2-digit'
                         }),
                         color: danmakuColors[Math.floor(Math.random() * danmakuColors.length)],
-                        userName: currentUser.name,
-                        userAvatar: currentUser.avatar,
+                        userName: user.name,
+                        userAvatar: user.avatar,
                       };
                       setComments(prev => [newComment, ...prev].slice(0, 50));
                       setCommentInput('');

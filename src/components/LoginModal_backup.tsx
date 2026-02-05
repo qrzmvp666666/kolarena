@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Mail, Loader2, KeyRound } from 'lucide-react';
+import { Mail, Phone, X, Loader2, KeyRound } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -195,44 +195,86 @@ const LoginModal = ({ open, onOpenChange, onLogin }: LoginModalProps) => {
                   <Button type="submit" className="w-full font-mono" disabled={isLoading || !email}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {t('sendCode')}
-                  </Button>
-                </form>
-              ) : (
-                <form onSubmit={handleVerifyOTP} className="space-y-6">
-                  <div className="flex flex-col items-center space-y-4">
-                    <p className="text-sm text-muted-foreground font-mono">
-                      {email}
-                      <button 
-                        type="button" 
-                        onClick={() => setIsOtpSent(false)}
-                        className="ml-2 text-primary hover:underline"
-                      >
-                        {t('modify')}
-                      </button>
-                    </p>
-                    
-                    <InputOTP
-                      maxLength={6}
-                      value={otp}
-                      onChange={(val) => setOtp(val)}
-                      onComplete={() => handleVerifyOTP()}
-                      disabled={isLoading}
-                    >
-                      <InputOTPGroup>
-                        <InputOTPSlot index={0} />
-                        <InputOTPSlot index={1} />
-                        <InputOTPSlot index={2} />
-                        <InputOTPSlot index={3} />
-                        <InputOTPSlot index={4} />
-                        <InputOTPSlot index={5} />
-                      </InputOTPGroup>
-                    </InputOTP>
-                  </div>
+                  </button>
+                </p>
+                
+                <InputOTP
+                  maxLength={6}
+                  value={otp}
+                  onChange={(val) => setOtp(val)}
+                  onComplete={() => handleVerifyOTP()}
+                  disabled={isLoading}
+                >
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
 
-                  <div className="space-y-2">
-                    <Button type="submit" className="w-full font-mono" disabled={isLoading || otp.length < 6}>
-                      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      {t('verifyCode')}
+              <div className="space-y-2">
+                <Button type="submit" className="w-full font-mono" disabled={isLoading || otp.length < 6}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {t('verifyCode')}
+                </Button>
+                
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  className="w-full font-mono text-xs" 
+                  onClick={handleSendOTP}
+                  disabled={isLoading || countdown > 0}
+                >
+                  {countdown > 0 ? t('resendAfter').replace('{count}', countdown.toString()) : t('sendCode')}
+                </Button>
+              </div>
+            </form>
+          )}
+            </TabsContent>
+
+            {/* 密码登录 */}
+            <TabsContent value="password" className="space-y-4 mt-0">
+              <form onSubmit={handlePasswordLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Input
+                    type="email"
+                    placeholder={t('emailPlaceholder')}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="font-mono"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Input
+                    type="password"
+                    placeholder={t('passwordPlaceholder')}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="font-mono"
+                    disabled={isLoading}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && email && password) {
+                        handlePasswordLogin();
+                      }
+                    }}
+                  />
+                </div>
+
+                <Button type="submit" className="w-full font-mono" disabled={isLoading || !email || !password}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {t('login')}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>          {t('verifyCode')}
                     </Button>
                     
                     <Button 
@@ -288,6 +330,45 @@ const LoginModal = ({ open, onOpenChange, onLogin }: LoginModalProps) => {
               </form>
             </TabsContent>
           </Tabs>
+                  </button>
+                </p>
+                
+                <InputOTP
+                  maxLength={6}
+                  value={otp}
+                  onChange={(val) => setOtp(val)}
+                  onComplete={() => handleVerifyOTP()}
+                  disabled={isLoading}
+                >
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+
+              <div className="space-y-2">
+                <Button type="submit" className="w-full font-mono" disabled={isLoading || otp.length < 6}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {t('verifyCode')}
+                </Button>
+                
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  className="w-full font-mono text-xs" 
+                  onClick={handleSendOTP}
+                  disabled={isLoading || countdown > 0}
+                >
+                  {countdown > 0 ? t('resendAfter').replace('{count}', countdown.toString()) : t('sendCode')}
+                </Button>
+              </div>
+            </form>
+          )}
 
           {/* Social Login Divider */}
           <div className="relative my-8">

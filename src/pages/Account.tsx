@@ -262,6 +262,18 @@ const Account = () => {
 
   const handleUpdatePassword = async () => {
     if (!newPassword || !confirmPassword) return;
+    
+    // 密码长度验证
+    if (newPassword.length < 6) {
+      toast({
+        title: t('error'),
+        description: t('passwordTooShort'),
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // 密码匹配验证
     if (newPassword !== confirmPassword) {
       toast({
         title: t('error'),
@@ -270,6 +282,7 @@ const Account = () => {
       });
       return;
     }
+    
     setIsSavingPassword(true);
     try {
       const { error } = await supabase.auth.updateUser({
@@ -281,6 +294,7 @@ const Account = () => {
       setConfirmPassword('');
       toast({
         title: t('passwordUpdated'),
+        description: t('passwordUpdateSuccess'),
       });
     } catch (error: any) {
       toast({
@@ -725,21 +739,34 @@ const Account = () => {
                   <CardTitle className="font-mono text-sm">{t('passwordSettings')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Input
-                    type="password"
-                    placeholder={t('newPassword')}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="font-mono"
-                  />
+                  <div className="space-y-2">
+                    <Input
+                      type="password"
+                      placeholder={t('newPassword')}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="font-mono"
+                      minLength={6}
+                    />
+                    <p className="text-xs text-muted-foreground">{t('passwordTooShort')}</p>
+                  </div>
                   <Input
                     type="password"
                     placeholder={t('confirmPassword')}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="font-mono"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && newPassword && confirmPassword) {
+                        handleUpdatePassword();
+                      }
+                    }}
                   />
-                  <Button onClick={handleUpdatePassword} disabled={isSavingPassword || !newPassword || !confirmPassword}>
+                  <Button 
+                    onClick={handleUpdatePassword} 
+                    disabled={isSavingPassword || !newPassword || !confirmPassword}
+                    className="w-full"
+                  >
                     {isSavingPassword ? t('saving') : t('updatePassword')}
                   </Button>
                 </CardContent>
