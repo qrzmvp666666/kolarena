@@ -650,14 +650,14 @@ const LeaderboardContent = () => {
                     <tr className="bg-muted/50 border-b border-border">
                       <th className="px-4 py-3 text-left font-semibold text-muted-foreground">RANK</th>
                       <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('trader')}</th>
-                      <th className="px-4 py-3 text-center font-semibold text-muted-foreground">{t('coinType')}</th>
-                      <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('accountValue')} ↓</th>
-                      <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('returnRate')}</th>
-                      <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('totalPnL')}</th>
-                      <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('winRate')}</th>
-                      <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('maxProfit')}</th>
-                      <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('maxLoss')}</th>
-                      <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('tradingDays')}</th>
+                      <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('description')}</th>
+                      <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('accountValue')} ↓</th>
+                      <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('returnRate')}</th>
+                      <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('totalPnL')}</th>
+                      <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('winRate')}</th>
+                      <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('maxProfit')}</th>
+                      <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('maxLoss')}</th>
+                      <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('tradingDays')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -676,20 +676,22 @@ const LeaderboardContent = () => {
                             <span className="text-foreground font-medium hover:text-accent-orange">{row.name}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-center text-muted-foreground">{row.mainCoin}</td>
-                        <td className="px-4 py-3 text-right text-foreground font-medium">
+                        <td className="px-4 py-3 text-left text-muted-foreground text-[10px]">
+                          {row.shortName || '-'}
+                        </td>
+                        <td className="px-4 py-3 text-left text-foreground font-medium">
                           ${row.accountValue.toLocaleString()}
                         </td>
-                        <td className={`px-4 py-3 text-right font-medium ${row.returnRate >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+                        <td className={`px-4 py-3 text-left font-medium ${row.returnRate >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
                           {row.returnRate >= 0 ? '+' : ''}{row.returnRate.toFixed(2)}%
                         </td>
-                        <td className={`px-4 py-3 text-right font-medium ${row.totalPnL >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+                        <td className={`px-4 py-3 text-left font-medium ${row.totalPnL >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
                           {row.totalPnL >= 0 ? '+' : ''}${row.totalPnL.toLocaleString()}
                         </td>
-                        <td className="px-4 py-3 text-right text-muted-foreground">{row.winRate}%</td>
-                        <td className="px-4 py-3 text-right text-accent-green">${row.maxProfit.toLocaleString()}</td>
-                        <td className="px-4 py-3 text-right text-accent-red">-${Math.abs(row.maxLoss).toLocaleString()}</td>
-                        <td className="px-4 py-3 text-right text-muted-foreground">{row.trades}</td>
+                        <td className="px-4 py-3 text-left text-muted-foreground">{row.winRate}%</td>
+                        <td className="px-4 py-3 text-left text-accent-green">${row.maxProfit.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-left text-accent-red">-${Math.abs(row.maxLoss).toLocaleString()}</td>
+                        <td className="px-4 py-3 text-left text-muted-foreground">{row.trades}</td>
                       </tr>
                     ))}
                   </tbody>
