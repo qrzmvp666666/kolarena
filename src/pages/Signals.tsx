@@ -76,6 +76,21 @@ const generateMockActiveSignals = (count: number) => {
       second: '2-digit',
     }).replace(/\//g, '/');
 
+    // Calculate duration
+    const diffMs = now.getTime() - orderDate.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    let durationStr = '';
+    if (diffDays > 0) {
+      durationStr = `${diffDays}天${diffHours}小时`;
+    } else if (diffHours > 0) {
+      durationStr = `${diffHours}小时${diffMinutes}分`;
+    } else {
+      durationStr = `${diffMinutes}分钟`;
+    }
+
     return {
       id: `active-${i + 1}`,
       author: traderNames[i % traderNames.length],
@@ -89,6 +104,7 @@ const generateMockActiveSignals = (count: number) => {
             : String((Math.random() * 100).toFixed(2)),
       positionMode: Math.random() > 0.5 ? '全仓' : '逐仓',
       orderTime: orderTimeStr,
+      duration: durationStr,
       takeProfit: hasTP ? String(Math.floor(Math.random() * 5000) + 100000) : null,
       stopLoss: hasSL ? String(Math.floor(Math.random() * 5000) + 70000) : null,
       profitRatio: '0:0',
@@ -106,19 +122,31 @@ const generateMockHistorySignals = (count: number) => {
     const isProfit = Math.random() > 0.4;
 
     const now = new Date();
-    const orderDate = new Date(now.getTime() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000));
+    const closeDate = new Date(now.getTime() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000));
+    const durationHours = Math.floor(Math.random() * 48) + 1;
+    const orderDate = new Date(closeDate.getTime() - durationHours * 60 * 60 * 1000);
+    
     const orderTimeStr = orderDate.toLocaleString('zh-CN', {
-      year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit',
+    }).replace(/\//g, '/');
+
+    const closeTimeStr = closeDate.toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
     }).replace(/\//g, '/');
 
     const profitValue = isProfit
       ? `+${(Math.random() * 50).toFixed(1)}%`
       : `-${(Math.random() * 30).toFixed(1)}%`;
+
+    const returnRate = isProfit 
+      ? `+${(Math.random() * 30).toFixed(1)}%` 
+      : `-${(Math.random() * 20).toFixed(1)}%`;
 
     return {
       id: `history-${i + 1}`,
@@ -133,9 +161,14 @@ const generateMockHistorySignals = (count: number) => {
             : String((Math.random() * 100).toFixed(2)),
       positionMode: Math.random() > 0.5 ? '全仓' : '逐仓',
       orderTime: orderTimeStr,
+      closeTime: closeTimeStr,
       takeProfit: hasTP ? String(Math.floor(Math.random() * 5000) + 100000) : null,
       stopLoss: hasSL ? String(Math.floor(Math.random() * 5000) + 70000) : null,
-      profitRatio: profitValue,
+      profitRatio: '0:0',
+      returnRate: returnRate,
+      isProfit: isProfit,
+      signalDuration: `${durationHours}h`,
+      outcome: isProfit ? 'takeProfit' : (Math.random() > 0.5 ? 'stopLoss' : 'draw') as 'takeProfit' | 'stopLoss' | 'draw',
     };
   });
 };
@@ -308,15 +341,9 @@ const SignalsContent = () => {
           </div>
         </div>
 
-        {/* Signal Tabs: Card View vs List View */}
-        <Tabs defaultValue="cards" className="w-full">
+        {/* Signal Tabs: Active vs History */}
+        <Tabs defaultValue="active" className="w-full">
           <TabsList className="mb-4 bg-transparent border-b border-border rounded-none p-0 h-auto w-full justify-start">
-            <TabsTrigger
-              value="cards"
-              className="rounded-none border-b-2 border-transparent py-2 px-4 font-mono text-sm text-muted-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold"
-            >
-              {t('signalCards')}
-            </TabsTrigger>
             <TabsTrigger
               value="active"
               className="rounded-none border-b-2 border-transparent py-2 px-4 font-mono text-sm text-muted-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold"
@@ -331,18 +358,9 @@ const SignalsContent = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Card View Content */}
-          <TabsContent value="cards" className="mt-0 h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {mockSignals.map(signal => (
-                <SignalCard key={signal.id} signal={signal} />
-              ))}
-            </div>
-          </TabsContent>
-
           {/* Active Signals List View */}
           <TabsContent value="active" className="mt-0 h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-2">
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {mockActiveSignals.map(signal => (
                 <SignalListCard key={signal.id} signal={signal} isHistory={false} />
               ))}
@@ -351,7 +369,7 @@ const SignalsContent = () => {
 
           {/* History Signals List View */}
           <TabsContent value="history" className="mt-0 h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-2">
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {mockHistorySignals.map(signal => (
                 <SignalListCard key={signal.id} signal={signal} isHistory={true} />
               ))}

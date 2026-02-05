@@ -12,9 +12,15 @@ interface SignalListItem {
   entryPrice: string;
   positionMode: string;
   orderTime: string;
+  duration?: string;
   takeProfit: string | null;
   stopLoss: string | null;
   profitRatio: string;
+  returnRate?: string;
+  isProfit?: boolean;
+  signalDuration?: string;
+  closeTime?: string;
+  outcome?: 'takeProfit' | 'stopLoss' | 'draw';
 }
 
 interface SignalListCardProps {
@@ -46,12 +52,31 @@ const SignalListCard = ({ signal, isHistory = false }: SignalListCardProps) => {
 
   return (
     <div
-      className="bg-card border border-border rounded-lg p-4 hover:border-foreground/20 transition-all duration-200 cursor-pointer"
+      className="relative bg-card border border-border rounded-lg p-4 hover:border-foreground/20 transition-all duration-200 cursor-pointer overflow-hidden group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Outcome Badge - Top Right (历史信号) */}
+      {isHistory && signal.outcome && (
+        <div className={`absolute top-2 right-2 px-3 py-1 text-xs font-bold text-black rounded ${
+          signal.outcome === 'takeProfit' ? 'bg-[rgb(51,240,140)]' :
+          signal.outcome === 'stopLoss' ? 'bg-[rgb(240,80,80)]' :
+          'bg-yellow-500'
+        }`}>
+          {signal.outcome === 'takeProfit' ? '止盈' :
+           signal.outcome === 'stopLoss' ? '止损' : '平局'}
+        </div>
+      )}
+
+      {/* Arrow - Below Badge */}
+      {isHistory && (
+        <div className="absolute top-10 right-3">
+          <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+      )}
+
       {/* Header: Avatar + Author */}
-      <div className="flex items-center justify-between mb-3">
+      <div className={`flex items-center justify-between mb-3 ${isHistory ? 'pr-10' : ''}`}>
         <div className="flex items-center gap-3">
           <img
             src={signal.avatar}
@@ -60,11 +85,13 @@ const SignalListCard = ({ signal, isHistory = false }: SignalListCardProps) => {
           />
           <span className="font-semibold text-foreground text-base">{signal.author}</span>
         </div>
-        <ArrowRight
-          className={`w-5 h-5 text-muted-foreground transition-all duration-200 ${
-            isHovered ? 'translate-x-1 text-foreground' : ''
-          }`}
-        />
+        {!isHistory && (
+          <ArrowRight
+            className={`w-5 h-5 text-muted-foreground transition-all duration-200 ${
+              isHovered ? 'translate-x-1 text-foreground' : ''
+            }`}
+          />
+        )}
       </div>
 
       {/* Pair & Type & Leverage */}
@@ -78,24 +105,35 @@ const SignalListCard = ({ signal, isHistory = false }: SignalListCardProps) => {
         </span>
       </div>
 
-      {/* Info Grid: Entry Price | Position Mode | Order Time */}
+      {/* Info Grid: Entry Price | Position Mode | Return Rate/Order Time */}
       <div className="grid grid-cols-3 gap-4 mb-4">
         <div>
           <div className="text-xs text-muted-foreground mb-1">{t('entryPrice')}</div>
-          <div className="text-base font-bold text-foreground">{signal.entryPrice}</div>
+          <div className="text-sm font-bold text-foreground">{signal.entryPrice}</div>
         </div>
         <div>
           <div className="text-xs text-muted-foreground mb-1">{t('positionMode')}</div>
-          <div className="text-base font-bold text-foreground">{signal.positionMode}</div>
+          <div className="text-sm font-bold text-foreground">{signal.positionMode}</div>
         </div>
         <div>
-          <div className="text-xs text-muted-foreground mb-1">{t('orderTime')}</div>
-          <div className="text-base font-bold text-foreground">{signal.orderTime}</div>
+          {isHistory && signal.returnRate ? (
+            <>
+              <div className="text-xs text-muted-foreground mb-1">{t('returnRate')}</div>
+              <div className={`text-sm font-bold ${signal.isProfit ? 'text-accent-green' : 'text-accent-red'}`}>
+                {signal.returnRate}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-xs text-muted-foreground mb-1">{t('orderTime')}</div>
+              <div className="text-sm font-bold text-foreground">{signal.orderTime}</div>
+            </>
+          )}
         </div>
       </div>
 
-      {/* TP / SL / Profit Ratio - 按照截图样式 */}
-      <div className="grid grid-cols-3 gap-4">
+      {/* Row 2: TP / SL / Profit Ratio */}
+      <div className="grid grid-cols-3 gap-4 mb-4">
         <div>
           <div className="text-xs text-muted-foreground mb-1">{t('takeProfit')}</div>
           <div className={`text-sm font-semibold ${signal.takeProfit ? 'text-accent-green' : 'text-accent-green'}`}>
@@ -108,13 +146,38 @@ const SignalListCard = ({ signal, isHistory = false }: SignalListCardProps) => {
             {signal.stopLoss || t('notProvided')}
           </div>
         </div>
-        {isHistory && (
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">{t('profitRatio')}</div>
-            <div className="text-sm font-semibold text-foreground">{signal.profitRatio}</div>
-          </div>
-        )}
+        <div>
+          <div className="text-xs text-muted-foreground mb-1">{t('profitRatio')}</div>
+          <div className="text-sm font-semibold text-foreground">{signal.profitRatio}</div>
+        </div>
       </div>
+
+      {/* Row 3: Signal Duration | Order Time | Close Time (历史信号) / Duration (有效信号) */}
+      {isHistory ? (
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <div className="text-xs text-muted-foreground mb-1">{t('signalDuration')}</div>
+            <div className="text-sm font-bold text-foreground">{signal.signalDuration || '-'}</div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground mb-1">{t('orderTime')}</div>
+            <div className="text-sm font-bold text-foreground">{signal.orderTime}</div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground mb-1">{t('closeTime')}</div>
+            <div className="text-sm font-bold text-foreground">{signal.closeTime || '-'}</div>
+          </div>
+        </div>
+      ) : signal.duration ? (
+        <div className="grid grid-cols-3 gap-4">
+          <div></div>
+          <div></div>
+          <div>
+            <div className="text-xs text-muted-foreground mb-1">{t('duration')}</div>
+            <div className="text-sm font-semibold text-foreground">{signal.duration}</div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

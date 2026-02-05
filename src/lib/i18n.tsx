@@ -99,6 +99,7 @@ export const translations: Translations = {
   fullPosition: { zh: '全仓', en: 'Full' },
   isolatedPosition: { zh: '逐仓', en: 'Isolated' },
   orderTime: { zh: '委托时间', en: 'Order Time' },
+  duration: { zh: '持续时间', en: 'Duration' },
   profitRatio: { zh: '盈亏比', en: 'P&L Ratio' },
   closePrice: { zh: '平仓价', en: 'Close' },
   openTime: { zh: '开仓', en: 'Open' },
