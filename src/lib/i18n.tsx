@@ -174,14 +174,14 @@ export const translations: Translations = {
 
   // About Page
   aboutTitle: { zh: '关于 KolArena', en: 'About KolArena' },
-  aboutSubtitle: { zh: '一个透明、公正的KOL业绩追踪与排名平台', en: 'A transparent and fair trader performance tracking and ranking platform' },
+  aboutSubtitle: { zh: '一个透明、公正的 KOL 业绩追踪与排名平台', en: 'A transparent and fair trader performance tracking and ranking platform' },
   aboutMissionTitle: { zh: '我们的使命', en: 'Our Mission' },
-  aboutMissionDesc: { zh: 'KolArena 致力于为加密货币交易者提供一个公开透明的业绩展示平台。我们相信,真实的交易数据比任何营销话术都更有说服力。通过实时追踪和验证KOL的实盘表现,我们帮助投资者做出更明智的选择。', en: 'KolArena is dedicated to providing cryptocurrency traders with an open and transparent performance display platform. We believe that real trading data is more convincing than any marketing pitch. By tracking and verifying traders\' live performance in real-time, we help investors make smarter choices.' },
+  aboutMissionDesc: { zh: 'KolArena 致力于为加密货币交易者提供一个公开透明的业绩展示平台。我们相信，真实的交易数据比任何营销话术都更有说服力。通过实时追踪和验证 KOL 的实盘表现，我们帮助投资者做出更明智的选择。', en: 'KolArena is dedicated to providing cryptocurrency traders with an open and transparent performance display platform. We believe that real trading data is more convincing than any marketing pitch. By tracking and verifying traders\' live performance in real-time, we help investors make smarter choices.' },
   aboutWhyChoose: { zh: '为什么选择我们', en: 'Why Choose Us' },
   aboutFeature1Title: { zh: '实盘验证', en: 'Live Verification' },
   aboutFeature1Desc: { zh: '所有交易数据均来自真实账户，确保数据的真实性和可靠性', en: 'All trading data comes from real accounts, ensuring authenticity and reliability' },
   aboutFeature2Title: { zh: '透明公开', en: 'Full Transparency' },
-  aboutFeature2Desc: { zh: '完整展示KOL的盈亏记录、胜率、最大回撤等关键指标', en: 'Complete display of traders\' P&L records, win rates, max drawdown and other key metrics' },
+  aboutFeature2Desc: { zh: '完整展示 KOL 的盈亏记录、胜率、最大回撤等关键指标', en: 'Complete display of traders\' P&L records, win rates, max drawdown and other key metrics' },
   aboutFeature3Title: { zh: '实时更新', en: 'Real-time Updates' },
   aboutFeature3Desc: { zh: '交易数据实时同步更新，第一时间掌握市场动态', en: 'Trading data synced in real-time, stay updated with market movements' },
   aboutFeature4Title: { zh: '社区驱动', en: 'Community Driven' },
@@ -189,9 +189,9 @@ export const translations: Translations = {
   aboutFeature5Title: { zh: '多元资产', en: 'Multi-Asset' },
   aboutFeature5Desc: { zh: '支持多种加密货币交易对，满足不同投资需求', en: 'Support for multiple crypto trading pairs to meet different investment needs' },
   aboutFeature6Title: { zh: '专业评级', en: 'Professional Rating' },
-  aboutFeature6Desc: { zh: '基于多维度指标的专业KOL评级系统', en: 'Professional trader rating system based on multi-dimensional metrics' },
+  aboutFeature6Desc: { zh: '基于多维度指标的专业 KOL 评级系统', en: 'Professional trader rating system based on multi-dimensional metrics' },
   aboutTeamTitle: { zh: '我们的团队', en: 'Our Team' },
-  aboutTeamDesc: { zh: '我们是一支由资深KOL、区块链开发者和金融分析师组成的团队,拥有多年加密货币市场经验。我们深知交易者的痛点,致力于打造最可靠的KOL追踪平台。', en: 'We are a team of experienced traders, blockchain developers, and financial analysts with years of experience in the cryptocurrency market. We understand traders\' pain points and are committed to building the most reliable trader tracking platform.' },
+  aboutTeamDesc: { zh: '我们是一支由资深交易员、区块链开发者和金融分析师组成的团队，拥有多年加密货币市场经验。我们深知交易者的痛点，致力于打造最可靠的 KOL 追踪平台。', en: 'We are a team of experienced traders, blockchain developers, and financial analysts with years of experience in the cryptocurrency market. We understand traders\' pain points and are committed to building the most reliable trader tracking platform.' },
   
   // Account Page
   myAccount: { zh: '我的账户', en: 'My Account' },

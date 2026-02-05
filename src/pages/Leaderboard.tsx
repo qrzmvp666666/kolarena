@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import TopNav from '@/components/TopNav';
 import TickerBar from '@/components/TickerBar';
 import { useLanguage } from '@/lib/i18n';
-import { models } from '@/lib/chartData';
+import { supabase } from '@/lib/supabase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -18,47 +18,46 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieC
 // Coin types for filtering
 const coinTypes = ['ALL', 'BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'BNB'];
 
-// Generate leaderboard data based on models
-const generateLeaderboardData = () => {
-  return models
-    .filter(m => m.id !== 'btc') // Exclude BTC benchmark
-    .map((model, index) => {
-      const accountValue = model.value;
-      const returnRate = ((accountValue - 10000) / 10000) * 100;
-      const totalPnL = accountValue - 10000;
-      const fees = Math.floor(Math.random() * 2000) + 500;
-      const winRate = parseFloat((Math.random() * 15 + 25).toFixed(1));
-      const maxProfit = Math.floor(Math.random() * 2000) + 400;
-      const maxLoss = -(Math.floor(Math.random() * 1500) + 500);
-      const sharpe = (Math.random() * 0.2 - 0.1).toFixed(3);
-      const trades = Math.floor(Math.random() * 800) + 150;
-      const mainCoin = coinTypes[Math.floor(Math.random() * (coinTypes.length - 1)) + 1];
+// KOL type from Supabase
+interface KolData {
+  id: string;
+  name: string;
+  short_name: string | null;
+  icon: string | null;
+  avatar_url: string | null;
+  main_coin: string | null;
+  account_value: number;
+  return_rate: number;
+  total_pnl: number;
+  win_rate: number;
+  max_profit: number;
+  max_loss: number;
+  trading_days: number;
+  created_at: string;
+  updated_at: string;
+}
 
-      return {
-        rank: index + 1,
-        id: model.id,
-        name: model.name,
-        shortName: model.shortName,
-        icon: model.icon,
-        color: model.color,
-        avatar: model.avatar,
-        accountValue,
-        returnRate,
-        totalPnL,
-        fees,
-        winRate,
-        maxProfit,
-        maxLoss,
-        sharpe,
-        trades,
-        mainCoin,
-      };
-    })
-    .sort((a, b) => b.accountValue - a.accountValue)
-    .map((item, index) => ({ ...item, rank: index + 1 }));
+// Transform Supabase data to UI format
+const transformKolData = (kols: KolData[]) => {
+  const colors = ['#10B981', '#6366F1', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
+  return kols.map((kol, index) => ({
+    rank: index + 1,
+    id: kol.id,
+    name: kol.name,
+    shortName: kol.short_name || '',
+    icon: kol.icon || '👤',
+    color: colors[index % colors.length],
+    avatar: kol.avatar_url || '',
+    accountValue: Number(kol.account_value),
+    returnRate: Number(kol.return_rate),
+    totalPnL: Number(kol.total_pnl),
+    winRate: Number(kol.win_rate),
+    maxProfit: Number(kol.max_profit),
+    maxLoss: Number(kol.max_loss),
+    trades: kol.trading_days,
+    mainCoin: kol.main_coin || 'BTC',
+  }));
 };
-
-const leaderboardData = generateLeaderboardData();
 
 // Generate mock profit trend data
 const generateProfitTrendData = (traderId: string) => {
@@ -319,7 +318,55 @@ const LeaderboardContent = () => {
     to: undefined,
   });
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [selectedKol, setSelectedKol] = useState(leaderboardData[0]?.id || '');
+  
+  // KOL data from Supabase
+  const [leaderboardData, setLeaderboardData] = useState<ReturnType<typeof transformKolData>>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedKol, setSelectedKol] = useState('');
+
+  // Fetch KOL data via RPC
+  const fetchKols = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_kols');
+      if (error) throw error;
+      const transformed = transformKolData(data || []);
+      setLeaderboardData(transformed);
+      if (transformed.length > 0 && !selectedKol) {
+        setSelectedKol(transformed[0].id);
+      }
+    } catch (err) {
+      console.error('Error fetching KOLs:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial fetch and Realtime subscription
+  useEffect(() => {
+    fetchKols();
+
+    // Subscribe to Realtime changes on kols table
+    const channel = supabase
+      .channel('kols-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'kols',
+        },
+        (payload) => {
+          console.log('Realtime update:', payload);
+          // Refetch data on any change
+          fetchKols();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   // Filtered data
   const filteredData = useMemo(() => {
@@ -344,9 +391,9 @@ const LeaderboardContent = () => {
       
       return true;
     });
-  }, [searchQuery, coinFilter, returnRateFilter, winRateFilter, maxLossFilter]);
+  }, [leaderboardData, searchQuery, coinFilter, returnRateFilter, winRateFilter, maxLossFilter]);
 
-  const winner = filteredData[0] || leaderboardData[0];
+  const winner = filteredData[0] || leaderboardData[0] || null;
   const maxValue = Math.max(...filteredData.map(d => d.accountValue), 1);
 
   const handleRefresh = () => {
@@ -357,6 +404,7 @@ const LeaderboardContent = () => {
     setMaxLossFilter('all');
     setTimeRange('month');
     setCustomDateRange({ from: undefined, to: undefined });
+    fetchKols(); // Also refetch data
   };
 
   const getTimeRangeLabel = () => {
@@ -702,6 +750,7 @@ const LeaderboardContent = () => {
             {/* Bottom Section: Winner Card + Bar Chart */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               {/* Winner Card */}
+              {winner && (
               <div className="lg:col-span-1 border border-border rounded-lg p-6 bg-card">
                 <div className="text-sm text-muted-foreground mb-3">{t('winningModel')}</div>
                 <div className="flex items-center gap-3 mb-4">
@@ -718,6 +767,7 @@ const LeaderboardContent = () => {
                   ${winner.accountValue.toLocaleString()}
                 </div>
               </div>
+              )}
 
               {/* Bar Chart Visualization */}
               <div className="lg:col-span-3 border border-border rounded-lg p-6 bg-card">
