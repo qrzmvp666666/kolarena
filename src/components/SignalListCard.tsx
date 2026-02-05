@@ -152,8 +152,8 @@ const SignalListCard = ({ signal, isHistory = false }: SignalListCardProps) => {
         </div>
       </div>
 
-      {/* Row 3: Signal Duration | Order Time | Close Time (历史信号) / Duration (有效信号) */}
-      {isHistory ? (
+      {/* Row 3: Signal Duration | Order Time | Close Time (历史信号) */}
+      {isHistory && (
         <div className="grid grid-cols-3 gap-4">
           <div>
             <div className="text-xs text-muted-foreground mb-1">{t('signalDuration')}</div>
@@ -168,16 +168,7 @@ const SignalListCard = ({ signal, isHistory = false }: SignalListCardProps) => {
             <div className="text-sm font-bold text-foreground">{signal.closeTime || '-'}</div>
           </div>
         </div>
-      ) : signal.duration ? (
-        <div className="grid grid-cols-3 gap-4">
-          <div></div>
-          <div></div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">{t('duration')}</div>
-            <div className="text-sm font-semibold text-foreground">{signal.duration}</div>
-          </div>
-        </div>
-      ) : null}
+      )}
     </div>
   );
 };

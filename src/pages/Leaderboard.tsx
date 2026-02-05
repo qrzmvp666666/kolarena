@@ -654,11 +654,9 @@ const LeaderboardContent = () => {
                       <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('accountValue')} ↓</th>
                       <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('returnRate')}</th>
                       <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('totalPnL')}</th>
-                      <th className="px-4 py-3 text-right font-semibold text-muted-foreground">FEES</th>
                       <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('winRate')}</th>
                       <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('maxProfit')}</th>
                       <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('maxLoss')}</th>
-                      <th className="px-4 py-3 text-right font-semibold text-muted-foreground">SHARPE</th>
                       <th className="px-4 py-3 text-right font-semibold text-muted-foreground">TRADES</th>
                     </tr>
                   </thead>
@@ -688,11 +686,9 @@ const LeaderboardContent = () => {
                         <td className={`px-4 py-3 text-right font-medium ${row.totalPnL >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
                           {row.totalPnL >= 0 ? '+' : ''}${row.totalPnL.toLocaleString()}
                         </td>
-                        <td className="px-4 py-3 text-right text-muted-foreground">${row.fees.toLocaleString()}</td>
                         <td className="px-4 py-3 text-right text-muted-foreground">{row.winRate}%</td>
                         <td className="px-4 py-3 text-right text-accent-green">${row.maxProfit.toLocaleString()}</td>
                         <td className="px-4 py-3 text-right text-accent-red">-${Math.abs(row.maxLoss).toLocaleString()}</td>
-                        <td className="px-4 py-3 text-right text-muted-foreground">{row.sharpe}</td>
                         <td className="px-4 py-3 text-right text-muted-foreground">{row.trades}</td>
                       </tr>
                     ))}

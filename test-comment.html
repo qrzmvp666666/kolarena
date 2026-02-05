@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>评论功能测试</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: monospace;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #fff;
+    }
+    button {
+      background: #00ffff;
+      color: #000;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    textarea {
+      width: 100%;
+      height: 100px;
+      margin: 10px 0;
+      padding: 10px;
+      background: #2a2a2a;
+      color: #fff;
+      border: 1px solid #444;
+    }
+    .log {
+      background: #2a2a2a;
+      padding: 15px;
+      margin: 10px 0;
+      border-left: 3px solid #00ffff;
+      white-space: pre-wrap;
+      font-size: 12px;
+    }
+    .error {
+      border-left-color: #ff0000;
+      color: #ff6666;
+    }
+    .success {
+      border-left-color: #00ff00;
+      color: #66ff66;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 评论功能测试</h1>
+  
+  <div>
+    <h3>Supabase 配置</h3>
+    <input type="text" id="supabaseUrl" placeholder="Supabase URL" style="width: 100%; padding: 10px; background: #2a2a2a; color: #fff; border: 1px solid #444; margin: 5px 0;">
+    <input type="text" id="supabaseKey" placeholder="Supabase Anon Key" style="width: 100%; padding: 10px; background: #2a2a2a; color: #fff; border: 1px solid #444; margin: 5px 0;">
+    <button onclick="initSupabase()">初始化 Supabase</button>
+  </div>
+
+  <hr>
+
+  <div>
+    <h3>用户操作</h3>
+    <input type="email" id="email" placeholder="邮箱" style="width: calc(50% - 10px); padding: 10px; background: #2a2a2a; color: #fff; border: 1px solid #444; margin: 5px;">
+    <input type="password" id="password" placeholder="密码" style="width: calc(50% - 10px); padding: 10px; background: #2a2a2a; color: #fff; border: 1px solid #444; margin: 5px;">
+    <br>
+    <button onclick="signIn()">登录</button>
+    <button onclick="checkAuth()">检查登录状态</button>
+    <button onclick="signOut()">登出</button>
+  </div>
+
+  <hr>
+
+  <div>
+    <h3>评论操作</h3>
+    <textarea id="commentContent" placeholder="输入评论内容..."></textarea>
+    <button onclick="createComment()">创建评论</button>
+    <button onclick="getComments()">获取评论列表</button>
+    <button onclick="subscribeToComments()">订阅实时更新</button>
+  </div>
+
+  <div id="logs"></div>
+
+  <script>
+    let supabase = null;
+    let realtimeChannel = null;
+
+    function log(message, type = 'info') {
+      const logs = document.getElementById('logs');
+      const div = document.createElement('div');
+      div.className = `log ${type}`;
+      div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logs.insertBefore(div, logs.firstChild);
+      console.log(message);
+    }
+
+    function initSupabase() {
+      const url = document.getElementById('supabaseUrl').value;
+      const key = document.getElementById('supabaseKey').value;
+      
+      if (!url || !key) {
+        log('请填写 Supabase URL 和 Anon Key', 'error');
+        return;
+      }
+
+      try {
+        supabase = window.supabase.createClient(url, key);
+        log('Supabase 客户端初始化成功！', 'success');
+      } catch (error) {
+        log('初始化失败: ' + error.message, 'error');
+      }
+    }
+
+    async function signIn() {
+      if (!supabase) {
+        log('请先初始化 Supabase', 'error');
+        return;
+      }
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) throw error;
+        log('登录成功！用户: ' + data.user.email, 'success');
+        log('User ID: ' + data.user.id, 'info');
+      } catch (error) {
+        log('登录失败: ' + error.message, 'error');
+      }
+    }
+
+    async function checkAuth() {
+      if (!supabase) {
+        log('请先初始化 Supabase', 'error');
+        return;
+      }
+
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+
+        if (session) {
+          log('已登录 - 用户: ' + session.user.email, 'success');
+          log('User ID: ' + session.user.id, 'info');
+        } else {
+          log('未登录', 'info');
+        }
+      } catch (error) {
+        log('检查登录状态失败: ' + error.message, 'error');
+      }
+    }
+
+    async function signOut() {
+      if (!supabase) return;
+      await supabase.auth.signOut();
+      log('已登出', 'info');
+    }
+
+    async function createComment() {
+      if (!supabase) {
+        log('请先初始化 Supabase', 'error');
+        return;
+      }
+
+      const content = document.getElementById('commentContent').value;
+      if (!content.trim()) {
+        log('请输入评论内容', 'error');
+        return;
+      }
+
+      try {
+        log('调用 create_comment RPC...', 'info');
+        const { data, error } = await supabase.rpc('create_comment', {
+          p_target_type: 'global',
+          p_target_id: null,
+          p_content: content.trim(),
+          p_display_time: new Date().toISOString()
+        });
+
+        if (error) {
+          log('RPC 错误: ' + JSON.stringify(error, null, 2), 'error');
+          throw error;
+        }
+
+        log('评论创建成功！\n' + JSON.stringify(data, null, 2), 'success');
+        document.getElementById('commentContent').value = '';
+      } catch (error) {
+        log('创建评论失败: ' + error.message, 'error');
+      }
+    }
+
+    async function getComments() {
+      if (!supabase) {
+        log('请先初始化 Supabase', 'error');
+        return;
+      }
+
+      try {
+        log('获取评论列表...', 'info');
+        const { data, error } = await supabase.rpc('get_comments', {
+          p_target_type: 'global',
+          p_target_id: null,
+          p_limit: 100
+        });
+
+        if (error) {
+          log('RPC 错误: ' + JSON.stringify(error, null, 2), 'error');
+          throw error;
+        }
+
+        log(`成功获取 ${data.length} 条评论:\n${JSON.stringify(data, null, 2)}`, 'success');
+      } catch (error) {
+        log('获取评论失败: ' + error.message, 'error');
+      }
+    }
+
+    async function subscribeToComments() {
+      if (!supabase) {
+        log('请先初始化 Supabase', 'error');
+        return;
+      }
+
+      if (realtimeChannel) {
+        await supabase.removeChannel(realtimeChannel);
+        log('已取消订阅', 'info');
+      }
+
+      try {
+        log('订阅评论实时更新...', 'info');
+        realtimeChannel = supabase
+          .channel('test-comments')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'comments'
+            },
+            (payload) => {
+              log('实时更新收到:\n' + JSON.stringify(payload, null, 2), 'success');
+            }
+          )
+          .subscribe((status) => {
+            log('订阅状态: ' + status, status === 'SUBSCRIBED' ? 'success' : 'info');
+          });
+      } catch (error) {
+        log('订阅失败: ' + error.message, 'error');
+      }
+    }
+  </script>
+</body>
+</html>
