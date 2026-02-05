@@ -131,13 +131,6 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
         <div className="ml-2 pl-3 border-l border-border">
           {user ? (
             <div className="flex items-center gap-2">
-              <Link
-                to="/account"
-                className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-accent text-foreground font-mono text-sm transition-colors"
-              >
-                <User size={16} />
-                {t('myAccount')}
-              </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-accent rounded-md px-2 py-1 transition-colors">
                   <img 

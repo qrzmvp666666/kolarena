@@ -694,7 +694,14 @@ const LeaderboardContent = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredData.map((row, index) => (
+                    {filteredData.length === 0 ? (
+                      <tr>
+                        <td colSpan={10} className="px-4 py-20 text-center text-muted-foreground text-sm">
+                          {isLoading ? '加载中...' : '暂无 KOL 数据'}
+                        </td>
+                      </tr>
+                    ) : (
+                    filteredData.map((row, index) => (
                       <tr key={row.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                         <td className="px-4 py-3 text-foreground font-medium">{index + 1}</td>
                         <td className="px-4 py-3">
@@ -726,7 +733,8 @@ const LeaderboardContent = () => {
                         <td className="px-4 py-3 text-left text-accent-red">-${Math.abs(row.maxLoss).toLocaleString()}</td>
                         <td className="px-4 py-3 text-left text-muted-foreground">{row.trades}</td>
                       </tr>
-                    ))}
+                    ))
+                    )}
                   </tbody>
                 </table>
               </ScrollArea>
