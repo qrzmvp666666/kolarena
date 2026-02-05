@@ -168,11 +168,6 @@ export const useBinanceWebSocket = (): UseBinanceWebSocketReturn => {
           }, RECONNECT_DELAY);
         } else {
           console.log('⚠️ Max reconnect attempts reached, switching to HTTP fallback');
-          toast({
-            title: '连接已切换',
-            description: 'WebSocket连接失败，已切换到HTTP轮询模式',
-            variant: 'default',
-          });
           startHttpFallback();
         }
       };
