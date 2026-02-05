@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import TopNav from '@/components/TopNav';
 import TickerBar from '@/components/TickerBar';
 import { useLanguage } from '@/lib/i18n';
-import SignalCard from '@/components/SignalCard';
 import SignalListCard from '@/components/SignalListCard';
 import { Search, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -10,187 +9,136 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-// Mock signal data - generate more traders
-const traderNames = [
-  'CryptoMaster', 'ETH_Whale', 'GoldAnalyst', 'AltCoinKing', 'Carrysolo668',
-  'TraderNick', 'BitcoinBull', 'SolanaSniper', 'DefiDegen', 'WhaleWatcher',
-  'MoonHunter', 'DiamondHands', 'CryptoQueen', 'BlockchainBob', 'TokenTitan',
-  'SatoshiFan', 'EtherKing', 'ChartMaster', 'TrendTrader', 'ProfitPro',
-  'CoinCollector', 'CryptoNinja', 'MarketMaker', 'SwingKing', 'DayTraderX'
-];
-
-const channels = [
-  'premium-signals', 'eth-trading', 'xau-signals', 'altcoin-gems', 'btc-premium',
-  'nick-analysis', 'whale-alerts', 'defi-plays', 'moon-shots', 'safe-trades'
-];
+import { supabase } from '@/lib/supabase';
 
 const coinTypes = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'BNB', 'XAU', 'PENDLE', 'ARB', 'OP'];
-const signalTypes: ('spot' | 'long' | 'short')[] = ['spot', 'long', 'short'];
 
-const generateMockSignals = (count: number) => {
-  return Array.from({ length: count }, (_, i) => {
-    const signalType = signalTypes[Math.floor(Math.random() * signalTypes.length)];
-    const coinType = coinTypes[Math.floor(Math.random() * coinTypes.length)];
-    const hasTP = Math.random() > 0.3;
-    const hasSL = Math.random() > 0.3;
+// ---- Types matching DB schema ----
+interface SignalRow {
+  id: string;
+  kol_id: string;
+  kol_name: string;
+  kol_icon: string;
+  kol_avatar_url: string;
+  symbol: string;
+  direction: 'long' | 'short';
+  leverage: number;
+  margin_mode: 'isolated' | 'cross';
+  entry_price: number;
+  stop_loss: number | null;
+  take_profit: number | null;
+  exit_price: number | null;
+  exit_type: 'take_profit' | 'stop_loss' | 'manual' | 'draw' | null;
+  pnl_percentage: number | null;
+  pnl_ratio: string | null;
+  status: 'active' | 'closed' | 'cancelled';
+  signal_duration: string | null;
+  entry_time: string | null;
+  exit_time: string | null;
+  created_at: string;
+}
 
-    return {
-      id: String(i + 1),
-      author: traderNames[i % traderNames.length],
-      channel: channels[Math.floor(Math.random() * channels.length)],
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=trader${i}`,
-      signalType,
-      coinType,
-      signalCount7d: Math.floor(Math.random() * 15) + 1,
-      pair: `${coinType}/USDT`,
-      entryPrice: coinType === 'BTC' ? String(Math.floor(Math.random() * 20000) + 80000)
-        : coinType === 'ETH' ? String(Math.floor(Math.random() * 500) + 1500)
-          : coinType === 'SOL' ? String(Math.floor(Math.random() * 50) + 150)
-            : String((Math.random() * 100).toFixed(2)),
-      takeProfit: hasTP ? String(Math.floor(Math.random() * 10000) + 50000) : null,
-      stopLoss: hasSL ? String(Math.floor(Math.random() * 5000) + 70000) : null,
-      leverage: Math.random() > 0.7 ? `${Math.floor(Math.random() * 20) + 5}x` : null,
-      time: `${Math.floor(Math.random() * 12) + 10}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
-      totalSignals: Math.floor(Math.random() * 100) + 1,
-    };
-  });
-};
+// Transform DB row → card props
+const transformSignal = (row: SignalRow, isHistory: boolean) => {
+  const entryTimeStr = row.entry_time
+    ? new Date(row.entry_time).toLocaleString('zh-CN', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+      }).replace(/\//g, '/')
+    : '-';
 
-// Generate mock active signals for list view
-const generateMockActiveSignals = (count: number) => {
-  return Array.from({ length: count }, (_, i) => {
-    const signalType = Math.random() > 0.5 ? 'long' : 'short';
-    const coinType = coinTypes[Math.floor(Math.random() * coinTypes.length)];
-    const hasTP = Math.random() > 0.2;
-    const hasSL = Math.random() > 0.2;
+  const closeTimeStr = row.exit_time
+    ? new Date(row.exit_time).toLocaleString('zh-CN', {
+        month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit',
+      }).replace(/\//g, '/')
+    : undefined;
 
-    const now = new Date();
-    const orderDate = new Date(now.getTime() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000));
-    const orderTimeStr = orderDate.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    }).replace(/\//g, '/');
+  const isProfit = row.pnl_percentage !== null ? row.pnl_percentage >= 0 : undefined;
+  const returnRate = row.pnl_percentage !== null
+    ? `${row.pnl_percentage >= 0 ? '+' : ''}${row.pnl_percentage}%`
+    : undefined;
 
-    // Calculate duration
-    const diffMs = now.getTime() - orderDate.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    
-    let durationStr = '';
-    if (diffDays > 0) {
-      durationStr = `${diffDays}天${diffHours}小时`;
-    } else if (diffHours > 0) {
-      durationStr = `${diffHours}小时${diffMinutes}分`;
-    } else {
-      durationStr = `${diffMinutes}分钟`;
-    }
+  const outcomeMap: Record<string, 'takeProfit' | 'stopLoss' | 'draw'> = {
+    take_profit: 'takeProfit',
+    stop_loss: 'stopLoss',
+    draw: 'draw',
+    manual: 'draw',
+  };
 
-    return {
-      id: `active-${i + 1}`,
-      author: traderNames[i % traderNames.length],
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=active${i}`,
-      pair: `${coinType}/USDT 永续`,
-      signalType: signalType as 'long' | 'short',
-      leverage: `${Math.floor(Math.random() * 15) + 5}x`,
-      entryPrice: coinType === 'BTC' ? String(Math.floor(Math.random() * 20000) + 80000)
-        : coinType === 'ETH' ? String(Math.floor(Math.random() * 500) + 1500)
-          : coinType === 'SOL' ? String(Math.floor(Math.random() * 50) + 150)
-            : String((Math.random() * 100).toFixed(2)),
-      positionMode: Math.random() > 0.5 ? '全仓' : '逐仓',
-      orderTime: orderTimeStr,
-      duration: durationStr,
-      takeProfit: hasTP ? String(Math.floor(Math.random() * 5000) + 100000) : null,
-      stopLoss: hasSL ? String(Math.floor(Math.random() * 5000) + 70000) : null,
-      profitRatio: '0:0',
-    };
-  });
-};
-
-// Generate mock history signals for list view
-const generateMockHistorySignals = (count: number) => {
-  return Array.from({ length: count }, (_, i) => {
-    const signalType = Math.random() > 0.5 ? 'long' : 'short';
-    const coinType = coinTypes[Math.floor(Math.random() * coinTypes.length)];
-    const hasTP = Math.random() > 0.2;
-    const hasSL = Math.random() > 0.2;
-    const isProfit = Math.random() > 0.4;
-
-    const now = new Date();
-    const closeDate = new Date(now.getTime() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000));
-    const durationHours = Math.floor(Math.random() * 48) + 1;
-    const orderDate = new Date(closeDate.getTime() - durationHours * 60 * 60 * 1000);
-    
-    const orderTimeStr = orderDate.toLocaleString('zh-CN', {
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).replace(/\//g, '/');
-
-    const closeTimeStr = closeDate.toLocaleString('zh-CN', {
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).replace(/\//g, '/');
-
-    const profitValue = isProfit
-      ? `+${(Math.random() * 50).toFixed(1)}%`
-      : `-${(Math.random() * 30).toFixed(1)}%`;
-
-    const returnRate = isProfit 
-      ? `+${(Math.random() * 30).toFixed(1)}%` 
-      : `-${(Math.random() * 20).toFixed(1)}%`;
-
-    return {
-      id: `history-${i + 1}`,
-      author: traderNames[i % traderNames.length],
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=history${i}`,
-      pair: `${coinType}/USDT 永续`,
-      signalType: signalType as 'long' | 'short',
-      leverage: `${Math.floor(Math.random() * 15) + 5}x`,
-      entryPrice: coinType === 'BTC' ? String(Math.floor(Math.random() * 20000) + 80000)
-        : coinType === 'ETH' ? String(Math.floor(Math.random() * 500) + 1500)
-          : coinType === 'SOL' ? String(Math.floor(Math.random() * 50) + 150)
-            : String((Math.random() * 100).toFixed(2)),
-      positionMode: Math.random() > 0.5 ? '全仓' : '逐仓',
-      orderTime: orderTimeStr,
+  return {
+    id: row.id,
+    author: row.kol_name,
+    avatar: row.kol_avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${row.kol_name}`,
+    pair: `${row.symbol} 永续`,
+    signalType: row.direction,
+    leverage: `${row.leverage}x`,
+    entryPrice: String(row.entry_price),
+    positionMode: row.margin_mode === 'cross' ? '全仓' : '逐仓',
+    orderTime: entryTimeStr,
+    takeProfit: row.take_profit !== null ? String(row.take_profit) : null,
+    stopLoss: row.stop_loss !== null ? String(row.stop_loss) : null,
+    profitRatio: row.pnl_ratio || '0:0',
+    ...(isHistory ? {
+      returnRate,
+      isProfit,
+      signalDuration: row.signal_duration || undefined,
       closeTime: closeTimeStr,
-      takeProfit: hasTP ? String(Math.floor(Math.random() * 5000) + 100000) : null,
-      stopLoss: hasSL ? String(Math.floor(Math.random() * 5000) + 70000) : null,
-      profitRatio: '0:0',
-      returnRate: returnRate,
-      isProfit: isProfit,
-      signalDuration: `${durationHours}h`,
-      outcome: isProfit ? 'takeProfit' : (Math.random() > 0.5 ? 'stopLoss' : 'draw') as 'takeProfit' | 'stopLoss' | 'draw',
-    };
-  });
+      outcome: row.exit_type ? outcomeMap[row.exit_type] : undefined,
+    } : {}),
+  };
 };
-
-const mockSignals = generateMockSignals(25);
-const mockActiveSignals = generateMockActiveSignals(20);
-const mockHistorySignals = generateMockHistorySignals(30);
 
 const SignalsContent = () => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'all' | 'subscribed' | 'unsubscribed'>('all');
-  const [listTab, setListTab] = useState<'active' | 'history'>('active');
   const [marketType, setMarketType] = useState<'futures' | 'spot'>('futures');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPair, setSelectedPair] = useState<string>('all');
   const [selectedSignalType, setSelectedSignalType] = useState<string>('all');
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'year' | 'custom'>('month');
 
+  // ---- Supabase data ----
+  const [activeSignals, setActiveSignals] = useState<SignalRow[]>([]);
+  const [historySignals, setHistorySignals] = useState<SignalRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchSignals = useCallback(async () => {
+    setLoading(true);
+    const [activeRes, closedRes] = await Promise.all([
+      supabase.rpc('get_signals', { p_status: 'active', p_limit: 50 }),
+      supabase.rpc('get_signals', { p_status: 'closed', p_limit: 50 }),
+    ]);
+    if (activeRes.data) setActiveSignals(activeRes.data as SignalRow[]);
+    if (closedRes.data) setHistorySignals(closedRes.data as SignalRow[]);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchSignals();
+
+    // Realtime subscription
+    const channel = supabase
+      .channel('signals-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'signals' },
+        () => {
+          // Re-fetch on any change
+          fetchSignals();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchSignals]);
+
   const tabs = [
-    { id: 'all' as const, label: t('signalAll'), count: 1000 },
+    { id: 'all' as const, label: t('signalAll'), count: activeSignals.length + historySignals.length },
     { id: 'subscribed' as const, label: t('signalSubscribed'), count: 0 },
-    { id: 'unsubscribed' as const, label: t('signalUnsubscribed'), count: 1000 },
+    { id: 'unsubscribed' as const, label: t('signalUnsubscribed'), count: activeSignals.length + historySignals.length },
   ];
 
   const timeRanges = [
@@ -280,8 +228,8 @@ const SignalsContent = () => {
                 className="pl-9 w-64 bg-card border-border"
               />
             </div>
-            <Button variant="outline" size="sm" className="gap-2">
-              <RefreshCw className="w-4 h-4" />
+            <Button variant="outline" size="sm" className="gap-2" onClick={fetchSignals} disabled={loading}>
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               {t('refresh')}
             </Button>
           </div>
@@ -360,20 +308,42 @@ const SignalsContent = () => {
 
           {/* Active Signals List View */}
           <TabsContent value="active" className="mt-0 h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {mockActiveSignals.map(signal => (
-                <SignalListCard key={signal.id} signal={signal} isHistory={false} />
-              ))}
-            </div>
+            {loading ? (
+              <div className="flex items-center justify-center py-20 text-muted-foreground">
+                <RefreshCw className="w-5 h-5 animate-spin mr-2" />
+                加载中...
+              </div>
+            ) : activeSignals.length === 0 ? (
+              <div className="flex items-center justify-center py-20 text-muted-foreground">
+                暂无有效信号
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {activeSignals.map(row => (
+                  <SignalListCard key={row.id} signal={transformSignal(row, false)} isHistory={false} />
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           {/* History Signals List View */}
           <TabsContent value="history" className="mt-0 h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {mockHistorySignals.map(signal => (
-                <SignalListCard key={signal.id} signal={signal} isHistory={true} />
-              ))}
-            </div>
+            {loading ? (
+              <div className="flex items-center justify-center py-20 text-muted-foreground">
+                <RefreshCw className="w-5 h-5 animate-spin mr-2" />
+                加载中...
+              </div>
+            ) : historySignals.length === 0 ? (
+              <div className="flex items-center justify-center py-20 text-muted-foreground">
+                暂无历史信号
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {historySignals.map(row => (
+                  <SignalListCard key={row.id} signal={transformSignal(row, true)} isHistory={true} />
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
