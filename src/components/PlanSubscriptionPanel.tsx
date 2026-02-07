@@ -31,25 +31,27 @@ const PlanSubscriptionPanel = () => {
   };
 
   const monthlyFeatures: PlanFeature[] = [
+    { text: t('featureLive') },
+    { text: t('featureLeaderboard') },
     { text: t('featureSignals') },
     { text: t('featureCharts') },
-    { text: t('featureChat') },
+    { text: t('featureCommunity') },
   ];
 
   const quarterlyFeatures: PlanFeature[] = [
+    { text: t('featureLive') },
+    { text: t('featureLeaderboard') },
     { text: t('featureSignals') },
     { text: t('featureCharts') },
-    { text: t('featureChat') },
-    { text: t('featurePriority'), highlight: true },
-    { text: t('featureAdvanced'), highlight: true },
+    { text: t('featureCommunity') },
   ];
 
   const yearlyFeatures: PlanFeature[] = [
+    { text: t('featureLive') },
+    { text: t('featureLeaderboard') },
     { text: t('featureSignals') },
     { text: t('featureCharts') },
-    { text: t('featureChat') },
-    { text: t('featurePriority'), highlight: true },
-    { text: t('featureAdvanced'), highlight: true },
+    { text: t('featureCommunity') },
     { text: t('featureVipGroup'), highlight: true },
     { text: t('featureExclusive'), highlight: true },
   ];
@@ -136,15 +138,15 @@ const PlanSubscriptionPanel = () => {
             <div className="space-y-2 mb-6 pb-6 border-b border-border">
               <div className="flex items-center gap-2 text-sm">
                 <CircleDot className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-muted-foreground">{t('featureLive')}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <CircleDot className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-muted-foreground">{t('featureLeaderboard')}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <CircleDot className="w-3.5 h-3.5 text-muted-foreground" />
                 <span className="text-muted-foreground">{t('featureSignals')}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <CircleDot className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-muted-foreground">{t('featureCharts')}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <CircleDot className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-muted-foreground">{t('featureChat')}</span>
               </div>
             </div>
             
