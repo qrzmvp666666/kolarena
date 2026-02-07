@@ -188,7 +188,10 @@ const ChartPage = () => {
                     {/* KOL Filter */}
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-7 border-dashed gap-2 text-xs">
+                            <Button 
+                                size="sm" 
+                                className="h-8 gap-2 text-xs font-bold text-white border-0 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 shadow-[0_0_15px_-3px_rgba(168,85,247,0.4)] hover:shadow-[0_0_20px_-3px_rgba(168,85,247,0.6)] transition-all duration-300 hover:scale-105"
+                            >
                                 <Users className="w-3.5 h-3.5" />
                                 KOL 筛选
                             </Button>

@@ -56,7 +56,9 @@ const Index = () => {
         </div>
 
         {/* Sidebar */}
-        <Sidebar />
+        <div className="w-[380px] border-l border-border bg-card hidden md:block">
+          <Sidebar />
+        </div>
       </div>
     </div>
   );
