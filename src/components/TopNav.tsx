@@ -70,6 +70,15 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
         </Link>
         <span className="text-muted-foreground">|</span>
         <Link 
+          to="/chart" 
+          className={`font-mono text-sm transition-colors ${
+            location.pathname === '/chart' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Chart
+        </Link>
+        <span className="text-muted-foreground">|</span>
+        <Link 
           to="/signals" 
           className={`font-mono text-sm transition-colors ${
             location.pathname === '/signals' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
