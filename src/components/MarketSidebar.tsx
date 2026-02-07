@@ -77,7 +77,7 @@ export const MarketSidebar = ({ currentSymbol, onSelectSymbol }: MarketSidebarPr
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <Avatar className="w-8 h-8 p-1 bg-background/50 rounded-full shrink-0">
+                  <Avatar className="w-8 h-8 shrink-0 bg-transparent">
                     <AvatarImage src={iconUrl} alt={symbol} className="object-contain" />
                     <AvatarFallback>{symbol.substring(0, 2)}</AvatarFallback>
                   </Avatar>
