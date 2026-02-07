@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TopNav from '@/components/TopNav';
 import { TradingChart, ChartSignal } from '@/components/TradingChart';
+import Danmaku from '@/components/Danmaku';
 import { useBinanceCandles } from '@/hooks/useBinanceCandles';
 import { INTERVALS, Interval } from '@/lib/binance';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -47,6 +48,7 @@ const ChartPage = () => {
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [interval, setInterval] = useState<Interval>('15m');
   const [chartSignals, setChartSignals] = useState<ChartSignal[]>([]);
+  const [danmakuEnabled, setDanmakuEnabled] = useState(true);
   
   // Filters State
   const [selectedKols, setSelectedKols] = useState<Set<string>>(new Set());
@@ -157,8 +159,9 @@ const ChartPage = () => {
 
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
-      <TopNav />
+    <div className="h-screen bg-background flex flex-col overflow-hidden relative">
+      {danmakuEnabled && <Danmaku />}
+      <TopNav danmakuEnabled={danmakuEnabled} onToggleDanmaku={() => setDanmakuEnabled(!danmakuEnabled)} />
       <TickerBar />
       
       <div className="flex flex-1 overflow-hidden">
