@@ -1,6 +1,17 @@
-import { useEffect, useRef } from 'react';
-import { createChart, ColorType, IChartApi, ISeriesApi, Time, CandlestickSeries, HistogramSeries } from 'lightweight-charts';
+import { useEffect, useRef, useState } from 'react';
+import { createChart, ColorType, IChartApi, ISeriesApi, Time, CandlestickSeries, HistogramSeries, MouseEventParams } from 'lightweight-charts';
 import { Candle } from '@/lib/binance';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
+export interface ChartSignal {
+  id: string;
+  type: 'long' | 'short';
+  price: number;
+  time: number; // Unix timestamp in seconds
+  avatarUrl?: string;
+  kolName?: string;
+  status?: 'active' | 'closed' | 'cancelled';
+}
 
 interface TradingChartProps {
   data: Candle[];
@@ -13,6 +24,7 @@ interface TradingChartProps {
     wickDownColor?: string;
   };
   isLoading?: boolean;
+  signals?: ChartSignal[];
 }
 
 export const TradingChart = ({ 
@@ -25,18 +37,31 @@ export const TradingChart = ({
     wickUpColor = '#26a69a',
     wickDownColor = '#ef5350',
   } = {},
-  isLoading = false
+  isLoading = false,
+  signals = []
 }: TradingChartProps) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
+  
+  // Refs for managing overlay signal elements
+  const signalsRef = useRef<ChartSignal[]>(signals);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const signalElementsRef = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  // Update refs when props change
+  useEffect(() => {
+    signalsRef.current = signals;
+  }, [signals]);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
     const handleResize = () => {
-      chartRef.current?.applyOptions({ width: chartContainerRef.current!.clientWidth });
+      if (chartContainerRef.current) {
+         chartRef.current?.applyOptions({ width: chartContainerRef.current.clientWidth });
+      }
     };
 
     const chart = createChart(chartContainerRef.current, {
@@ -53,6 +78,9 @@ export const TradingChart = ({
       timeScale: {
         timeVisible: true,
         secondsVisible: false,
+      },
+      crosshair: {
+        mode: 1, // CrosshairMode.Normal
       },
     });
 
@@ -86,8 +114,52 @@ export const TradingChart = ({
 
     window.addEventListener('resize', handleResize);
 
+    // --- Signal Overlay Logic ---
+    // We use a RAF loop to sync positions for smoother performance than React state during scroll
+    let animationFrameId: number;
+    const timeScale = chart.timeScale();
+
+    const updateSignalPositions = () => {
+      if (!chartRef.current || !candleSeriesRef.current || !overlayRef.current) return;
+      
+      const series = candleSeriesRef.current;
+      // const timeScale = chart.timeScale(); // Already defined in closure
+
+      signalsRef.current.forEach(signal => {
+        const el = signalElementsRef.current.get(signal.id);
+        if (!el) return;
+
+        // Convert time and price to coordinates
+        // Note: signal.time must match the data type. Assuming unix seconds (number).
+        const x = timeScale.timeToCoordinate(signal.time as Time); 
+        const y = series.priceToCoordinate(signal.price);
+
+        if (x === null || y === null) {
+          el.style.display = 'none';
+        } else {
+          el.style.display = 'flex';
+          // Centering the marker: Subtract half width/height
+          // Assuming marker is 32x32 roughly
+          el.style.transform = `translate(${x - 16}px, ${y - 32}px)`; 
+          // y - 32 places it slightly above the candle (if we consider standard pin behavior)
+          // or y - 16 to undo center pivot.
+        }
+      });
+      
+      animationFrameId = requestAnimationFrame(updateSignalPositions);
+    };
+
+    // Start loop
+    animationFrameId = requestAnimationFrame(updateSignalPositions);
+    
+    // Subscribe to time scale changes (optional, RAF covers it mostly but this can help with edge cases if we stop RAF)
+    timeScale.subscribeVisibleTimeRangeChange(() => {
+        // We rely on RAF for position updates
+    });
+
     return () => {
       window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationFrameId);
       chart.remove();
     };
   }, [backgroundColor, textColor, upColor, downColor, wickUpColor, wickDownColor]);
@@ -125,37 +197,81 @@ export const TradingChart = ({
       value: d.volume || 0,
       color: d.close >= d.open ? upColor : downColor,
     }));
-
-    // Logic to prevent full redraw on every tick if possible, 
-    // but for simplicity and robustness with React state, 
-    // we use setData for now. lightweight-charts handles this reasonably well.
-    // For specific high-freq optimization, we would compare the last data point.
-    
-    // We check if the data set is completely different or just an update
-    // A simple heuristic: if the array length difference is > 1, it's a history load.
-    
-    // Note: This is a heavy operation for every tick if the array is huge.
-    // Ideally, we would use `series.update()` for the last element.
-    // But since `candles` from hook is a new array reference every time...
     
     candleSeriesRef.current.setData(chartData);
     volumeSeriesRef.current.setData(volumeData);
-
-    // Only fit content on initial load or significant change
-    // We strictly rely on the hook's loading state to decide "initial"
-    // Since we don't track "initial" here easily without more state.
-    // But `setData` maintains viewport usually unless we call timeScale().fitContent().
     
   }, [data, upColor, downColor]);
 
   return (
-    <div className="relative w-full h-full border border-gray-800 rounded-lg overflow-hidden bg-card">
+    <div className="relative w-full h-full border border-border rounded-lg overflow-hidden bg-card">
        {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10 text-white">
+        <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10 text-foreground">
           Loading Data...
         </div>
       )}
       <div ref={chartContainerRef} className="w-full h-full" />
+      
+      {/* Signal Overlay Container */}
+      <div 
+        ref={overlayRef} 
+        className="absolute inset-0 pointer-events-none overflow-hidden" 
+        style={{ zIndex: 5 }}
+      >
+        {signals.map(signal => (
+           <div
+             key={signal.id}
+             ref={el => {
+                if (el) signalElementsRef.current.set(signal.id, el);
+                else signalElementsRef.current.delete(signal.id);
+             }}
+             className="absolute flex flex-col items-center gap-1 group pointer-events-auto cursor-pointer transition-transform will-change-transform"
+             style={{ display: 'none' }} // Hidden initially until positioned
+           >
+              {/* Name Label */}
+               <div className={`
+                   absolute -top-7 whitespace-nowrap text-[10px] font-bold px-1.5 py-0.5 rounded border shadow-sm z-30
+                    ${signal.type === 'long' ? 'bg-green-950/80 text-green-400 border-green-500/30' : 'bg-red-950/80 text-red-400 border-red-500/30'}
+                    ${signal.status === 'closed' ? 'bg-gray-100 text-gray-500 border-gray-200' : ''}
+               `}>
+                   {signal.kolName}
+               </div>
+
+              {/* Avatar Bubble */}
+              <div className={`
+                 relative p-0.5 rounded-full border-2 z-20 bg-background
+                 ${signal.type === 'long' ? 'border-green-500' : 'border-red-500'}
+                 ${signal.status === 'closed' || signal.status === 'cancelled' ? 'opacity-50 grayscale border-gray-400' : ''}
+              `}>
+                <Avatar className="w-8 h-8">
+                    <AvatarImage src={signal.avatarUrl} />
+                    <AvatarFallback>{signal.kolName?.substring(0,2)}</AvatarFallback>
+                </Avatar>
+              </div>
+
+              {/* Price Line & Label */}
+               <div className={`
+                    absolute left-full top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-10
+                    ${signal.status === 'closed' || signal.status === 'cancelled' ? 'opacity-30 grayscale' : 'opacity-80'}
+               `}>
+                   {/* Dashed Line */}
+                   <div 
+                      className={`h-[1px] border-t-2 border-dashed ${signal.type === 'long' ? 'border-green-500' : 'border-red-500'}`}
+                      style={{ width: '2000px' }}
+                   />
+                   
+                   {/* Price Pill */}
+                   <div className={`
+                      absolute left-2 -top-6 px-1.5 py-0.5 rounded text-[10px] font-bold shadow-sm whitespace-nowrap
+                      ${signal.type === 'long' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}
+                   `}>
+                      入场价：{signal.price}
+                   </div>
+               </div>
+           </div>
+        ))}
+      </div>
     </div>
   );
 };
+

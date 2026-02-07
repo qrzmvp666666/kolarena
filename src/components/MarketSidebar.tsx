@@ -27,12 +27,8 @@ export const MarketSidebar = ({ currentSymbol, onSelectSymbol }: MarketSidebarPr
   return (
     <div className="w-[300px] bg-card border-r border-border flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 border-b border-border">
-        <h2 className="text-sm text-foreground font-semibold mb-2">Markets</h2>
-        <div className="flex text-xs text-muted-foreground justify-between px-2">
-            <span className="pl-8">Pair</span>
-            <span>Price / 24h</span>
-        </div>
+      <div className="h-[60px] flex items-center px-4 border-b border-border shrink-0">
+        <h2 className="text-sm text-foreground font-semibold">Markets</h2>
       </div>
 
       <ScrollArea className="flex-1">

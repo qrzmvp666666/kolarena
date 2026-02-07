@@ -68,110 +68,88 @@ interface CompletedTrade {
   outcome: 'takeProfit' | 'stopLoss' | 'draw';
 }
 
-// Generate mock pending orders
-const generateMockPendingOrders = (count: number): PendingOrder[] => {
-  return Array.from({ length: count }, (_, i) => {
-    const signalType = Math.random() > 0.5 ? 'long' : 'short';
-    const coinType = coinTypes[Math.floor(Math.random() * coinTypes.length)];
-    const hasTP = Math.random() > 0.2;
-    const hasSL = Math.random() > 0.2;
+// Remove mock data generation
+// const generateMockPendingOrders = ... 
+// const generateMockCompletedTrades = ...
+// const mockPendingOrders = generateMockPendingOrders(15);
+// const mockCompletedTrades = generateMockCompletedTrades(20);
 
-    const now = new Date();
-    const orderDate = new Date(now.getTime() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000));
-    const orderTimeStr = orderDate.toLocaleString('zh-CN', {
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+// const Sidebar = () => { ... } 
 
-    return {
-      id: `pending-${i + 1}`,
-      author: mockUsers[i % mockUsers.length].name,
-      avatar: mockUsers[i % mockUsers.length].avatar,
-      pair: `${coinType}/USDT 永续`,
-      signalType,
-      leverage: `${Math.floor(Math.random() * 15) + 5}x`,
-      entryPrice: coinType === 'BTC' ? String(Math.floor(Math.random() * 20000) + 80000)
-        : coinType === 'ETH' ? String(Math.floor(Math.random() * 500) + 1500)
-          : String((Math.random() * 100).toFixed(2)),
-      positionMode: Math.random() > 0.5 ? '全仓' : '逐仓',
-      orderTime: orderTimeStr,
-      takeProfit: hasTP ? String(Math.floor(Math.random() * 5000) + 100000) : null,
-      stopLoss: hasSL ? String(Math.floor(Math.random() * 5000) + 70000) : null,
-    };
-  });
-};
-
-// Generate mock completed trades
-const generateMockCompletedTrades = (count: number): CompletedTrade[] => {
-  return Array.from({ length: count }, (_, i) => {
-    const signalType = Math.random() > 0.5 ? 'long' : 'short';
-    const coinType = coinTypes[Math.floor(Math.random() * coinTypes.length)];
-    const isProfit = Math.random() > 0.4;
-    const hasTP = Math.random() > 0.2;
-    const hasSL = Math.random() > 0.2;
-
-    const now = new Date();
-    const openDate = new Date(now.getTime() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000));
-    const closeDate = new Date(openDate.getTime() + Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000));
-
-    const entryPrice = coinType === 'BTC' ? Math.floor(Math.random() * 20000) + 80000
-      : coinType === 'ETH' ? Math.floor(Math.random() * 500) + 1500
-        : Math.floor(Math.random() * 100);
-
-    const priceChange = isProfit
-      ? entryPrice * (1 + Math.random() * 0.3)
-      : entryPrice * (1 - Math.random() * 0.2);
-
-    const profitValue = isProfit
-      ? `+${(Math.random() * 50).toFixed(1)}%`
-      : `-${(Math.random() * 30).toFixed(1)}%`;
-
-    return {
-      id: `trade-${i + 1}`,
-      author: mockUsers[i % mockUsers.length].name,
-      avatar: mockUsers[i % mockUsers.length].avatar,
-      pair: `${coinType}/USDT 永续`,
-      signalType,
-      leverage: `${Math.floor(Math.random() * 15) + 5}x`,
-      entryPrice: String(entryPrice),
-      closePrice: String(Math.floor(priceChange)),
-      positionMode: Math.random() > 0.5 ? '全仓' : '逐仓',
-      openTime: openDate.toLocaleString('zh-CN', {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      closeTime: closeDate.toLocaleString('zh-CN', {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      takeProfit: hasTP ? String(Math.floor(Math.random() * 5000) + 100000) : null,
-      stopLoss: hasSL ? String(Math.floor(Math.random() * 5000) + 70000) : null,
-      profit: profitValue,
-      isProfit,
-      signalDuration: `${Math.floor(Math.random() * 48) + 1}h`,
-      returnRate: isProfit ? `+${(Math.random() * 30).toFixed(1)}%` : `-${(Math.random() * 20).toFixed(1)}%`,
-      profitRatio: '0:0',
-      outcome: isProfit ? 'takeProfit' : Math.random() > 0.5 ? 'stopLoss' : 'draw',
-    };
-  });
-};
-
-const mockPendingOrders = generateMockPendingOrders(15);
-const mockCompletedTrades = generateMockCompletedTrades(20);
+// We need to fetch real signals similar to Signal.tsx or ChartPage.tsx
+// I will rewrite the component to include state for pending/history orders and fetch them.
 
 const Sidebar = () => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentInput, setCommentInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeSignals, setActiveSignals] = useState<PendingOrder[]>([]);
+  const [historySignals, setHistorySignals] = useState<CompletedTrade[]>([]);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguage();
   const { user } = useUser();
+
+  // Fetch signals
+  const fetchSignals = async () => {
+    try {
+        const [activeRes, closedRes] = await Promise.all([
+             supabase.rpc('get_signals', { p_status: 'active', p_limit: 50 }),
+             supabase.rpc('get_signals', { p_status: 'closed', p_limit: 50 }),
+        ]);
+
+        if (activeRes.data) {
+            const mappedActive = activeRes.data.map((s: any) => ({
+                id: s.id,
+                author: s.kol_name,
+                avatar: s.kol_avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.kol_name}`,
+                pair: `${s.symbol} 永续`, // Assuming symbol like BTC/USDT or BTCUSDT
+                signalType: s.direction,
+                leverage: `${s.leverage}x`,
+                entryPrice: String(s.entry_price),
+                positionMode: s.margin_mode === 'cross' ? '全仓' : '逐仓',
+                orderTime: new Date(s.entry_time).toLocaleString('zh-CN', {
+                    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+                }),
+                takeProfit: s.take_profit ? String(s.take_profit) : null,
+                stopLoss: s.stop_loss ? String(s.stop_loss) : null,
+            }));
+            setActiveSignals(mappedActive);
+        }
+
+        if (closedRes.data) {
+            const mappedHistory = closedRes.data.map((s: any) => ({
+                id: s.id,
+                author: s.kol_name,
+                avatar: s.kol_avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.kol_name}`,
+                pair: `${s.symbol} 永续`,
+                signalType: s.direction,
+                leverage: `${s.leverage}x`,
+                entryPrice: String(s.entry_price),
+                closePrice: String(s.exit_price || s.entry_price), // Fallback if null
+                positionMode: s.margin_mode === 'cross' ? '全仓' : '逐仓',
+                openTime: new Date(s.entry_time).toLocaleString('zh-CN', {
+                    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+                }),
+                closeTime: s.exit_time ? new Date(s.exit_time).toLocaleString('zh-CN', {
+                    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+                }) : '-',
+                takeProfit: s.take_profit ? String(s.take_profit) : null,
+                stopLoss: s.stop_loss ? String(s.stop_loss) : null,
+                profit: s.pnl_percentage ? `${s.pnl_percentage >= 0 ? '+' : ''}${s.pnl_percentage}%` : '0%',
+                isProfit: (s.pnl_percentage || 0) >= 0,
+                signalDuration: s.signal_duration || '-',
+                returnRate: s.pnl_percentage ? `${s.pnl_percentage}%` : '0%', // slightly redundant with profit
+                profitRatio: s.pnl_ratio || '0:0',
+                outcome: s.exit_type === 'take_profit' ? 'takeProfit' : s.exit_type === 'stop_loss' ? 'stopLoss' : 'draw'
+            }));
+            setHistorySignals(mappedHistory);
+        }
+
+    } catch (err) {
+        console.error("Failed to fetch sidebar signals", err);
+    }
+  };
 
   // 获取评论
   const fetchComments = async () => {
@@ -205,9 +183,10 @@ const Sidebar = () => {
   // 初始化加载和实时订阅
   useEffect(() => {
     fetchComments();
+    fetchSignals();
 
     // 订阅评论表的变化
-    const channel = supabase
+    const commentChannel = supabase
       .channel('sidebar-comments')
       .on(
         'postgres_changes',
@@ -222,9 +201,20 @@ const Sidebar = () => {
         }
       )
       .subscribe();
+    
+    // 订阅信号表变化
+    const signalChannel = supabase
+      .channel('sidebar-signals')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'signals' },
+        () => { fetchSignals(); }
+      )
+      .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(commentChannel);
+      supabase.removeChannel(signalChannel);
     };
   }, []);
 
@@ -280,7 +270,7 @@ const Sidebar = () => {
         <TabsContent value="trades" className="flex-1 mt-0 overflow-hidden flex flex-col">
           <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent p-3">
             <div className="space-y-3">
-              {mockCompletedTrades.map((trade) => (
+              {historySignals.map((trade) => (
                 <div
                   key={trade.id}
                   className="relative p-3 rounded-lg bg-card border border-border hover:border-foreground/20 transition-all cursor-pointer group overflow-hidden"
@@ -387,7 +377,7 @@ const Sidebar = () => {
         <TabsContent value="pending" className="flex-1 mt-0 overflow-hidden flex flex-col">
           <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent p-3">
             <div className="space-y-3">
-              {mockPendingOrders.map((order) => (
+              {activeSignals.map((order) => (
                 <div
                   key={order.id}
                   className="p-3 rounded-lg bg-card border border-border hover:border-foreground/20 transition-all cursor-pointer group"

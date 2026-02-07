@@ -75,7 +75,7 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
             location.pathname === '/chart' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          Chart
+          {t('chartPage')}
         </Link>
         <span className="text-muted-foreground">|</span>
         <Link 
