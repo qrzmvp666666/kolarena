@@ -19,6 +19,7 @@ import { DateRange } from "react-day-picker";
 import { addDays, subDays, subMonths, subQuarters, subYears, isWithinInterval, parseISO, startOfDay, endOfDay } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Filter, Users } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n';
 
 interface SignalRow {
   id: string;
@@ -45,6 +46,7 @@ const getIntervalSeconds = (interval: Interval): number => {
 };
 
 const ChartPage = () => {
+    const { language } = useLanguage();
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [interval, setInterval] = useState<Interval>('15m');
   const [chartSignals, setChartSignals] = useState<ChartSignal[]>([]);
@@ -178,7 +180,9 @@ const ChartPage = () => {
                 <div className="flex items-center gap-4 min-w-[200px]">
                      <h1 className="text-xl font-bold text-foreground tracking-wide">
                         {symbol.replace('USDT', '')}/USDT
-                        <span className="ml-2 text-xs font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Perp</span>
+                                <span className="ml-2 text-xs font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                                  {language === 'zh' ? '合约' : 'Perp'}
+                                </span>
                      </h1>
                 </div>
 
@@ -247,7 +251,6 @@ const ChartPage = () => {
                 </div>
 
                 <div className="flex items-center gap-2 min-w-[200px] justify-end">
-                    <span className="text-sm text-muted-foreground mr-2">Timeframe</span>
                     <div className="flex bg-muted rounded p-1">
                         {Object.keys(INTERVALS).map((i) => (
                             <button
