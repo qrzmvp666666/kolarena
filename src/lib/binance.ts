@@ -50,11 +50,14 @@ export async function fetchKlines(
 ): Promise<Candle[]> {
   try {
     // Determine the base URL
-    // In development, we use the proxy '/api'.
-    // In production, you might need a real backend or a different proxy strategy 
-    // because calling binance.com directly from browser usually hits CORS.
-    // Assuming Vite proxy is active for '/api'.
-    const url = `/api/v3/klines?symbol=${symbol.toUpperCase()}&interval=${interval}&limit=${limit}`;
+    // In development, we use the proxy '/api' defined in vite.config.ts to avoid CORS.
+    // In production, we typically need to call the API directly unless the hosting provider (like EdgeOne) 
+    // is configured to proxy '/api' as well.
+    // NOTE: Direct calls to binance.vision usually support CORS, but might be blocked by GFW in CN.
+    const isDev = import.meta.env.DEV;
+    const baseUrl = isDev ? '/api' : 'https://data-api.binance.vision/api';
+    
+    const url = `${baseUrl}/v3/klines?symbol=${symbol.toUpperCase()}&interval=${interval}&limit=${limit}`;
 
     const response = await fetch(url);
     if (!response.ok) {
