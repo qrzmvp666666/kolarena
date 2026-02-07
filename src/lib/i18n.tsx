@@ -48,6 +48,13 @@ export const translations: Translations = {
   // ChartHeader
   totalAccountValue: { zh: '总账户价值', en: 'TOTAL ACCOUNT VALUE' },
   all: { zh: '全部', en: 'ALL' },
+
+  // TickerBar
+  weeklyRank: { zh: '周榜', en: 'WEEKLY' },
+  monthlyRank: { zh: '月榜', en: 'MONTHLY' },
+  seasonRank: { zh: '季榜', en: 'SEASON' },
+  highest: { zh: '最高', en: 'High' },
+  lowest: { zh: '最低', en: 'Low' },
   
   // Sidebar tabs
   completedTrades: { zh: '历史信号', en: 'HISTORY SIGNALS' },

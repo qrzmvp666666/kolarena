@@ -179,6 +179,8 @@ export const useBinanceWebSocket = (): UseBinanceWebSocketReturn => {
 
   // HTTP备用方案
   const startHttpFallback = useCallback(() => {
+    if (fallbackIntervalRef.current) clearInterval(fallbackIntervalRef.current);
+    
     setIsFallback(true);
 
     const fetchPrices = async () => {
@@ -232,6 +234,11 @@ export const useBinanceWebSocket = (): UseBinanceWebSocketReturn => {
     // 清理函数
     return () => {
       if (wsRef.current) {
+        // Prevent onclose logic from running during cleanup
+        wsRef.current.onclose = null;
+        wsRef.current.onerror = null;
+        wsRef.current.onmessage = null;
+        wsRef.current.onopen = null;
         wsRef.current.close();
       }
       if (reconnectTimeoutRef.current) {

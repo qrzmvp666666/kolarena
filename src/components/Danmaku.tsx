@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 interface DanmakuMessage {
   id: string;
   text: string;
+  avatar: string;
   top: number;
   color: string;
   speed: number;
@@ -15,6 +16,7 @@ interface Comment {
   content: string;
   display_time: string;
   user_display_name: string;
+  user_avatar_url?: string;
 }
 
 const colors = [
@@ -42,6 +44,7 @@ const Danmaku = () => {
     const newDanmaku: DanmakuMessage = {
       id: `danmaku-${comment.id}`,
       text: comment.content,
+      avatar: comment.user_avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.user_display_name}`,
       top: Math.random() * 80 + 5, // 5% to 85% from top
       color: colors[Math.floor(Math.random() * colors.length)],
       speed: speed,
@@ -123,7 +126,7 @@ const Danmaku = () => {
       {danmakuList.map((danmaku) => (
         <div
           key={danmaku.id}
-          className="absolute whitespace-nowrap font-mono font-medium animate-danmaku"
+          className="absolute whitespace-nowrap font-mono font-medium animate-danmaku flex items-center gap-2"
           style={{
             top: `${danmaku.top}%`,
             color: danmaku.color,
@@ -132,7 +135,16 @@ const Danmaku = () => {
             animationDuration: `${danmaku.speed}s`,
           }}
         >
-          {danmaku.text}
+          <img 
+            src={danmaku.avatar} 
+            alt="user" 
+            className="rounded-full border border-white/20 object-cover"
+            style={{ 
+              width: `${danmaku.fontSize + 8}px`, 
+              height: `${danmaku.fontSize + 8}px` 
+            }} 
+          />
+          <span>{danmaku.text}</span>
         </div>
       ))}
     </div>

@@ -162,7 +162,7 @@ const ChartPage = () => {
     <div className="h-screen bg-background flex flex-col overflow-hidden relative">
       {danmakuEnabled && <Danmaku />}
       <TopNav danmakuEnabled={danmakuEnabled} onToggleDanmaku={() => setDanmakuEnabled(!danmakuEnabled)} />
-      <TickerBar />
+      <TickerBar showCryptoTicker={false} />
       
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar */}
@@ -190,7 +190,7 @@ const ChartPage = () => {
                         <PopoverTrigger asChild>
                             <Button 
                                 size="sm" 
-                                className="h-8 gap-2 text-xs font-bold text-white border-0 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 shadow-[0_0_15px_-3px_rgba(168,85,247,0.4)] hover:shadow-[0_0_20px_-3px_rgba(168,85,247,0.6)] transition-all duration-300 hover:scale-105"
+                                className="h-8 gap-2 text-xs font-bold text-black border-0 bg-white hover:bg-gray-100 shadow-[0_0_15px_-3px_rgba(255,255,255,0.3)] hover:shadow-[0_0_20px_-3px_rgba(255,255,255,0.5)] transition-all duration-300 hover:scale-105"
                             >
                                 <Users className="w-3.5 h-3.5" />
                                 KOL 筛选

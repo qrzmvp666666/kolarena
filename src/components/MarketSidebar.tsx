@@ -42,8 +42,28 @@ export const MarketSidebar = ({ currentSymbol, onSelectSymbol }: MarketSidebarPr
             const prevPrice = (price || 0) - changeAmount;
             const percentChange = prevPrice !== 0 ? (changeAmount / prevPrice) * 100 : 0;
             const isPositive = changeAmount >= 0;
-            const directionColor = isPositive ? 'text-[#26a69a]' : 'text-[#ef5350]';
             const iconUrl = cryptoIcons[symbol];
+
+            // Flash Logic
+            const flashDirection = change?.direction || 'none';
+            
+            // Price Text Color Logic
+            let priceColorClass = "text-foreground";
+            if (flashDirection === 'up') priceColorClass = "text-[#26a69a]";
+            if (flashDirection === 'down') priceColorClass = "text-[#ef5350]";
+
+            // Badge Background/Text Logic
+            // Default state based on 24h change
+            let badgeClass = isPositive 
+                ? "bg-[#26a69a]/10 text-[#26a69a]" 
+                : "bg-[#ef5350]/10 text-[#ef5350]";
+
+            // Flash override (lighter/stronger background for visibility)
+            if (flashDirection === 'up') {
+                badgeClass = "bg-[#26a69a]/30 text-[#26a69a]";
+            } else if (flashDirection === 'down') {
+                badgeClass = "bg-[#ef5350]/30 text-[#ef5350]";
+            }
 
             return (
               <button
@@ -68,12 +88,10 @@ export const MarketSidebar = ({ currentSymbol, onSelectSymbol }: MarketSidebarPr
                 </div>
                 
                 <div className="flex flex-col items-end gap-0.5">
-                  <span className={cn("text-sm font-mono font-medium text-foreground tracking-tight")}>
-                    {price ? price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+                  <span className={cn("text-sm font-mono font-medium transition-colors duration-300 tracking-tight", priceColorClass)}>
+                    {price ? `\$${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-'}
                   </span>
-                  <span className={cn("text-xs font-mono font-medium px-1.5 py-0.5 rounded", 
-                    isPositive ? "bg-[#26a69a]/10 text-[#26a69a]" : "bg-[#ef5350]/10 text-[#ef5350]"
-                  )}>
+                  <span className={cn("text-xs font-mono font-medium px-1.5 py-0.5 rounded transition-colors duration-300", badgeClass)}>
                     {percentChange > 0 ? '+' : ''}{percentChange.toFixed(2)}%
                   </span>
                 </div>
