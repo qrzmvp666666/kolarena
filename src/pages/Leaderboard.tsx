@@ -503,7 +503,7 @@ const LeaderboardContent = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [returnRateFilter, setReturnRateFilter] = useState('all');
   const [winRateFilter, setWinRateFilter] = useState('all');
-  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'year' | 'custom'>('month');
+  const [timeRange, setTimeRange] = useState<'today' | '7days' | '1month' | '6months' | '1year' | 'custom'>('7days');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
     from: undefined,
     to: undefined,
@@ -581,7 +581,7 @@ const LeaderboardContent = () => {
     setSearchQuery('');
     setReturnRateFilter('all');
     setWinRateFilter('all');
-    setTimeRange('month');
+    setTimeRange('7days');
     setCustomDateRange({ from: undefined, to: undefined });
     fetchLeaderboard();
   };
@@ -779,7 +779,7 @@ const LeaderboardContent = () => {
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">{t('timeRange')}:</span>
               <div className="flex items-center gap-1">
-                {(['week', 'month', 'quarter', 'year'] as const).map((range) => (
+                {(['today', '7days', '1month', '6months', '1year'] as const).map((range) => (
                   <button
                     key={range}
                     onClick={() => setTimeRange(range)}
