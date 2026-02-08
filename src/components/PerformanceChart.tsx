@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 interface PerformanceChartProps {
   visibleModels: string[];
-  displayMode: '$' | '%';
+  displayMode: '$' | '%' | 'profit';
   timeRange: string;
 }
 
@@ -14,6 +14,11 @@ const PerformanceChart = ({ visibleModels, displayMode, timeRange }: Performance
       const returnRate = ((value - 10000) / 10000) * 100;
       const sign = returnRate >= 0 ? '+' : '';
       return `${sign}${returnRate.toFixed(0)}%`;
+    }
+    if (displayMode === 'profit') {
+      const profit = value - 10000;
+      const sign = profit >= 0 ? '+' : '-';
+      return `${sign}$${Math.abs(profit).toLocaleString()}`;
     }
     return `$${value.toLocaleString()}`;
   };
@@ -35,6 +40,7 @@ const PerformanceChart = ({ visibleModels, displayMode, timeRange }: Performance
 
     const value = payload[dataKey] as number;
     const returnRate = ((value - 10000) / 10000) * 100;
+    const profit = value - 10000;
 
     return (
       <g>
@@ -68,7 +74,9 @@ const PerformanceChart = ({ visibleModels, displayMode, timeRange }: Performance
         >
           {displayMode === '%'
             ? `${returnRate >= 0 ? '+' : ''}${returnRate.toFixed(2)}%`
-            : `$${value.toLocaleString()}`
+            : displayMode === 'profit'
+              ? `${profit >= 0 ? '+' : '-'}$${Math.abs(profit).toLocaleString()}`
+              : `$${value.toLocaleString()}`
           }
         </text>
       </g>
@@ -84,13 +92,16 @@ const PerformanceChart = ({ visibleModels, displayMode, timeRange }: Performance
             const value = entry.value as number;
             const returnRate = ((value - 10000) / 10000) * 100;
             const sign = returnRate >= 0 ? '+' : '';
+            const profit = value - 10000;
             return (
               <p key={index} style={{ color: entry.color }} className="flex justify-between gap-4">
                 <span>{entry.name.toUpperCase()}</span>
                 <span>
                   {displayMode === '%' 
                     ? `${sign}${returnRate.toFixed(2)}%`
-                    : `$${value.toLocaleString()}`
+                    : displayMode === 'profit'
+                      ? `${profit >= 0 ? '+' : '-'}$${Math.abs(profit).toLocaleString()}`
+                      : `$${value.toLocaleString()}`
                   }
                 </span>
               </p>

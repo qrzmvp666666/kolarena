@@ -194,7 +194,7 @@ export const translations: Translations = {
   close: { zh: '平仓', en: 'Close' },
   cumulativeProfit: { zh: '累计收益', en: 'Cumulative Profit' },
   dailyProfit: { zh: '日收益', en: 'Daily Profit' },
-  profitComparison: { zh: '收益对比', en: 'Profit Comparison' },
+  profitComparison: { zh: '趋势对比', en: 'Trend Comparison' },
   traderPerformance: { zh: 'KOL表现', en: 'Trader Performance' },
   totalTrades: { zh: '总交易次数', en: 'Total Trades' },
   tradingDays: { zh: '交易天数', en: 'Trading Days' },

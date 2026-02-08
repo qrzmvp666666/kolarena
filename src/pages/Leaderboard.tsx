@@ -500,7 +500,7 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader }: AdvancedAnalysi
 
 const ProfitComparisonPanel = () => {
   const [timeRange, setTimeRange] = useState('7D');
-  const [displayMode, setDisplayMode] = useState<'$' | '%'>('$');
+  const [displayMode, setDisplayMode] = useState<'$' | '%' | 'profit'>('$');
   const [visibleModels, setVisibleModels] = useState<string[]>(models.map(m => m.id));
 
   const handleToggleModel = (modelId: string) => {
@@ -513,12 +513,71 @@ const ProfitComparisonPanel = () => {
 
   return (
     <div className="flex flex-col" style={{ height: 'calc(100vh - 180px)' }}>
-      <ChartHeader
-        timeRange={timeRange}
-        onTimeRangeChange={setTimeRange}
-        displayMode={displayMode}
-        onDisplayModeChange={setDisplayMode}
-      />
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div className="flex items-center gap-2">
+          <div className="flex border border-border rounded overflow-hidden">
+            <button
+              onClick={() => setDisplayMode('$')}
+              className={`px-3 py-1 font-mono text-sm transition-colors ${
+                displayMode === '$'
+                  ? 'bg-accent-orange/10 text-accent-orange font-semibold'
+                  : 'bg-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              账户价值
+            </button>
+            <button
+              onClick={() => setDisplayMode('profit')}
+              className={`px-3 py-1 font-mono text-sm transition-colors ${
+                displayMode === 'profit'
+                  ? 'bg-accent-orange/10 text-accent-orange font-semibold'
+                  : 'bg-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              收益
+            </button>
+            <button
+              onClick={() => setDisplayMode('%')}
+              className={`px-3 py-1 font-mono text-sm transition-colors ${
+                displayMode === '%'
+                  ? 'bg-accent-orange/10 text-accent-orange font-semibold'
+                  : 'bg-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              收益率
+            </button>
+          </div>
+        </div>
+
+        <h1 className="font-mono text-sm font-semibold tracking-wider text-foreground">
+          趋势对比
+        </h1>
+
+        <div className="flex items-center gap-2">
+          <div className="flex border border-border rounded overflow-hidden">
+            <button
+              onClick={() => setTimeRange('7D')}
+              className={`px-3 py-1 font-mono text-sm transition-colors ${
+                timeRange === '7D'
+                  ? 'bg-accent-orange/10 text-accent-orange font-semibold'
+                  : 'bg-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              最近7天
+            </button>
+            <button
+              onClick={() => setTimeRange('1M')}
+              className={`px-3 py-1 font-mono text-sm transition-colors ${
+                timeRange === '1M'
+                  ? 'bg-accent-orange/10 text-accent-orange font-semibold'
+                  : 'bg-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              最近一个月
+            </button>
+          </div>
+        </div>
+      </div>
       <div className="flex-1 min-h-0 p-4">
         <PerformanceChart visibleModels={visibleModels} displayMode={displayMode} timeRange={timeRange} />
       </div>
