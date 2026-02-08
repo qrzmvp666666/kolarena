@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 
 export interface BinanceSymbol {
+  /** Optional DB id for stable ordering */
+  id?: number;
   /** DB format, e.g. "BTC/USDT" */
   symbol: string;
   /** Icon URL, e.g. "/crypto/btc.svg" */
@@ -32,9 +34,10 @@ export const useBinanceSymbols = () => {
       const { data, error } = await supabase.rpc('get_binance_symbols');
       if (error) throw error;
       if (data) {
-        const mapped: BinanceSymbol[] = (data as { symbol: string; icon_url: string | null }[]).map((row) => {
+        const mapped: BinanceSymbol[] = (data as { id?: number; symbol: string; icon_url: string | null }[]).map((row) => {
           const parts = row.symbol.split('/');
           return {
+            id: row.id,
             symbol: row.symbol,
             icon_url: row.icon_url,
             binanceSymbol: toBinanceFormat(row.symbol),
@@ -42,7 +45,15 @@ export const useBinanceSymbols = () => {
             quote: parts[1] || 'USDT',
           };
         });
-        setSymbols(mapped);
+        const sorted = [...mapped].sort((a, b) => {
+          if (typeof a.id === 'number' && typeof b.id === 'number') {
+            return a.id - b.id;
+          }
+          if (typeof a.id === 'number') return -1;
+          if (typeof b.id === 'number') return 1;
+          return a.symbol.localeCompare(b.symbol);
+        });
+        setSymbols(sorted);
       }
     } catch (err) {
       console.error('useBinanceSymbols: Error fetching symbols:', err);
