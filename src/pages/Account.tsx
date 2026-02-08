@@ -442,17 +442,6 @@ const Account = () => {
               {t('purchaseRecords')}
             </button>
             <button
-              onClick={() => setActiveTab('accounts')}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md font-mono text-sm transition-colors ${
-                activeTab === 'accounts'
-                  ? 'bg-accent text-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-              }`}
-            >
-              <Wallet className="w-4 h-4" />
-              {t('tradingAccounts')}
-            </button>
-            <button
               onClick={() => setActiveTab('redemption')}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-md font-mono text-sm transition-colors ${
                 activeTab === 'redemption'
