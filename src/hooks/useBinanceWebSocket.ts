@@ -22,7 +22,7 @@ interface UseBinanceWebSocketReturn {
   isFallback: boolean;
 }
 
-const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'DOGEUSDT', 'XRPUSDT'];
+const DEFAULT_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'DOGEUSDT', 'XRPUSDT'];
 const WS_URL = 'wss://stream.binance.com:9443/stream';
 const HTTP_API_URL = 'https://api.binance.com/api/v3/ticker/24hr';
 const RECONNECT_DELAY = 3000;
@@ -30,7 +30,11 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 const THROTTLE_DELAY = 1000; // 1秒节流
 const PING_INTERVAL = 20000; // 20秒心跳
 
-export const useBinanceWebSocket = (): UseBinanceWebSocketReturn => {
+export const useBinanceWebSocket = (externalSymbols?: string[]): UseBinanceWebSocketReturn => {
+  const SYMBOLS = externalSymbols && externalSymbols.length > 0 ? externalSymbols : DEFAULT_SYMBOLS;
+  // Stable key to detect symbol list changes
+  const symbolsKey = SYMBOLS.join(',');
+
   const { toast } = useToast();
   const [prices, setPrices] = useState<Record<string, TickerData>>({});
   const [priceChanges, setPriceChanges] = useState<Record<string, PriceChange>>({});
@@ -44,6 +48,8 @@ export const useBinanceWebSocket = (): UseBinanceWebSocketReturn => {
   const pingIntervalRef = useRef<NodeJS.Timeout>();
   const throttleTimersRef = useRef<Record<string, NodeJS.Timeout>>({});
   const pendingUpdatesRef = useRef<Record<string, TickerData>>({});
+  const symbolsRef = useRef(SYMBOLS);
+  symbolsRef.current = SYMBOLS;
 
   // 节流更新价格
   const throttledUpdatePrice = useCallback((symbol: string, newData: TickerData) => {
@@ -95,7 +101,8 @@ export const useBinanceWebSocket = (): UseBinanceWebSocketReturn => {
   const connectWebSocket = useCallback(() => {
     try {
       // 构建组合流URL
-      const streams = SYMBOLS.map(s => `${s.toLowerCase()}@miniTicker`).join('/');
+      const currentSymbols = symbolsRef.current;
+      const streams = currentSymbols.map(s => `${s.toLowerCase()}@miniTicker`).join('/');
       const wsUrl = `${WS_URL}?streams=${streams}`;
 
       wsRef.current = new WebSocket(wsUrl);
@@ -185,7 +192,7 @@ export const useBinanceWebSocket = (): UseBinanceWebSocketReturn => {
 
     const fetchPrices = async () => {
       try {
-        const symbolsParam = SYMBOLS.map(s => `"${s}"`).join(',');
+        const symbolsParam = symbolsRef.current.map(s => `"${s}"`).join(',');
         const response = await fetch(`${HTTP_API_URL}?symbols=[${symbolsParam}]`);
         
         if (!response.ok) {
@@ -227,7 +234,7 @@ export const useBinanceWebSocket = (): UseBinanceWebSocketReturn => {
     setIsFallback(false);
   }, []);
 
-  // 初始化连接
+  // 初始化连接 — symbolsKey 变化时重新连接
   useEffect(() => {
     connectWebSocket();
 
@@ -253,7 +260,8 @@ export const useBinanceWebSocket = (): UseBinanceWebSocketReturn => {
       // 清除所有节流定时器
       Object.values(throttleTimersRef.current).forEach(timer => clearTimeout(timer));
     };
-  }, [connectWebSocket]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [symbolsKey]);
 
   return {
     prices,

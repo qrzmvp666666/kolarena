@@ -3,13 +3,8 @@ import { useLanguage } from '@/lib/i18n';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useBinanceWebSocket } from '@/hooks/useBinanceWebSocket';
+import { useBinanceSymbols } from '@/hooks/useBinanceSymbols';
 import { supabase } from '@/lib/supabase';
-
-interface CryptoConfig {
-  symbol: string;
-  icon: string;
-  color: string;
-}
 
 interface KolRow {
   id: string;
@@ -23,22 +18,18 @@ interface KolRow {
   total_pnl: number;
 }
 
-const cryptoConfigs: CryptoConfig[] = [
-  { symbol: 'BTCUSDT', icon: '/crypto/btc.svg', color: '#F7931A' },
-  { symbol: 'ETHUSDT', icon: '/crypto/eth.svg', color: '#627EEA' },
-  { symbol: 'SOLUSDT', icon: '/crypto/sol.svg', color: '#00FFA3' },
-  { symbol: 'BNBUSDT', icon: '/crypto/bnb.svg', color: '#F3BA2F' },
-  { symbol: 'DOGEUSDT', icon: '/crypto/doge.svg', color: '#C2A633' },
-  { symbol: 'XRPUSDT', icon: '/crypto/xrp.svg', color: '#23292F' },
-];
-
 interface TickerBarProps {
   showCryptoTicker?: boolean;
 }
 
 const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
   const { t } = useLanguage();
-  const { prices, priceChanges, isConnected, isFallback } = useBinanceWebSocket();
+  const { symbols: binanceSymbols } = useBinanceSymbols();
+
+  // Derive Binance-format symbol list for WebSocket subscription
+  const wsSymbols = useMemo(() => binanceSymbols.map(s => s.binanceSymbol), [binanceSymbols]);
+
+  const { prices, priceChanges, isConnected, isFallback } = useBinanceWebSocket(wsSymbols);
 
   // Fetch KOL data from Supabase for highest/lowest
   const [kolData, setKolData] = useState<KolRow[]>([]);
@@ -159,10 +150,6 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
     return `${sign}${rate.toFixed(2)}%`;
   };
 
-  const getDisplaySymbol = (fullSymbol: string) => {
-    return fullSymbol.replace('USDT', '');
-  };
-
   const getPriceChangeColor = (symbol: string) => {
     const change = priceChanges[symbol];
     if (!change || change.direction === 'none') return 'text-foreground';
@@ -187,24 +174,24 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
 
         {showCryptoTicker ? (
           // Crypto Prices (Default view)
-          cryptoConfigs.map((config) => {
-            const tickerData = prices[config.symbol];
+          binanceSymbols.map((sym) => {
+            const tickerData = prices[sym.binanceSymbol];
             const price = tickerData?.price || 0;
 
             return (
               <div 
-                key={config.symbol} 
+                key={sym.binanceSymbol} 
                 className="flex items-center gap-2 font-mono"
               >
                 <img 
-                  src={config.icon} 
-                  alt={config.symbol}
+                  src={sym.icon_url || ''} 
+                  alt={sym.base}
                   className="w-4 h-4"
                   style={{ filter: 'drop-shadow(0 0 2px rgba(255,255,255,0.3))' }}
                 />
-                <span className="text-muted-foreground">{getDisplaySymbol(config.symbol)}</span>
+                <span className="text-muted-foreground">{sym.base}</span>
                 <span 
-                  className={`font-medium transition-colors duration-300 ${getPriceChangeColor(config.symbol)}`}
+                  className={`font-medium transition-colors duration-300 ${getPriceChangeColor(sym.binanceSymbol)}`}
                 >
                   {formatPrice(price)}
                 </span>
