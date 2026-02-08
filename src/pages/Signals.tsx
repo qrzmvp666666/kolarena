@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import TopNav from '@/components/TopNav';
 import TickerBar from '@/components/TickerBar';
 import { useLanguage } from '@/lib/i18n';
@@ -12,6 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/lib/supabase';
 import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/hooks/use-toast';
+import { DatePickerWithRange } from '@/components/ui/date-range-picker';
+import type { DateRange } from 'react-day-picker';
+import { enUS, zhCN } from 'date-fns/locale';
 
 const coinTypes = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'BNB', 'XAU', 'PENDLE', 'ARB', 'OP'];
 
@@ -91,15 +94,17 @@ const transformSignal = (row: SignalRow, isHistory: boolean) => {
 };
 
 const SignalsContent = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useUser();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<'all' | 'subscribed' | 'unsubscribed'>('all');
+  const [subscriptionFilter, setSubscriptionFilter] = useState<'all' | 'subscribed' | 'unsubscribed'>('all');
+  const [followFilter, setFollowFilter] = useState<'all' | 'followed' | 'unfollowed'>('all');
   const [marketType, setMarketType] = useState<'futures' | 'spot'>('futures');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPair, setSelectedPair] = useState<string>('all');
   const [selectedSignalType, setSelectedSignalType] = useState<string>('all');
-  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'year' | 'custom'>('month');
+  const [timeRange, setTimeRange] = useState<'today' | '7days' | '1month' | '6months' | '1year' | 'custom'>('7days');
+  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
 
   // ---- Supabase data ----
   const [activeSignals, setActiveSignals] = useState<SignalRow[]>([]);
@@ -235,19 +240,129 @@ const SignalsContent = () => {
   const subscribedSignals = allSignals.filter(s => subscribedKolIds.has(s.kol_id));
   const unsubscribedSignals = allSignals.filter(s => !subscribedKolIds.has(s.kol_id));
 
-  const tabs = [
-    { id: 'all' as const, label: t('signalAll'), count: allSignals.length },
+  const followedSignals = allSignals.filter(s => followedKolIds.has(s.kol_id));
+  const unfollowedSignals = allSignals.filter(s => !followedKolIds.has(s.kol_id));
+
+  const subscriptionTabs = [
     { id: 'subscribed' as const, label: t('signalSubscribed'), count: subscribedSignals.length },
     { id: 'unsubscribed' as const, label: t('signalUnsubscribed'), count: unsubscribedSignals.length },
   ];
 
+  const followTabs = [
+    { id: 'followed' as const, label: t('signalFollowed'), count: followedSignals.length },
+    { id: 'unfollowed' as const, label: t('signalUnfollowed'), count: unfollowedSignals.length },
+  ];
+
   const timeRanges = [
-    { id: 'week' as const, label: t('timeRange_week') },
-    { id: 'month' as const, label: t('timeRange_month') },
-    { id: 'quarter' as const, label: t('timeRange_quarter') },
-    { id: 'year' as const, label: t('timeRange_year') },
+    { id: 'today' as const, label: t('timeRange_today') },
+    { id: '7days' as const, label: t('timeRange_7days') },
+    { id: '1month' as const, label: t('timeRange_1month') },
+    { id: '6months' as const, label: t('timeRange_6months') },
+    { id: '1year' as const, label: t('timeRange_1year') },
     { id: 'custom' as const, label: t('timeRange_custom') },
   ];
+
+  const handleResetFilters = useCallback(() => {
+    setSubscriptionFilter('all');
+    setFollowFilter('all');
+    setMarketType('futures');
+    setSearchQuery('');
+    setSelectedPair('all');
+    setSelectedSignalType('all');
+    setTimeRange('7days');
+    setCustomDateRange(undefined);
+  }, []);
+
+  const filteredSignals = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const now = new Date();
+    const startOfToday = new Date(now);
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const buildRange = () => {
+      switch (timeRange) {
+        case 'today': {
+          return { from: startOfToday, to: now };
+        }
+        case '7days': {
+          const from = new Date(now);
+          from.setDate(from.getDate() - 7);
+          return { from, to: now };
+        }
+        case '1month': {
+          const from = new Date(now);
+          from.setMonth(from.getMonth() - 1);
+          return { from, to: now };
+        }
+        case '6months': {
+          const from = new Date(now);
+          from.setMonth(from.getMonth() - 6);
+          return { from, to: now };
+        }
+        case '1year': {
+          const from = new Date(now);
+          from.setFullYear(from.getFullYear() - 1);
+          return { from, to: now };
+        }
+        case 'custom': {
+          if (customDateRange?.from && customDateRange?.to) {
+            const from = new Date(customDateRange.from);
+            from.setHours(0, 0, 0, 0);
+            const to = new Date(customDateRange.to);
+            to.setHours(23, 59, 59, 999);
+            return { from, to };
+          }
+          return null;
+        }
+        default:
+          return null;
+      }
+    };
+
+    const activeRange = buildRange();
+
+    const matchesFilters = (row: SignalRow) => {
+      if (marketType === 'spot') return false;
+      if (subscriptionFilter === 'subscribed' && !subscribedKolIds.has(row.kol_id)) return false;
+      if (subscriptionFilter === 'unsubscribed' && subscribedKolIds.has(row.kol_id)) return false;
+      if (followFilter === 'followed' && !followedKolIds.has(row.kol_id)) return false;
+      if (followFilter === 'unfollowed' && followedKolIds.has(row.kol_id)) return false;
+      if (selectedPair !== 'all' && !row.symbol.toUpperCase().includes(selectedPair.toUpperCase())) return false;
+      if (selectedSignalType !== 'all' && selectedSignalType !== 'spot' && row.direction !== selectedSignalType) return false;
+      if (selectedSignalType === 'spot') return false;
+      if (query) {
+        const symbolText = row.symbol?.toLowerCase() ?? '';
+        const nameText = row.kol_name?.toLowerCase() ?? '';
+        if (!symbolText.includes(query) && !nameText.includes(query)) return false;
+      }
+      if (activeRange) {
+        const timeValue = row.entry_time ?? row.created_at;
+        if (!timeValue) return false;
+        const time = new Date(timeValue);
+        if (Number.isNaN(time.getTime())) return false;
+        if (time < activeRange.from || time > activeRange.to) return false;
+      }
+      return true;
+    };
+
+    return {
+      active: activeSignals.filter(matchesFilters),
+      history: historySignals.filter(matchesFilters),
+    };
+  }, [
+    activeSignals,
+    historySignals,
+    subscriptionFilter,
+    followFilter,
+    marketType,
+    searchQuery,
+    selectedPair,
+    selectedSignalType,
+    timeRange,
+    customDateRange,
+    subscribedKolIds,
+    followedKolIds,
+  ]);
 
   return (
     <div className="min-h-screen bg-background text-foreground font-mono relative">
@@ -297,23 +412,66 @@ const SignalsContent = () => {
               </TooltipProvider>
             </div>
 
-            {/* Tabs */}
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${activeTab === tab.id
-                    ? 'bg-card border-accent-orange text-foreground'
-                    : 'bg-transparent border-border text-muted-foreground hover:border-foreground/30'
-                  }`}
-              >
-                <span className="text-sm">{tab.label}</span>
-                <span className={`text-xs px-1.5 py-0.5 rounded ${activeTab === tab.id ? 'bg-accent-orange/20 text-accent-orange' : 'bg-muted text-muted-foreground'
-                  }`}>
-                  {tab.count}
-                </span>
-              </button>
-            ))}
+            {/* All Button */}
+            <button
+              onClick={() => {
+                setSubscriptionFilter('all');
+                setFollowFilter('all');
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${subscriptionFilter === 'all' && followFilter === 'all'
+                  ? 'bg-card border-accent-orange text-foreground'
+                  : 'bg-transparent border-border text-muted-foreground hover:border-foreground/30'
+                }`}
+            >
+              <span className="text-sm">{t('signalAll')}</span>
+              <span className={`text-xs px-1.5 py-0.5 rounded ${subscriptionFilter === 'all' && followFilter === 'all'
+                  ? 'bg-accent-orange/20 text-accent-orange'
+                  : 'bg-muted text-muted-foreground'
+                }`}>
+                {allSignals.length}
+              </span>
+            </button>
+
+            {/* Subscription Tabs */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{t('filterSubscription')}:</span>
+              {subscriptionTabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setSubscriptionFilter(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${subscriptionFilter === tab.id
+                      ? 'bg-card border-accent-orange text-foreground'
+                      : 'bg-transparent border-border text-muted-foreground hover:border-foreground/30'
+                    }`}
+                >
+                  <span className="text-sm">{tab.label}</span>
+                  <span className={`text-xs px-1.5 py-0.5 rounded ${subscriptionFilter === tab.id ? 'bg-accent-orange/20 text-accent-orange' : 'bg-muted text-muted-foreground'
+                    }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Follow Tabs */}
+            <div className="flex items-center gap-2">
+              {followTabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setFollowFilter(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${followFilter === tab.id
+                      ? 'bg-card border-accent-orange text-foreground'
+                      : 'bg-transparent border-border text-muted-foreground hover:border-foreground/30'
+                    }`}
+                >
+                  <span className="text-sm">{tab.label}</span>
+                  <span className={`text-xs px-1.5 py-0.5 rounded ${followFilter === tab.id ? 'bg-accent-orange/20 text-accent-orange' : 'bg-muted text-muted-foreground'
+                    }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Search & Actions */}
@@ -335,58 +493,84 @@ const SignalsContent = () => {
           </div>
         </div>
 
-        {/* Filter Bar - Row 2: All Filters on Left */}
-        <div className="flex items-center gap-6 mb-6">
-          {/* Trading Pair Filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{t('tradingPair')}:</span>
-            <Select value={selectedPair} onValueChange={setSelectedPair}>
-              <SelectTrigger className="w-28 h-8 text-xs bg-card border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border z-50">
-                <SelectItem value="all">{t('allPairs')}</SelectItem>
-                {coinTypes.map(coin => (
-                  <SelectItem key={coin} value={coin}>{coin}/USDT</SelectItem>
+        {/* Filter Bar - Row 2: Filters Left, Reset Right */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="flex flex-wrap items-center gap-6">
+            {/* Trading Pair Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{t('tradingPair')}:</span>
+              <Select value={selectedPair} onValueChange={setSelectedPair}>
+                <SelectTrigger className="w-28 h-8 text-xs bg-card border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  <SelectItem value="all">{t('allPairs')}</SelectItem>
+                  {coinTypes.map(coin => (
+                    <SelectItem key={coin} value={coin}>{coin}/USDT</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Signal Type Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{t('signalType')}:</span>
+              <Select value={selectedSignalType} onValueChange={setSelectedSignalType}>
+                <SelectTrigger className="w-24 h-8 text-xs bg-card border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  <SelectItem value="all">{t('allTypes')}</SelectItem>
+                  <SelectItem value="long">{t('signalLong')}</SelectItem>
+                  <SelectItem value="short">{t('signalShort')}</SelectItem>
+                  <SelectItem value="spot">{t('signalSpot')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Time Range Tabs */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted-foreground">{t('timeRange')}:</span>
+              <div className="flex flex-wrap items-center rounded-lg border border-border overflow-hidden">
+                {timeRanges.map(range => (
+                  <button
+                    key={range.id}
+                    onClick={() => {
+                      setTimeRange(range.id);
+                      if (range.id !== 'custom') setCustomDateRange(undefined);
+                    }}
+                    className={`px-3 py-1.5 text-xs font-medium transition-colors ${timeRange === range.id
+                        ? 'bg-accent-orange text-white'
+                        : 'bg-card text-muted-foreground hover:text-foreground'
+                      }`}
+                  >
+                    {range.label}
+                  </button>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Signal Type Filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{t('signalType')}:</span>
-            <Select value={selectedSignalType} onValueChange={setSelectedSignalType}>
-              <SelectTrigger className="w-24 h-8 text-xs bg-card border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border z-50">
-                <SelectItem value="all">{t('allTypes')}</SelectItem>
-                <SelectItem value="long">{t('signalLong')}</SelectItem>
-                <SelectItem value="short">{t('signalShort')}</SelectItem>
-                <SelectItem value="spot">{t('signalSpot')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Time Range Tabs */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{t('timeRange')}:</span>
-            <div className="flex items-center rounded-lg border border-border overflow-hidden">
-              {timeRanges.map(range => (
-                <button
-                  key={range.id}
-                  onClick={() => setTimeRange(range.id)}
-                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${timeRange === range.id
-                      ? 'bg-accent-orange text-white'
-                      : 'bg-card text-muted-foreground hover:text-foreground'
-                    }`}
-                >
-                  {range.label}
-                </button>
-              ))}
+              </div>
+              {timeRange === 'custom' && (
+                <div className="w-full md:w-auto md:ml-2">
+                  <DatePickerWithRange
+                    date={customDateRange}
+                    setDate={setCustomDateRange}
+                    locale={language === 'zh' ? zhCN : enUS}
+                    formatPattern={language === 'zh' ? 'yyyy/MM/dd' : 'MMM dd, yyyy'}
+                    placeholder={t('selectDateRange')}
+                    buttonClassName="w-full md:w-[260px] text-xs"
+                  />
+                </div>
+              )}
             </div>
           </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleResetFilters}
+            className="ml-auto"
+          >
+            {t('resetFilters')}
+          </Button>
         </div>
 
         {/* Signal Tabs: Active vs History */}
@@ -413,13 +597,13 @@ const SignalsContent = () => {
                 <RefreshCw className="w-5 h-5 animate-spin mr-2" />
                 加载中...
               </div>
-            ) : activeSignals.length === 0 ? (
+            ) : filteredSignals.active.length === 0 ? (
               <div className="flex items-center justify-center py-20 text-muted-foreground">
                 暂无有效信号
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {activeSignals.map(row => (
+                {filteredSignals.active.map(row => (
                   <SignalListCard
                     key={row.id}
                     signal={transformSignal(row, false)}
@@ -442,13 +626,13 @@ const SignalsContent = () => {
                 <RefreshCw className="w-5 h-5 animate-spin mr-2" />
                 加载中...
               </div>
-            ) : historySignals.length === 0 ? (
+            ) : filteredSignals.history.length === 0 ? (
               <div className="flex items-center justify-center py-20 text-muted-foreground">
                 暂无历史信号
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {historySignals.map(row => (
+                {filteredSignals.history.map(row => (
                   <SignalListCard
                     key={row.id}
                     signal={transformSignal(row, true)}
