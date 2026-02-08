@@ -43,7 +43,7 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
   return (
     <nav className="flex items-center justify-between px-6 py-3 border-b border-border bg-card">
       {/* Logo */}
-      <Link to="/leaderboard" className="flex items-center gap-2">
+      <Link to="/chart" className="flex items-center gap-2">
         <span className="text-xl font-bold tracking-tight text-foreground logo-shine">
           Kol<span className="text-accent-purple">Arena</span>
         </span>
@@ -52,27 +52,27 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
       {/* Center Navigation */}
       <div className="flex items-center gap-6">
         <Link 
-          to="/leaderboard" 
-          className={`font-mono text-sm transition-colors ${
-            location.pathname === '/leaderboard' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          {t('leaderboard')}
-        </Link>
-        <span className="text-muted-foreground">|</span>
-        <Link 
           to="/chart" 
           className={`font-mono text-sm transition-colors ${
-            location.pathname === '/chart' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+            location.pathname === '/chart' ? 'text-foreground text-base font-bold' : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           {t('chartPage')}
         </Link>
         <span className="text-muted-foreground">|</span>
         <Link 
+          to="/leaderboard" 
+          className={`font-mono text-sm transition-colors ${
+            location.pathname === '/leaderboard' ? 'text-foreground text-base font-bold' : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          {t('leaderboard')}
+        </Link>
+        <span className="text-muted-foreground">|</span>
+        <Link 
           to="/signals" 
           className={`font-mono text-sm transition-colors ${
-            location.pathname === '/signals' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+            location.pathname === '/signals' ? 'text-foreground text-base font-bold' : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           {t('models')}
@@ -88,7 +88,7 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
         <Link 
           to="/about"
           className={`font-mono text-sm transition-colors ${
-            location.pathname === '/about' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+            location.pathname === '/about' ? 'text-foreground text-base font-bold' : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           {t('aboutUs')}

@@ -12,7 +12,7 @@ interface Translations {
 export const translations: Translations = {
   // TopNav
   live: { zh: '实盘', en: 'LIVE' },
-  chartPage: { zh: 'K线', en: 'Chart' },
+  chartPage: { zh: '聚合K线', en: 'Aggregated Chart' },
   leaderboard: { zh: '排行榜', en: 'LEADERBOARD' },
   models: { zh: '信号', en: 'SIGNALS' },
   joinCommunity: { zh: '加入社区', en: 'COMMUNITY' },
