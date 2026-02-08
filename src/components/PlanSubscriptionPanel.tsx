@@ -194,17 +194,6 @@ const PlanSubscriptionPanel = () => {
         ))}
       </div>
 
-      {/* Bottom Banner - Enterprise Style */}
-      <div className="rounded-xl border border-border bg-card p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div>
-          <h3 className="font-mono font-semibold text-foreground mb-1">{t('enterprisePlan')}</h3>
-          <p className="text-sm text-muted-foreground">{t('enterpriseDesc')}</p>
-        </div>
-        <Button variant="outline" className="whitespace-nowrap">
-          {t('contactUs')}
-        </Button>
-      </div>
-
       {/* Payment Info */}
       <div className="flex flex-wrap gap-6 justify-center text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
