@@ -1,6 +1,9 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import TopNav from '@/components/TopNav';
 import TickerBar from '@/components/TickerBar';
+import PerformanceChart from '@/components/PerformanceChart';
+import ChartHeader from '@/components/ChartHeader';
+import ModelBar from '@/components/ModelBar';
 import { useLanguage } from '@/lib/i18n';
 import { models } from '@/lib/chartData';
 import { supabase } from '@/lib/supabase';
@@ -495,10 +498,41 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader }: AdvancedAnalysi
   );
 };
 
+const ProfitComparisonPanel = () => {
+  const [timeRange, setTimeRange] = useState('7D');
+  const [displayMode, setDisplayMode] = useState<'$' | '%'>('$');
+  const [visibleModels, setVisibleModels] = useState<string[]>(models.map(m => m.id));
+
+  const handleToggleModel = (modelId: string) => {
+    setVisibleModels(prev =>
+      prev.includes(modelId)
+        ? prev.filter(id => id !== modelId)
+        : [...prev, modelId]
+    );
+  };
+
+  return (
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 180px)' }}>
+      <ChartHeader
+        timeRange={timeRange}
+        onTimeRangeChange={setTimeRange}
+        displayMode={displayMode}
+        onDisplayModeChange={setDisplayMode}
+      />
+      <div className="flex-1 min-h-0 p-4">
+        <PerformanceChart visibleModels={visibleModels} displayMode={displayMode} timeRange={timeRange} />
+      </div>
+      <div className="border-t border-border">
+        <ModelBar visibleModels={visibleModels} onToggleModel={handleToggleModel} />
+      </div>
+    </div>
+  );
+};
+
 
 const LeaderboardContent = () => {
   const { t, language } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'overall' | 'advanced'>('overall');
+  const [activeTab, setActiveTab] = useState<'overall' | 'comparison' | 'advanced'>('overall');
   const [marketType, setMarketType] = useState<'futures' | 'spot'>('futures');
   const [searchQuery, setSearchQuery] = useState('');
   const [returnRateFilter, setReturnRateFilter] = useState('all');
@@ -608,8 +642,6 @@ const LeaderboardContent = () => {
       <div className="px-6 py-3">
         {/* Header */}
         <div className="mb-4">
-          <h1 className="text-xl font-bold text-foreground mb-0.5">{t('leaderboard')}</h1>
-          <p className="text-xs text-muted-foreground">{t('leaderboardSummary')}</p>
         </div>
 
         {/* Filter Bar - Similar to Signals page */}
@@ -660,6 +692,16 @@ const LeaderboardContent = () => {
               }`}>
                 {filteredData.length}
               </span>
+            </button>
+            <button
+              onClick={() => setActiveTab('comparison')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                activeTab === 'comparison'
+                  ? 'bg-card border-accent-orange text-foreground'
+                  : 'bg-transparent border-border text-muted-foreground hover:border-foreground/30'
+              }`}
+            >
+              <span className="text-sm">{t('profitComparison')}</span>
             </button>
             <button
               onClick={() => setActiveTab('advanced')}
@@ -1010,6 +1052,8 @@ const LeaderboardContent = () => {
           </>
           )}
           </>
+        ) : activeTab === 'comparison' ? (
+          <ProfitComparisonPanel />
         ) : (
           <AdvancedAnalysisContent traders={filteredData} t={t} selectedTrader={selectedKol} />
         )}
