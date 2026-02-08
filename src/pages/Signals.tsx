@@ -18,7 +18,6 @@ interface SignalRow {
   id: string;
   kol_id: string;
   kol_name: string;
-  kol_icon: string;
   kol_avatar_url: string;
   symbol: string;
   direction: 'long' | 'short';
