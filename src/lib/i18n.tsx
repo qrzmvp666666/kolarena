@@ -120,6 +120,13 @@ export const translations: Translations = {
   manualClose: { zh: '手动平仓', en: 'Manual' },
   marginCross: { zh: '全仓', en: 'CROSS' },
   marginIsolated: { zh: '逐仓', en: 'isolated' },
+  follow: { zh: '关注', en: 'Follow' },
+  unfollow: { zh: '取消关注', en: 'Unfollow' },
+  unsubscribe: { zh: '取消订阅', en: 'Unsubscribe' },
+  followSuccess: { zh: '已关注', en: 'Followed' },
+  unfollowSuccess: { zh: '已取消关注', en: 'Unfollowed' },
+  subscribeSuccess: { zh: '已订阅', en: 'Subscribed' },
+  unsubscribeSuccess: { zh: '已取消订阅', en: 'Unsubscribed' },
 
   // Leaderboard Page
   competition: { zh: '比赛', en: 'Competition' },

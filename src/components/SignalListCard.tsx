@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLanguage } from '@/lib/i18n';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Star, Bell } from 'lucide-react';
 
 interface SignalListItem {
   id: string;
@@ -26,9 +26,14 @@ interface SignalListItem {
 interface SignalListCardProps {
   signal: SignalListItem;
   isHistory?: boolean;
+  isFollowed?: boolean;
+  isSubscribed?: boolean;
+  onToggleFollow?: (kolId: string) => void;
+  onToggleSubscribe?: (kolId: string) => void;
+  kolId?: string;
 }
 
-const SignalListCard = ({ signal, isHistory = false }: SignalListCardProps) => {
+const SignalListCard = ({ signal, isHistory = false, isFollowed = false, isSubscribed = false, onToggleFollow, onToggleSubscribe, kolId }: SignalListCardProps) => {
   const { t } = useLanguage();
   const [isHovered, setIsHovered] = useState(false);
 
@@ -75,7 +80,7 @@ const SignalListCard = ({ signal, isHistory = false }: SignalListCardProps) => {
         </div>
       )}
 
-      {/* Header: Avatar + Author */}
+      {/* Header: Avatar + Author + Follow/Subscribe + Arrow */}
       <div className={`flex items-center justify-between mb-3 ${isHistory ? 'pr-10' : ''}`}>
         <div className="flex items-center gap-3">
           <img
@@ -85,13 +90,43 @@ const SignalListCard = ({ signal, isHistory = false }: SignalListCardProps) => {
           />
           <span className="font-semibold text-foreground text-base">{signal.author}</span>
         </div>
-        {!isHistory && (
-          <ArrowRight
-            className={`w-5 h-5 text-muted-foreground transition-all duration-200 ${
-              isHovered ? 'translate-x-1 text-foreground' : ''
-            }`}
-          />
-        )}
+        <div className="flex items-center gap-2">
+          {/* Follow Star Button */}
+          {kolId && onToggleFollow && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleFollow(kolId); }}
+              className={`p-1.5 rounded-md transition-colors ${
+                isFollowed
+                  ? 'text-yellow-400 hover:text-yellow-300'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              title={isFollowed ? t('unfollow') : t('follow')}
+            >
+              <Star className={`w-4 h-4 ${isFollowed ? 'fill-yellow-400' : ''}`} />
+            </button>
+          )}
+          {/* Subscribe Bell Button */}
+          {kolId && onToggleSubscribe && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleSubscribe(kolId); }}
+              className={`p-1.5 rounded-md transition-colors ${
+                isSubscribed
+                  ? 'text-accent-orange hover:text-accent-orange/80'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              title={isSubscribed ? t('unsubscribe') : t('subscribe')}
+            >
+              <Bell className={`w-4 h-4 ${isSubscribed ? 'fill-accent-orange' : ''}`} />
+            </button>
+          )}
+          {!isHistory && (
+            <ArrowRight
+              className={`w-5 h-5 text-muted-foreground transition-all duration-200 ${
+                isHovered ? 'translate-x-1 text-foreground' : ''
+              }`}
+            />
+          )}
+        </div>
       </div>
 
       {/* Pair & Type & Leverage */}

@@ -10,6 +10,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/lib/supabase';
+import { useUser } from '@/contexts/UserContext';
+import { useToast } from '@/hooks/use-toast';
 
 const coinTypes = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'BNB', 'XAU', 'PENDLE', 'ARB', 'OP'];
 
@@ -90,6 +92,8 @@ const transformSignal = (row: SignalRow, isHistory: boolean) => {
 
 const SignalsContent = () => {
   const { t } = useLanguage();
+  const { user } = useUser();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<'all' | 'subscribed' | 'unsubscribed'>('all');
   const [marketType, setMarketType] = useState<'futures' | 'spot'>('futures');
   const [searchQuery, setSearchQuery] = useState('');
@@ -101,6 +105,78 @@ const SignalsContent = () => {
   const [activeSignals, setActiveSignals] = useState<SignalRow[]>([]);
   const [historySignals, setHistorySignals] = useState<SignalRow[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // ---- Follow / Subscribe state ----
+  const [followedKolIds, setFollowedKolIds] = useState<Set<string>>(new Set());
+  const [subscribedKolIds, setSubscribedKolIds] = useState<Set<string>>(new Set());
+
+  // Fetch user's follow/subscribe relations
+  const fetchRelations = useCallback(async () => {
+    if (!user) {
+      setFollowedKolIds(new Set());
+      setSubscribedKolIds(new Set());
+      return;
+    }
+    try {
+      const { data, error } = await supabase.rpc('get_user_kol_relations');
+      if (error) {
+        console.error('Error fetching relations:', error);
+        return;
+      }
+      if (data) {
+        setFollowedKolIds(new Set(data.followed_kol_ids || []));
+        setSubscribedKolIds(new Set(data.subscribed_kol_ids || []));
+      }
+    } catch (err) {
+      console.error('Error fetching relations:', err);
+    }
+  }, [user]);
+
+  // Toggle follow handler
+  const handleToggleFollow = useCallback(async (kolId: string) => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase.rpc('toggle_follow', { p_kol_id: kolId });
+      if (error) {
+        console.error('Error toggling follow:', error);
+        return;
+      }
+      setFollowedKolIds(prev => {
+        const next = new Set(prev);
+        if (data) next.add(kolId);
+        else next.delete(kolId);
+        return next;
+      });
+      toast({
+        description: data ? t('followSuccess') : t('unfollowSuccess'),
+      });
+    } catch (err) {
+      console.error('Error toggling follow:', err);
+    }
+  }, [user, t, toast]);
+
+  // Toggle subscribe handler
+  const handleToggleSubscribe = useCallback(async (kolId: string) => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase.rpc('toggle_subscription', { p_kol_id: kolId });
+      if (error) {
+        console.error('Error toggling subscription:', error);
+        return;
+      }
+      setSubscribedKolIds(prev => {
+        const next = new Set(prev);
+        if (data) next.add(kolId);
+        else next.delete(kolId);
+        return next;
+      });
+      toast({
+        description: data ? t('subscribeSuccess') : t('unsubscribeSuccess'),
+      });
+    } catch (err) {
+      console.error('Error toggling subscription:', err);
+    }
+  }, [user, t, toast]);
 
   const fetchSignals = useCallback(async () => {
     setLoading(true);
@@ -115,29 +191,54 @@ const SignalsContent = () => {
 
   useEffect(() => {
     fetchSignals();
+    fetchRelations();
 
-    // Realtime subscription
-    const channel = supabase
+    // Realtime subscription for signals
+    const signalsChannel = supabase
       .channel('signals-realtime')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'signals' },
         () => {
-          // Re-fetch on any change
           fetchSignals();
         }
       )
       .subscribe();
 
+    // Realtime subscription for follows & subscriptions
+    const relationsChannel = supabase
+      .channel('relations-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_follows' },
+        () => {
+          fetchRelations();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_subscriptions' },
+        () => {
+          fetchRelations();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(signalsChannel);
+      supabase.removeChannel(relationsChannel);
     };
-  }, [fetchSignals]);
+  }, [fetchSignals, fetchRelations]);
+
+  // Compute subscribed/unsubscribed counts
+  const allSignals = [...activeSignals, ...historySignals];
+  const subscribedSignals = allSignals.filter(s => subscribedKolIds.has(s.kol_id));
+  const unsubscribedSignals = allSignals.filter(s => !subscribedKolIds.has(s.kol_id));
 
   const tabs = [
-    { id: 'all' as const, label: t('signalAll'), count: activeSignals.length + historySignals.length },
-    { id: 'subscribed' as const, label: t('signalSubscribed'), count: 0 },
-    { id: 'unsubscribed' as const, label: t('signalUnsubscribed'), count: activeSignals.length + historySignals.length },
+    { id: 'all' as const, label: t('signalAll'), count: allSignals.length },
+    { id: 'subscribed' as const, label: t('signalSubscribed'), count: subscribedSignals.length },
+    { id: 'unsubscribed' as const, label: t('signalUnsubscribed'), count: unsubscribedSignals.length },
   ];
 
   const timeRanges = [
@@ -319,7 +420,16 @@ const SignalsContent = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {activeSignals.map(row => (
-                  <SignalListCard key={row.id} signal={transformSignal(row, false)} isHistory={false} />
+                  <SignalListCard
+                    key={row.id}
+                    signal={transformSignal(row, false)}
+                    isHistory={false}
+                    kolId={row.kol_id}
+                    isFollowed={followedKolIds.has(row.kol_id)}
+                    isSubscribed={subscribedKolIds.has(row.kol_id)}
+                    onToggleFollow={handleToggleFollow}
+                    onToggleSubscribe={handleToggleSubscribe}
+                  />
                 ))}
               </div>
             )}
@@ -339,7 +449,16 @@ const SignalsContent = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {historySignals.map(row => (
-                  <SignalListCard key={row.id} signal={transformSignal(row, true)} isHistory={true} />
+                  <SignalListCard
+                    key={row.id}
+                    signal={transformSignal(row, true)}
+                    isHistory={true}
+                    kolId={row.kol_id}
+                    isFollowed={followedKolIds.has(row.kol_id)}
+                    isSubscribed={subscribedKolIds.has(row.kol_id)}
+                    onToggleFollow={handleToggleFollow}
+                    onToggleSubscribe={handleToggleSubscribe}
+                  />
                 ))}
               </div>
             )}
