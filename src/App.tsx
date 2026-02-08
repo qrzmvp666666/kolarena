@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/lib/i18n";
 import { UserProvider } from "@/contexts/UserContext";
-import Index from "./pages/Index";
 import Signals from "./pages/Signals";
 import Leaderboard from "./pages/Leaderboard";
 import About from "./pages/About";
@@ -26,7 +25,7 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <Routes>
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<Leaderboard />} />
                 <Route path="/signals" element={<Signals />} />
                 <Route path="/chart" element={<ChartPage />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />

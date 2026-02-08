@@ -43,7 +43,7 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
   return (
     <nav className="flex items-center justify-between px-6 py-3 border-b border-border bg-card">
       {/* Logo */}
-      <Link to="/" className="flex items-center gap-2">
+      <Link to="/leaderboard" className="flex items-center gap-2">
         <span className="text-xl font-bold tracking-tight text-foreground logo-shine">
           Kol<span className="text-accent-purple">Arena</span>
         </span>
@@ -51,15 +51,6 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
 
       {/* Center Navigation */}
       <div className="flex items-center gap-6">
-        <Link 
-          to="/" 
-          className={`font-mono text-sm transition-colors ${
-            location.pathname === '/' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          {t('live')}
-        </Link>
-        <span className="text-muted-foreground">|</span>
         <Link 
           to="/leaderboard" 
           className={`font-mono text-sm transition-colors ${
