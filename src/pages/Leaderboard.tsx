@@ -84,49 +84,65 @@ const generateCoinDistribution = () => {
   return coins.map(c => ({ ...c, percent: ((c.value / total) * 100).toFixed(1) }));
 };
 
-// Generate trade history
-const generateTradeHistory = (traderName: string, filterType?: 'open' | 'close') => {
-  const pairs = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'XRP/USDT', 'DOGE/USDT', 'BNB/USDT'];
-  const directions = ['long', 'short'] as const;
-  const types = ['open', 'close'] as const;
-  const leverages = ['10x', '20x', '50x', '100x'];
-  const marginModes = ['isolated', 'cross'] as const;
-  const formatDuration = (hours: number) => {
-    const days = Math.floor(hours / 24);
-    const remainingHours = hours % 24;
-    if (days > 0 && remainingHours > 0) return `${days}d ${remainingHours}h`;
-    if (days > 0) return `${days}d`;
-    return `${remainingHours}h`;
+// Signal data type from Supabase
+interface SignalRow {
+  id: string;
+  kol_id: string;
+  symbol: string;
+  direction: 'long' | 'short';
+  leverage: number | null;
+  margin_mode: 'isolated' | 'cross';
+  entry_price: number;
+  stop_loss: number | null;
+  take_profit: number | null;
+  exit_price: number | null;
+  exit_type: 'take_profit' | 'stop_loss' | 'manual' | 'draw' | null;
+  pnl_percentage: number | null;
+  pnl_ratio: string | null;
+  status: 'active' | 'closed' | 'cancelled';
+  signal_duration: string | null;
+  entry_time: string | null;
+  exit_time: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Mapped trade row for rendering
+interface TradeRow {
+  id: string;
+  pair: string;
+  direction: 'long' | 'short';
+  leverage: string;
+  marginMode: 'isolated' | 'cross';
+  entryPrice: string;
+  tp: string;
+  sl: string;
+  time: string;
+  pnl: number;
+  roi: string;
+  duration: string;
+  closeTime: string;
+  status: string;
+}
+
+// Map a signal row from DB to a TradeRow for table rendering
+const mapSignalToTrade = (signal: SignalRow): TradeRow => {
+  return {
+    id: signal.id,
+    pair: signal.symbol,
+    direction: signal.direction,
+    leverage: signal.leverage ? `${signal.leverage}x` : '-',
+    marginMode: signal.margin_mode,
+    entryPrice: Number(signal.entry_price).toFixed(2),
+    tp: signal.take_profit ? Number(signal.take_profit).toFixed(2) : '-',
+    sl: signal.stop_loss ? Number(signal.stop_loss).toFixed(2) : '-',
+    time: signal.entry_time ? format(new Date(signal.entry_time), 'MM/dd HH:mm') : '-',
+    pnl: signal.pnl_percentage ? Number(signal.pnl_percentage) : 0,
+    roi: signal.pnl_ratio || (signal.pnl_percentage ? Number(signal.pnl_percentage).toFixed(2) : '0'),
+    duration: signal.signal_duration || '-',
+    closeTime: signal.exit_time ? format(new Date(signal.exit_time), 'MM/dd HH:mm') : '-',
+    status: signal.exit_type === 'take_profit' ? 'tp' : signal.exit_type === 'stop_loss' ? 'sl' : signal.exit_type === 'draw' ? 'draw' : signal.exit_type === 'manual' ? 'manual' : '-',
   };
-  
-  return Array.from({ length: 15 }, (_, i) => {
-    const direction = directions[Math.floor(Math.random() * 2)];
-    const type = filterType || types[Math.floor(Math.random() * 2)];
-    const pnl = type === 'close' ? (Math.random() - 0.4) * 1000 : 0;
-    const price = Math.random() * 50000 + 1000;
-    const openDate = new Date(Date.now() - i * 3600 * 1000 * Math.random() * 24);
-    const durationHours = Math.floor(Math.random() * 72) + 1;
-    const closeDate = new Date(openDate.getTime() + durationHours * 3600 * 1000);
-    
-    return {
-      id: i + 1,
-      time: format(openDate, 'MM/dd HH:mm'),
-      pair: pairs[Math.floor(Math.random() * pairs.length)],
-      type,
-      direction,
-      leverage: leverages[Math.floor(Math.random() * leverages.length)],
-      marginMode: marginModes[Math.floor(Math.random() * marginModes.length)],
-      entryPrice: price.toFixed(2),
-      tp: (price * (1 + (direction === 'long' ? 0.05 : -0.05))).toFixed(2),
-      sl: (price * (1 + (direction === 'long' ? -0.02 : 0.02))).toFixed(2),
-      amount: (Math.random() * 2 + 0.1).toFixed(3),
-      pnl: Math.round(pnl),
-      roi: (Math.random() * 200 - 50).toFixed(2), // ROI for active trades
-      duration: type === 'close' ? formatDuration(durationHours) : '-',
-      closeTime: type === 'close' ? format(closeDate, 'MM/dd HH:mm') : '-',
-      status: type === 'close' ? (pnl >= 0 ? 'tp' : 'sl') : '-'
-    };
-  }).sort((a, b) => b.id - a.id);
 };
 
 // Advanced Analysis Component
@@ -141,10 +157,101 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader }: AdvancedAnalysi
   const profitTrendData = useMemo(() => generateProfitTrendData(selectedTrader), [selectedTrader]);
   const coinDistribution = useMemo(() => generateCoinDistribution(), [selectedTrader]);
 
-  const activeTrades = useMemo(() => generateTradeHistory(currentTrader?.name || '', 'open'), [selectedTrader, currentTrader?.name]);
-  const historyTrades = useMemo(() => generateTradeHistory(currentTrader?.name || '', 'close'), [selectedTrader, currentTrader?.name]);
+  // Real signals from Supabase
+  const [activeSignals, setActiveSignals] = useState<SignalRow[]>([]);
+  const [historySignals, setHistorySignals] = useState<SignalRow[]>([]);
+  const [signalsLoading, setSignalsLoading] = useState(false);
 
-  const renderTradeTable = (trades: ReturnType<typeof generateTradeHistory>, isHistory = false) => (
+  // Fetch signals from DB via RPC
+  const fetchSignals = useCallback(async (kolId: string) => {
+    if (!kolId) return;
+    setSignalsLoading(true);
+    try {
+      const [activeRes, historyRes] = await Promise.all([
+        supabase.rpc('get_signals_by_kol', { p_kol_id: kolId, p_status: 'active' }),
+        supabase.rpc('get_signals_by_kol', { p_kol_id: kolId, p_status: 'closed' }),
+      ]);
+      if (activeRes.error) console.error('Error fetching active signals:', activeRes.error);
+      else setActiveSignals((activeRes.data || []) as SignalRow[]);
+
+      if (historyRes.error) console.error('Error fetching history signals:', historyRes.error);
+      else setHistorySignals((historyRes.data || []) as SignalRow[]);
+    } catch (err) {
+      console.error('Error fetching signals:', err);
+    } finally {
+      setSignalsLoading(false);
+    }
+  }, []);
+
+  // Fetch signals when selectedTrader changes
+  useEffect(() => {
+    if (selectedTrader) {
+      fetchSignals(selectedTrader);
+    }
+  }, [selectedTrader, fetchSignals]);
+
+  // Realtime subscription for signals table
+  useEffect(() => {
+    if (!selectedTrader) return;
+
+    const channel = supabase
+      .channel(`signals-kol-${selectedTrader}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'signals',
+          filter: `kol_id=eq.${selectedTrader}`,
+        },
+        (payload) => {
+          const eventType = payload.eventType;
+          const newRow = payload.new as SignalRow;
+          const oldRow = payload.old as { id: string };
+
+          if (eventType === 'INSERT') {
+            if (newRow.status === 'active') {
+              setActiveSignals(prev => [newRow, ...prev]);
+            } else if (newRow.status === 'closed') {
+              setHistorySignals(prev => [newRow, ...prev]);
+            }
+          } else if (eventType === 'UPDATE') {
+            // If status changed from active to closed, move from active to history
+            if (newRow.status === 'closed') {
+              setActiveSignals(prev => prev.filter(s => s.id !== newRow.id));
+              setHistorySignals(prev => {
+                const exists = prev.find(s => s.id === newRow.id);
+                if (exists) return prev.map(s => s.id === newRow.id ? newRow : s);
+                return [newRow, ...prev];
+              });
+            } else if (newRow.status === 'active') {
+              setActiveSignals(prev => {
+                const exists = prev.find(s => s.id === newRow.id);
+                if (exists) return prev.map(s => s.id === newRow.id ? newRow : s);
+                return [newRow, ...prev];
+              });
+            } else if (newRow.status === 'cancelled') {
+              setActiveSignals(prev => prev.filter(s => s.id !== newRow.id));
+              setHistorySignals(prev => prev.filter(s => s.id !== newRow.id));
+            }
+          } else if (eventType === 'DELETE') {
+            setActiveSignals(prev => prev.filter(s => s.id !== oldRow.id));
+            setHistorySignals(prev => prev.filter(s => s.id !== oldRow.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedTrader]);
+
+  // Map DB signals to TradeRow for rendering
+  const activeTrades = useMemo(() => activeSignals.map(mapSignalToTrade), [activeSignals]);
+  const historyTrades = useMemo(() => historySignals.map(mapSignalToTrade), [historySignals]);
+
+  const renderTradeTable = (trades: TradeRow[], isHistory = false) => (
     <ScrollArea className="max-h-[300px]">
       <table className="w-full text-xs">
         <thead className="sticky top-0 bg-muted/50">
@@ -211,9 +318,9 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader }: AdvancedAnalysi
               )}
               {isHistory && (
                 <td className={`px-4 py-2 text-left font-medium ${
-                  trade.status === 'tp' ? 'text-accent-green' : 'text-accent-red'
+                  trade.status === 'tp' ? 'text-accent-green' : trade.status === 'sl' ? 'text-accent-red' : 'text-muted-foreground'
                 }`}>
-                  {trade.status === 'tp' ? t('tpHit') : t('slHit')}
+                  {trade.status === 'tp' ? t('tpHit') : trade.status === 'sl' ? t('slHit') : trade.status === 'draw' ? t('drawHit') : trade.status === 'manual' ? t('manualClose') : '-'}
                 </td>
               )}
               <td className={`px-4 py-2 text-left font-medium ${
@@ -221,9 +328,9 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader }: AdvancedAnalysi
               }`}>
                 <div className="flex flex-col items-start">
                    {isHistory ? (
-                     <span>{trade.pnl === 0 ? '-' : `${trade.pnl > 0 ? '+' : ''}$${trade.pnl.toLocaleString()}`}</span>
+                     <span>{trade.pnl === 0 ? '-' : `${trade.pnl > 0 ? '+' : ''}${trade.pnl.toFixed(2)}%`}</span>
                    ) : (
-                     <span>{trade.roi ? `${Number(trade.roi) > 0 ? '+' : ''}${trade.roi}%` : '-'}</span>
+                     <span>{trade.roi && Number(trade.roi) !== 0 ? `${Number(trade.roi) > 0 ? '+' : ''}${trade.roi}%` : '-'}</span>
                    )}
                 </div>
               </td>

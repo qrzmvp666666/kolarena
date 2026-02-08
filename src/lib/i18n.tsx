@@ -116,6 +116,8 @@ export const translations: Translations = {
   signalStatus: { zh: '信号状态', en: 'Status' },
   tpHit: { zh: '止盈', en: 'TP' },
   slHit: { zh: '止损', en: 'SL' },
+  drawHit: { zh: '平局', en: 'Draw' },
+  manualClose: { zh: '手动平仓', en: 'Manual' },
   marginCross: { zh: '全仓', en: 'CROSS' },
   marginIsolated: { zh: '逐仓', en: 'isolated' },
 
