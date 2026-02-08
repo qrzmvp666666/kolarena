@@ -271,22 +271,6 @@ const PlanSubscriptionPanel = () => {
         )}
       </div>
 
-      {/* Payment Info */}
-      <div className="flex flex-wrap gap-6 justify-center text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4" />
-          <span>{t('securePayment')}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4" />
-          <span>{t('instantActivation')}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Check className="w-4 h-4" />
-          <span>{t('cancelAnytime')}</span>
-        </div>
-      </div>
-
       {/* Crypto Payment Modal */}
       {selectedPlan && (
         <CryptoPaymentModal
