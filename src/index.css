@@ -199,3 +199,22 @@ All colors MUST be HSL.
   background: hsl(var(--border));
   border-radius: 2px;
 }
+@keyframes border-breathe {
+  0% { border-color: hsl(var(--primary)); box-shadow: 0 0 0 0px hsl(var(--primary) / 0.2); }
+  50% { border-color: hsl(var(--primary)); box-shadow: 0 0 0 4px hsl(var(--primary) / 0.4); }
+  100% { border-color: hsl(var(--primary)); box-shadow: 0 0 0 0px hsl(var(--primary) / 0.2); }
+}
+
+.animate-border-pulse {
+  animation: border-breathe 2s infinite ease-in-out;
+}
+
+@keyframes badge-pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 6px hsl(var(--primary) / 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 hsl(var(--primary) / 0); }
+}
+
+.animate-badge-pulse {
+  animation: badge-pulse 2s infinite;
+}

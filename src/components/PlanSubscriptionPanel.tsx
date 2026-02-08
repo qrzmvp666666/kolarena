@@ -168,7 +168,7 @@ const PlanSubscriptionPanel = () => {
           : plan.duration === 'quarterly'
             ? t('featuresTitlePlus')
             : t('featuresTitle'),
-        isPopular: plan.duration === 'quarterly',
+        isPopular: plan.duration === 'lifetime',
         stripeUrl: plan.stripe_invoice_url,
         nowpaymentUrl: plan.nowpayment_invoice_url,
       };
@@ -184,7 +184,7 @@ const PlanSubscriptionPanel = () => {
       </div>
 
       {/* Plans Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {isLoading ? (
           <div className="col-span-full text-center text-sm text-muted-foreground">
             {t('loading')}
@@ -195,10 +195,15 @@ const PlanSubscriptionPanel = () => {
               key={plan.type}
               className={`relative rounded-xl p-6 flex flex-col transition-all ${
                 plan.isPopular
-                  ? 'border-2 border-primary bg-card shadow-lg shadow-primary/10'
+                  ? 'border-2 border-primary bg-card shadow-lg shadow-primary/10 animate-border-pulse'
                   : 'border border-border bg-card/50'
               }`}
             >
+            {plan.isPopular && (
+              <div className="absolute -top-4 right-4 bg-primary text-primary-foreground text-sm px-3 py-1 rounded-full font-bold animate-badge-pulse shadow-lg z-10">
+                最多人选
+              </div>
+            )}
             {/* Plan Name */}
             <div className="mb-4">
               <h3 className="font-mono text-lg font-medium text-foreground">{plan.name}</h3>
@@ -246,11 +251,7 @@ const PlanSubscriptionPanel = () => {
             {/* Payment Buttons - Together at bottom */}
             <div className="space-y-2 mt-6 pt-6 border-t border-border">
               <Button 
-                className={`w-full ${
-                  plan.isPopular 
-                    ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
-                    : 'bg-muted hover:bg-muted/80 text-foreground'
-                }`}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                 onClick={() => handleCryptoPayment(plan.name, plan.price, plan.currency, plan.nowpaymentUrl)}
               >
                 <Bitcoin className="w-4 h-4 mr-2" />
@@ -258,7 +259,7 @@ const PlanSubscriptionPanel = () => {
               </Button>
               <Button 
                 variant="outline"
-                className="w-full"
+                className="w-full border-primary/20 hover:bg-primary/5 hover:border-primary/50 text-foreground"
                 onClick={() => handleStripePayment(plan.name, plan.stripeUrl)}
               >
                 <CreditCard className="w-4 h-4 mr-2" />
