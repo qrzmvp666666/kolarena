@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Search, Filter, RefreshCw, Calendar as CalendarIcon, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from 'lucide-react';
@@ -84,24 +85,46 @@ const generateCoinDistribution = () => {
 };
 
 // Generate trade history
-const generateTradeHistory = (traderName: string) => {
+const generateTradeHistory = (traderName: string, filterType?: 'open' | 'close') => {
   const pairs = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'XRP/USDT', 'DOGE/USDT', 'BNB/USDT'];
   const directions = ['long', 'short'] as const;
   const types = ['open', 'close'] as const;
+  const leverages = ['10x', '20x', '50x', '100x'];
+  const marginModes = ['isolated', 'cross'] as const;
+  const formatDuration = (hours: number) => {
+    const days = Math.floor(hours / 24);
+    const remainingHours = hours % 24;
+    if (days > 0 && remainingHours > 0) return `${days}d ${remainingHours}h`;
+    if (days > 0) return `${days}d`;
+    return `${remainingHours}h`;
+  };
   
   return Array.from({ length: 15 }, (_, i) => {
     const direction = directions[Math.floor(Math.random() * 2)];
-    const type = types[Math.floor(Math.random() * 2)];
+    const type = filterType || types[Math.floor(Math.random() * 2)];
     const pnl = type === 'close' ? (Math.random() - 0.4) * 1000 : 0;
+    const price = Math.random() * 50000 + 1000;
+    const openDate = new Date(Date.now() - i * 3600 * 1000 * Math.random() * 24);
+    const durationHours = Math.floor(Math.random() * 72) + 1;
+    const closeDate = new Date(openDate.getTime() + durationHours * 3600 * 1000);
+    
     return {
       id: i + 1,
-      time: format(new Date(Date.now() - i * 3600 * 1000 * Math.random() * 24), 'MM/dd HH:mm'),
+      time: format(openDate, 'MM/dd HH:mm'),
       pair: pairs[Math.floor(Math.random() * pairs.length)],
       type,
       direction,
+      leverage: leverages[Math.floor(Math.random() * leverages.length)],
+      marginMode: marginModes[Math.floor(Math.random() * marginModes.length)],
+      entryPrice: price.toFixed(2),
+      tp: (price * (1 + (direction === 'long' ? 0.05 : -0.05))).toFixed(2),
+      sl: (price * (1 + (direction === 'long' ? -0.02 : 0.02))).toFixed(2),
       amount: (Math.random() * 2 + 0.1).toFixed(3),
-      price: (Math.random() * 50000 + 1000).toFixed(2),
       pnl: Math.round(pnl),
+      roi: (Math.random() * 200 - 50).toFixed(2), // ROI for active trades
+      duration: type === 'close' ? formatDuration(durationHours) : '-',
+      closeTime: type === 'close' ? format(closeDate, 'MM/dd HH:mm') : '-',
+      status: type === 'close' ? (pnl >= 0 ? 'tp' : 'sl') : '-'
     };
   }).sort((a, b) => b.id - a.id);
 };
@@ -117,7 +140,99 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader }: AdvancedAnalysi
   const currentTrader = traders.find(tr => tr.id === selectedTrader) || traders[0];
   const profitTrendData = useMemo(() => generateProfitTrendData(selectedTrader), [selectedTrader]);
   const coinDistribution = useMemo(() => generateCoinDistribution(), [selectedTrader]);
-  const tradeHistory = useMemo(() => generateTradeHistory(currentTrader?.name || ''), [selectedTrader, currentTrader?.name]);
+
+  const activeTrades = useMemo(() => generateTradeHistory(currentTrader?.name || '', 'open'), [selectedTrader, currentTrader?.name]);
+  const historyTrades = useMemo(() => generateTradeHistory(currentTrader?.name || '', 'close'), [selectedTrader, currentTrader?.name]);
+
+  const renderTradeTable = (trades: ReturnType<typeof generateTradeHistory>, isHistory = false) => (
+    <ScrollArea className="max-h-[300px]">
+      <table className="w-full text-xs">
+        <thead className="sticky top-0 bg-muted/50">
+          <tr className="border-b border-border">
+            <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('tradePair')}</th>
+            <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('tradeDirection')}</th>
+            <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('leverage')}</th>
+            <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('entryPrice')}</th>
+            <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('takeProfit')}</th>
+            <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('stopLoss')}</th>
+            <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('orderTime')}</th>
+            {isHistory && (
+              <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('signalDuration')}</th>
+            )}
+            {isHistory && (
+              <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('closeTime')}</th>
+            )}
+            {isHistory && (
+              <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('signalStatus')}</th>
+            )}
+            <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t(isHistory ? 'tradePnL' : 'profitRatio')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {trades.length === 0 ? (
+             <tr>
+               <td colSpan={isHistory ? 11 : 8} className="text-center py-8 text-muted-foreground">{t('noData') || 'No Data'}</td>
+             </tr>
+          ) : (
+            trades.map((trade) => (
+            <tr key={trade.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+              <td className="px-4 py-2 text-foreground font-medium">
+                <div className="flex flex-col">
+                   <span>{trade.pair}</span>
+                   <span className="text-[10px] text-muted-foreground uppercase">
+                     {trade.marginMode === 'cross' ? t('marginCross') : t('marginIsolated')}
+                   </span>
+                </div>
+              </td>
+              <td className="px-4 py-2 text-left">
+                <span className={`inline-flex items-center gap-1 font-bold ${
+                  trade.direction === 'long' ? 'text-accent-green' : 'text-accent-red'
+                }`}>
+                    {trade.direction === 'long' ? (
+                      <ArrowUpRight className="w-3 h-3" />
+                    ) : (
+                      <ArrowDownRight className="w-3 h-3" />
+                    )}
+                    {t(trade.direction === 'long' ? 'longPosition' : 'shortPosition')}
+                </span>
+              </td>
+              <td className="px-4 py-2 text-left text-foreground">
+                  <span className="text-xs bg-muted px-1.5 py-0.5 rounded text-foreground">{trade.leverage}</span>
+              </td>
+              <td className="px-4 py-2 text-left text-foreground">${trade.entryPrice}</td>
+              <td className="px-4 py-2 text-left text-accent-green">{trade.tp}</td>
+              <td className="px-4 py-2 text-left text-accent-red">{trade.sl}</td>
+              <td className="px-4 py-2 text-left text-muted-foreground">{trade.time}</td>
+              {isHistory && (
+                <td className="px-4 py-2 text-left text-muted-foreground">{trade.duration}</td>
+              )}
+              {isHistory && (
+                <td className="px-4 py-2 text-left text-muted-foreground">{trade.closeTime}</td>
+              )}
+              {isHistory && (
+                <td className={`px-4 py-2 text-left font-medium ${
+                  trade.status === 'tp' ? 'text-accent-green' : 'text-accent-red'
+                }`}>
+                  {trade.status === 'tp' ? t('tpHit') : t('slHit')}
+                </td>
+              )}
+              <td className={`px-4 py-2 text-left font-medium ${
+                (isHistory ? trade.pnl : Number(trade.roi)) === 0 ? 'text-muted-foreground' : (isHistory ? trade.pnl : Number(trade.roi)) > 0 ? 'text-accent-green' : 'text-accent-red'
+              }`}>
+                <div className="flex flex-col items-start">
+                   {isHistory ? (
+                     <span>{trade.pnl === 0 ? '-' : `${trade.pnl > 0 ? '+' : ''}$${trade.pnl.toLocaleString()}`}</span>
+                   ) : (
+                     <span>{trade.roi ? `${Number(trade.roi) > 0 ? '+' : ''}${trade.roi}%` : '-'}</span>
+                   )}
+                </div>
+              </td>
+            </tr>
+          )))}
+        </tbody>
+      </table>
+    </ScrollArea>
+  );
 
   if (!currentTrader) {
     return (
@@ -130,24 +245,38 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader }: AdvancedAnalysi
   return (
     <div className="space-y-6">
       {/* Stats Cards Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         <div className="border border-border rounded-lg p-4 bg-card">
-          <div className="text-xs text-muted-foreground mb-1">{t('tradingDays')}</div>
-          <div className="text-2xl font-bold text-foreground">{currentTrader.trading_days}</div>
+          <div className="text-xs text-muted-foreground mb-1">{t('accountValue')}</div>
+          <div className="text-xl font-bold text-foreground">${Number(currentTrader.account_value).toLocaleString()}</div>
         </div>
         <div className="border border-border rounded-lg p-4 bg-card">
-          <div className="text-xs text-muted-foreground mb-1">{t('winRate')}</div>
-          <div className="text-2xl font-bold text-foreground">{currentTrader.win_rate}%</div>
+          <div className="text-xs text-muted-foreground mb-1">{t('returnRate')}</div>
+          <div className={`text-xl font-bold ${currentTrader.return_rate >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+            {currentTrader.return_rate >= 0 ? '+' : ''}{Number(currentTrader.return_rate).toFixed(2)}%
+          </div>
         </div>
         <div className="border border-border rounded-lg p-4 bg-card">
           <div className="text-xs text-muted-foreground mb-1">{t('totalPnL')}</div>
-          <div className={`text-2xl font-bold ${currentTrader.total_pnl >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+          <div className={`text-xl font-bold ${currentTrader.total_pnl >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
             {currentTrader.total_pnl >= 0 ? '+' : ''}${Number(currentTrader.total_pnl).toLocaleString()}
           </div>
         </div>
         <div className="border border-border rounded-lg p-4 bg-card">
-          <div className="text-xs text-muted-foreground mb-1">{t('profitFactor')}</div>
-          <div className="text-2xl font-bold text-foreground">{(Math.random() * 1.5 + 0.8).toFixed(2)}</div>
+          <div className="text-xs text-muted-foreground mb-1">{t('winRate')}</div>
+          <div className="text-xl font-bold text-foreground">{currentTrader.win_rate}%</div>
+        </div>
+        <div className="border border-border rounded-lg p-4 bg-card">
+          <div className="text-xs text-muted-foreground mb-1">{t('maxProfit')}</div>
+          <div className="text-xl font-bold text-accent-green">${Number(currentTrader.max_profit).toLocaleString()}</div>
+        </div>
+        <div className="border border-border rounded-lg p-4 bg-card">
+          <div className="text-xs text-muted-foreground mb-1">{t('maxLoss')}</div>
+          <div className="text-xl font-bold text-accent-red">-${Math.abs(Number(currentTrader.max_loss)).toLocaleString()}</div>
+        </div>
+        <div className="border border-border rounded-lg p-4 bg-card">
+          <div className="text-xs text-muted-foreground mb-1">{t('tradingDays')}</div>
+          <div className="text-xl font-bold text-foreground">{currentTrader.trading_days}</div>
         </div>
       </div>
 
@@ -236,62 +365,24 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader }: AdvancedAnalysi
         </div>
       </div>
 
-      {/* Trade History Table */}
+      {/* Trade History Tabs */}
       <div className="border border-border rounded-lg overflow-hidden bg-card">
-        <div className="px-4 py-3 border-b border-border">
-          <h3 className="text-sm font-medium text-foreground">{t('tradeHistory')}</h3>
-        </div>
-        <ScrollArea className="max-h-[300px]">
-          <table className="w-full text-xs">
-            <thead className="sticky top-0 bg-muted/50">
-              <tr className="border-b border-border">
-                <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('tradeTime')}</th>
-                <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('tradePair')}</th>
-                <th className="px-4 py-2 text-center font-medium text-muted-foreground">{t('tradeType')}</th>
-                <th className="px-4 py-2 text-center font-medium text-muted-foreground">{t('tradeDirection')}</th>
-                <th className="px-4 py-2 text-right font-medium text-muted-foreground">{t('tradeAmount')}</th>
-                <th className="px-4 py-2 text-right font-medium text-muted-foreground">{t('tradePrice')}</th>
-                <th className="px-4 py-2 text-right font-medium text-muted-foreground">{t('tradePnL')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tradeHistory.map((trade) => (
-                <tr key={trade.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                  <td className="px-4 py-2 text-muted-foreground">{trade.time}</td>
-                  <td className="px-4 py-2 text-foreground font-medium">{trade.pair}</td>
-                  <td className="px-4 py-2 text-center">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-                      trade.type === 'open' 
-                        ? 'bg-blue-500/20 text-blue-400' 
-                        : 'bg-purple-500/20 text-purple-400'
-                    }`}>
-                      {t(trade.type)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2 text-center">
-                    <span className={`inline-flex items-center gap-1 ${
-                      trade.direction === 'long' ? 'text-accent-green' : 'text-accent-red'
-                    }`}>
-                      {trade.direction === 'long' ? (
-                        <ArrowUpRight className="w-3 h-3" />
-                      ) : (
-                        <ArrowDownRight className="w-3 h-3" />
-                      )}
-                      {t(trade.direction === 'long' ? 'longPosition' : 'shortPosition')}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2 text-right text-foreground">{trade.amount}</td>
-                  <td className="px-4 py-2 text-right text-foreground">${trade.price}</td>
-                  <td className={`px-4 py-2 text-right font-medium ${
-                    trade.pnl === 0 ? 'text-muted-foreground' : trade.pnl > 0 ? 'text-accent-green' : 'text-accent-red'
-                  }`}>
-                    {trade.pnl === 0 ? '-' : `${trade.pnl > 0 ? '+' : ''}$${trade.pnl.toLocaleString()}`}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </ScrollArea>
+        <Tabs defaultValue="active" className="w-full">
+            <div className="px-4 py-3 border-b border-border flex items-center gap-4">
+              <TabsList className="bg-muted/50 p-1 rounded-md">
+                <TabsTrigger value="active" className="text-xs h-7 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">{t('activeSignals')}</TabsTrigger>
+                <TabsTrigger value="history" className="text-xs h-7 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">{t('historySignals')}</TabsTrigger>
+              </TabsList>
+            </div>
+            
+            <TabsContent value="active" className="m-0">
+              {renderTradeTable(activeTrades)}
+            </TabsContent>
+            
+            <TabsContent value="history" className="m-0">
+              {renderTradeTable(historyTrades, true)}
+            </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
@@ -487,7 +578,16 @@ const LeaderboardContent = () => {
                         const found = kolsData.find(t => t.id === selectedKol);
                         const idx = kolsData.findIndex(t => t.id === selectedKol);
                         const display = found ? getKolDisplay(found, idx) : null;
-                        return found ? `${display?.icon} ${found.name}` : '';
+                        return found ? (
+                          <div className="flex items-center gap-2">
+                            {found.avatar_url ? (
+                              <img src={found.avatar_url} alt={found.name} className="w-5 h-5 rounded-full object-cover" />
+                            ) : (
+                              <span>{display?.icon}</span>
+                            )}
+                            <span>{found.name}</span>
+                          </div>
+                        ) : '';
                       })()}
                     </SelectValue>
                   </SelectTrigger>
@@ -495,7 +595,11 @@ const LeaderboardContent = () => {
                     {kolsData.map((trader, idx) => (
                       <SelectItem key={trader.id} value={trader.id}>
                         <div className="flex items-center gap-2">
-                          <span>{getKolDisplay(trader, idx).icon}</span>
+                          {trader.avatar_url ? (
+                            <img src={trader.avatar_url} alt={trader.name} className="w-5 h-5 rounded-full object-cover" />
+                          ) : (
+                            <span>{getKolDisplay(trader, idx).icon}</span>
+                          )}
                           <span>{trader.name}</span>
                         </div>
                       </SelectItem>

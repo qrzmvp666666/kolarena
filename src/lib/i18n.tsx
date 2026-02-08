@@ -113,6 +113,11 @@ export const translations: Translations = {
   openTime: { zh: '开仓', en: 'Open' },
   closeTime: { zh: '平仓', en: 'Close' },
   signalDuration: { zh: '信号时长', en: 'Duration' },
+  signalStatus: { zh: '信号状态', en: 'Status' },
+  tpHit: { zh: '止盈', en: 'TP' },
+  slHit: { zh: '止损', en: 'SL' },
+  marginCross: { zh: '全仓', en: 'CROSS' },
+  marginIsolated: { zh: '逐仓', en: 'isolated' },
 
   // Leaderboard Page
   competition: { zh: '比赛', en: 'Competition' },
@@ -158,6 +163,10 @@ export const translations: Translations = {
   tradeHistory: { zh: '交易记录', en: 'Trade History' },
   tradeTime: { zh: '交易时间', en: 'Time' },
   tradePair: { zh: '交易对', en: 'Pair' },
+  entryPrice: { zh: '入场价', en: 'Entry Price' },
+  takeProfit: { zh: '止盈价', en: 'Take Profit' },
+  stopLoss: { zh: '止损价', en: 'Stop Loss' },
+  leverage: { zh: '杠杆', en: 'Leverage' },
   tradeType: { zh: '类型', en: 'Type' },
   tradeDirection: { zh: '方向', en: 'Direction' },
   tradeAmount: { zh: '数量', en: 'Amount' },
