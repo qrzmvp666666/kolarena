@@ -54,7 +54,9 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
         <Link 
           to="/chart" 
           className={`font-mono text-sm transition-colors ${
-            location.pathname === '/chart' ? 'text-foreground text-base font-bold' : 'text-muted-foreground hover:text-foreground'
+            (location.pathname === '/chart' || location.pathname === '/')
+              ? 'text-foreground text-base font-bold'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           {t('chartPage')}
