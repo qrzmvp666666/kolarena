@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import TopNav from '@/components/TopNav';
 import TickerBar from '@/components/TickerBar';
 import { useLanguage } from '@/lib/i18n';
 import { models } from '@/lib/chartData';
+import { supabase } from '@/lib/supabase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,50 +16,43 @@ import { format } from 'date-fns';
 import { zhCN, enUS } from 'date-fns/locale';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip, Area, AreaChart } from 'recharts';
 
-// Coin types for filtering
-const coinTypes = ['ALL', 'BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'BNB'];
+// KOL display info mapping (name -> color/icon) derived from models
+const kolDisplayMap: Record<string, { color: string; icon: string }> = {};
+models.forEach(m => {
+  kolDisplayMap[m.name] = { color: m.color, icon: m.icon };
+});
 
-// Generate leaderboard data based on models
-const generateLeaderboardData = () => {
-  return models
-    .filter(m => m.id !== 'btc') // Exclude BTC benchmark
-    .map((model, index) => {
-      const accountValue = model.value;
-      const returnRate = ((accountValue - 10000) / 10000) * 100;
-      const totalPnL = accountValue - 10000;
-      const fees = Math.floor(Math.random() * 2000) + 500;
-      const winRate = parseFloat((Math.random() * 15 + 25).toFixed(1));
-      const maxProfit = Math.floor(Math.random() * 2000) + 400;
-      const maxLoss = -(Math.floor(Math.random() * 1500) + 500);
-      const sharpe = (Math.random() * 0.2 - 0.1).toFixed(3);
-      const trades = Math.floor(Math.random() * 800) + 150;
-      const mainCoin = coinTypes[Math.floor(Math.random() * (coinTypes.length - 1)) + 1];
+// Default color palette for KOLs not in models
+const defaultColors = [
+  'hsl(168, 100%, 40%)', 'hsl(280, 100%, 60%)', 'hsl(200, 100%, 50%)',
+  'hsl(25, 100%, 50%)', 'hsl(0, 0%, 40%)', 'hsl(0, 0%, 20%)', 'hsl(45, 100%, 50%)',
+];
 
-      return {
-        rank: index + 1,
-        id: model.id,
-        name: model.name,
-        shortName: model.shortName,
-        icon: model.icon,
-        color: model.color,
-        avatar: model.avatar,
-        accountValue,
-        returnRate,
-        totalPnL,
-        fees,
-        winRate,
-        maxProfit,
-        maxLoss,
-        sharpe,
-        trades,
-        mainCoin,
-      };
-    })
-    .sort((a, b) => b.accountValue - a.accountValue)
-    .map((item, index) => ({ ...item, rank: index + 1 }));
+export interface KolData {
+  id: string;
+  name: string;
+  short_name: string | null;
+  avatar_url: string | null;
+  account_value: number;
+  return_rate: number;
+  total_pnl: number;
+  win_rate: number;
+  max_profit: number;
+  max_loss: number;
+  trading_days: number;
+  created_at: string;
+  updated_at: string;
+  rank: number;
+}
+
+// Helper to get display info for a KOL
+const getKolDisplay = (kol: KolData, index: number) => {
+  const mapped = kolDisplayMap[kol.name];
+  return {
+    color: mapped?.color || defaultColors[index % defaultColors.length],
+    icon: mapped?.icon || '⚪',
+  };
 };
-
-const leaderboardData = generateLeaderboardData();
 
 // Generate mock profit trend data
 const generateProfitTrendData = (traderId: string) => {
@@ -114,7 +108,7 @@ const generateTradeHistory = (traderName: string) => {
 
 // Advanced Analysis Component
 interface AdvancedAnalysisProps {
-  traders: typeof leaderboardData;
+  traders: KolData[];
   t: (key: string) => string;
   selectedTrader: string;
 }
@@ -138,17 +132,17 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader }: AdvancedAnalysi
       {/* Stats Cards Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="border border-border rounded-lg p-4 bg-card">
-          <div className="text-xs text-muted-foreground mb-1">{t('totalTrades')}</div>
-          <div className="text-2xl font-bold text-foreground">{currentTrader.trades}</div>
+          <div className="text-xs text-muted-foreground mb-1">{t('tradingDays')}</div>
+          <div className="text-2xl font-bold text-foreground">{currentTrader.trading_days}</div>
         </div>
         <div className="border border-border rounded-lg p-4 bg-card">
           <div className="text-xs text-muted-foreground mb-1">{t('winRate')}</div>
-          <div className="text-2xl font-bold text-foreground">{currentTrader.winRate}%</div>
+          <div className="text-2xl font-bold text-foreground">{currentTrader.win_rate}%</div>
         </div>
         <div className="border border-border rounded-lg p-4 bg-card">
           <div className="text-xs text-muted-foreground mb-1">{t('totalPnL')}</div>
-          <div className={`text-2xl font-bold ${currentTrader.totalPnL >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
-            {currentTrader.totalPnL >= 0 ? '+' : ''}${currentTrader.totalPnL.toLocaleString()}
+          <div className={`text-2xl font-bold ${currentTrader.total_pnl >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+            {currentTrader.total_pnl >= 0 ? '+' : ''}${Number(currentTrader.total_pnl).toLocaleString()}
           </div>
         </div>
         <div className="border border-border rounded-lg p-4 bg-card">
@@ -309,54 +303,89 @@ const LeaderboardContent = () => {
   const [activeTab, setActiveTab] = useState<'overall' | 'advanced'>('overall');
   const [marketType, setMarketType] = useState<'futures' | 'spot'>('futures');
   const [searchQuery, setSearchQuery] = useState('');
-  const [coinFilter, setCoinFilter] = useState('ALL');
   const [returnRateFilter, setReturnRateFilter] = useState('all');
   const [winRateFilter, setWinRateFilter] = useState('all');
-  const [maxLossFilter, setMaxLossFilter] = useState('all');
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'year' | 'custom'>('month');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
     from: undefined,
     to: undefined,
   });
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [selectedKol, setSelectedKol] = useState(leaderboardData[0]?.id || '');
+  const [kolsData, setKolsData] = useState<KolData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedKol, setSelectedKol] = useState('');
+
+  // Fetch leaderboard data via RPC
+  const fetchLeaderboard = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_leaderboard');
+      if (error) {
+        console.error('Error fetching leaderboard:', error);
+        return;
+      }
+      if (data) {
+        setKolsData(data as KolData[]);
+        if (!selectedKol && data.length > 0) {
+          setSelectedKol(data[0].id);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching leaderboard:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedKol]);
+
+  // Initial fetch + Realtime subscription
+  useEffect(() => {
+    fetchLeaderboard();
+
+    // Subscribe to Realtime changes on kols table
+    const channel = supabase
+      .channel('kols-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'kols' },
+        (_payload) => {
+          // Re-fetch the full leaderboard on any change (INSERT, UPDATE, DELETE)
+          fetchLeaderboard();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchLeaderboard]);
 
   // Filtered data
   const filteredData = useMemo(() => {
-    return leaderboardData.filter(item => {
+    return kolsData.filter(item => {
       // Search filter
       if (searchQuery && !item.name.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
-      // Coin filter
-      if (coinFilter !== 'ALL' && item.mainCoin !== coinFilter) {
-        return false;
-      }
       // Return rate filter
-      if (returnRateFilter === 'positive' && item.returnRate < 0) return false;
-      if (returnRateFilter === 'negative' && item.returnRate >= 0) return false;
+      if (returnRateFilter === 'positive' && Number(item.return_rate) < 0) return false;
+      if (returnRateFilter === 'negative' && Number(item.return_rate) >= 0) return false;
       // Win rate filter
-      if (winRateFilter === 'high' && item.winRate < 30) return false;
-      if (winRateFilter === 'low' && item.winRate >= 30) return false;
-      // Max loss filter
-      if (maxLossFilter === 'low' && item.maxLoss < -1000) return false;
-      if (maxLossFilter === 'high' && item.maxLoss >= -1000) return false;
+      if (winRateFilter === 'high' && Number(item.win_rate) < 30) return false;
+      if (winRateFilter === 'low' && Number(item.win_rate) >= 30) return false;
       
       return true;
     });
-  }, [searchQuery, coinFilter, returnRateFilter, winRateFilter, maxLossFilter]);
+  }, [kolsData, searchQuery, returnRateFilter, winRateFilter]);
 
-  const winner = filteredData[0] || leaderboardData[0];
-  const maxValue = Math.max(...filteredData.map(d => d.accountValue), 1);
+  const winner = filteredData[0] || kolsData[0];
+  const maxValue = Math.max(...filteredData.map(d => Number(d.account_value)), 1);
 
   const handleRefresh = () => {
     setSearchQuery('');
-    setCoinFilter('ALL');
     setReturnRateFilter('all');
     setWinRateFilter('all');
-    setMaxLossFilter('all');
     setTimeRange('month');
     setCustomDateRange({ from: undefined, to: undefined });
+    fetchLeaderboard();
   };
 
   const getTimeRangeLabel = () => {
@@ -453,15 +482,20 @@ const LeaderboardContent = () => {
                 <span className="text-sm text-muted-foreground">{t('selectTrader')}:</span>
                 <Select value={selectedKol} onValueChange={setSelectedKol}>
                   <SelectTrigger className="w-[200px] h-9 bg-card border-border">
-                    <SelectValue placeholder={leaderboardData[0]?.name}>
-                      {leaderboardData.find(t => t.id === selectedKol)?.icon} {leaderboardData.find(t => t.id === selectedKol)?.name}
+                    <SelectValue placeholder={kolsData[0]?.name}>
+                      {(() => {
+                        const found = kolsData.find(t => t.id === selectedKol);
+                        const idx = kolsData.findIndex(t => t.id === selectedKol);
+                        const display = found ? getKolDisplay(found, idx) : null;
+                        return found ? `${display?.icon} ${found.name}` : '';
+                      })()}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="bg-popover border border-border z-50">
-                    {leaderboardData.map(trader => (
+                    {kolsData.map((trader, idx) => (
                       <SelectItem key={trader.id} value={trader.id}>
                         <div className="flex items-center gap-2">
-                          <span>{trader.icon}</span>
+                          <span>{getKolDisplay(trader, idx).icon}</span>
                           <span>{trader.name}</span>
                         </div>
                       </SelectItem>
@@ -500,21 +534,6 @@ const LeaderboardContent = () => {
         {/* Filter Options Row - Only show for overall tab */}
         {activeTab === 'overall' && (
           <div className="flex items-center gap-4 mb-4 flex-wrap">
-            {/* Coin Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{t('coinType')}:</span>
-              <Select value={coinFilter} onValueChange={setCoinFilter}>
-                <SelectTrigger className="w-[100px] h-8 font-mono text-xs bg-card border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="font-mono text-xs">
-                  {coinTypes.map(coin => (
-                    <SelectItem key={coin} value={coin}>{coin === 'ALL' ? t('all') : coin}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Return Rate Filter */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">{t('returnRate')}:</span>
@@ -541,21 +560,6 @@ const LeaderboardContent = () => {
                   <SelectItem value="all">{t('all')}</SelectItem>
                   <SelectItem value="high">{'>'}30%</SelectItem>
                   <SelectItem value="low">{'<'}30%</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Max Loss Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{t('maxLoss')}:</span>
-              <Select value={maxLossFilter} onValueChange={setMaxLossFilter}>
-                <SelectTrigger className="w-[120px] h-8 font-mono text-xs bg-card border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="font-mono text-xs">
-                  <SelectItem value="all">{t('all')}</SelectItem>
-                  <SelectItem value="low">{t('lowRisk')}</SelectItem>
-                  <SelectItem value="high">{t('highRisk')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -642,6 +646,14 @@ const LeaderboardContent = () => {
         {/* Content based on active tab */}
         {activeTab === 'overall' ? (
           <>
+            {/* Loading state */}
+            {loading ? (
+              <div className="flex items-center justify-center h-64 text-muted-foreground">
+                <RefreshCw className="w-5 h-5 animate-spin mr-2" />
+                {t('loading') || 'Loading...'}
+              </div>
+            ) : (
+            <>
             {/* Data Table */}
             <div className="border border-border rounded-lg overflow-hidden mb-6">
               <ScrollArea className="w-full">
@@ -650,20 +662,19 @@ const LeaderboardContent = () => {
                     <tr className="bg-muted/50 border-b border-border">
                       <th className="px-4 py-3 text-left font-semibold text-muted-foreground">RANK</th>
                       <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('trader')}</th>
-                      <th className="px-4 py-3 text-center font-semibold text-muted-foreground">{t('coinType')}</th>
                       <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('accountValue')} ↓</th>
                       <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('returnRate')}</th>
                       <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('totalPnL')}</th>
-                      <th className="px-4 py-3 text-right font-semibold text-muted-foreground">FEES</th>
                       <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('winRate')}</th>
                       <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('maxProfit')}</th>
                       <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('maxLoss')}</th>
-                      <th className="px-4 py-3 text-right font-semibold text-muted-foreground">SHARPE</th>
-                      <th className="px-4 py-3 text-right font-semibold text-muted-foreground">TRADES</th>
+                      <th className="px-4 py-3 text-right font-semibold text-muted-foreground">{t('tradingDays')}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredData.map((row, index) => (
+                    {filteredData.map((row, index) => {
+                      const display = getKolDisplay(row, index);
+                      return (
                       <tr key={row.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                         <td className="px-4 py-3 text-foreground font-medium">{index + 1}</td>
                         <td className="px-4 py-3">
@@ -674,28 +685,30 @@ const LeaderboardContent = () => {
                               setActiveTab('advanced');
                             }}
                           >
-                            <span>{row.icon}</span>
+                            {row.avatar_url ? (
+                              <img src={row.avatar_url} alt={row.name} className="w-6 h-6 rounded-full object-cover" />
+                            ) : (
+                              <span>{display.icon}</span>
+                            )}
                             <span className="text-foreground font-medium hover:text-accent-orange">{row.name}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-center text-muted-foreground">{row.mainCoin}</td>
                         <td className="px-4 py-3 text-right text-foreground font-medium">
-                          ${row.accountValue.toLocaleString()}
+                          ${Number(row.account_value).toLocaleString()}
                         </td>
-                        <td className={`px-4 py-3 text-right font-medium ${row.returnRate >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
-                          {row.returnRate >= 0 ? '+' : ''}{row.returnRate.toFixed(2)}%
+                        <td className={`px-4 py-3 text-right font-medium ${Number(row.return_rate) >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+                          {Number(row.return_rate) >= 0 ? '+' : ''}{Number(row.return_rate).toFixed(2)}%
                         </td>
-                        <td className={`px-4 py-3 text-right font-medium ${row.totalPnL >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
-                          {row.totalPnL >= 0 ? '+' : ''}${row.totalPnL.toLocaleString()}
+                        <td className={`px-4 py-3 text-right font-medium ${Number(row.total_pnl) >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+                          {Number(row.total_pnl) >= 0 ? '+' : ''}${Number(row.total_pnl).toLocaleString()}
                         </td>
-                        <td className="px-4 py-3 text-right text-muted-foreground">${row.fees.toLocaleString()}</td>
-                        <td className="px-4 py-3 text-right text-muted-foreground">{row.winRate}%</td>
-                        <td className="px-4 py-3 text-right text-accent-green">${row.maxProfit.toLocaleString()}</td>
-                        <td className="px-4 py-3 text-right text-accent-red">-${Math.abs(row.maxLoss).toLocaleString()}</td>
-                        <td className="px-4 py-3 text-right text-muted-foreground">{row.sharpe}</td>
-                        <td className="px-4 py-3 text-right text-muted-foreground">{row.trades}</td>
+                        <td className="px-4 py-3 text-right text-muted-foreground">{Number(row.win_rate)}%</td>
+                        <td className="px-4 py-3 text-right text-accent-green">${Number(row.max_profit).toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right text-accent-red">-${Math.abs(Number(row.max_loss)).toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right text-muted-foreground">{row.trading_days}</td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </ScrollArea>
@@ -704,28 +717,39 @@ const LeaderboardContent = () => {
             {/* Bottom Section: Winner Card + Bar Chart */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               {/* Winner Card */}
+              {winner && (() => {
+                const winnerIdx = filteredData.findIndex(d => d.id === winner.id);
+                const winnerDisplay = getKolDisplay(winner, winnerIdx >= 0 ? winnerIdx : 0);
+                return (
               <div className="lg:col-span-1 border border-border rounded-lg p-6 bg-card">
                 <div className="text-sm text-muted-foreground mb-3">{t('winningModel')}</div>
                 <div className="flex items-center gap-3 mb-4">
-                  <div 
-                    className="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
-                    style={{ backgroundColor: winner.color + '33' }}
-                  >
-                    {winner.icon}
-                  </div>
+                  {winner.avatar_url ? (
+                    <img src={winner.avatar_url} alt={winner.name} className="w-10 h-10 rounded-full object-cover" />
+                  ) : (
+                    <div 
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
+                      style={{ backgroundColor: winnerDisplay.color + '33' }}
+                    >
+                      {winnerDisplay.icon}
+                    </div>
+                  )}
                   <span className="text-lg font-bold text-foreground">{winner.name}</span>
                 </div>
                 <div className="text-sm text-muted-foreground mb-1">{t('totalEquity')}</div>
                 <div className="text-2xl font-bold text-foreground">
-                  ${winner.accountValue.toLocaleString()}
+                  ${Number(winner.account_value).toLocaleString()}
                 </div>
               </div>
+                );
+              })()}
 
               {/* Bar Chart Visualization */}
               <div className="lg:col-span-3 border border-border rounded-lg p-6 bg-card">
                 <div className="flex items-end justify-between gap-4 h-48">
-                  {filteredData.slice(0, 8).map((item) => {
-                    const heightPercent = (item.accountValue / maxValue) * 100;
+                  {filteredData.slice(0, 8).map((item, idx) => {
+                    const heightPercent = (Number(item.account_value) / maxValue) * 100;
+                    const itemDisplay = getKolDisplay(item, idx);
                     return (
                       <div 
                         key={item.id} 
@@ -736,26 +760,30 @@ const LeaderboardContent = () => {
                         }}
                       >
                         <div className="text-xs font-medium text-foreground">
-                          ${item.accountValue.toLocaleString()}
+                          ${Number(item.account_value).toLocaleString()}
                         </div>
                         <div className="w-full flex justify-center">
                           <div 
                             className="w-12 rounded-t-sm transition-all duration-500 group-hover:opacity-80"
                             style={{ 
                               height: `${heightPercent * 1.2}px`, 
-                              backgroundColor: item.color,
+                              backgroundColor: itemDisplay.color,
                               minHeight: '20px'
                             }}
                           />
                         </div>
-                        <div 
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-sm group-hover:scale-110 transition-transform"
-                          style={{ backgroundColor: item.color + '33' }}
-                        >
-                          {item.icon}
-                        </div>
+                        {item.avatar_url ? (
+                          <img src={item.avatar_url} alt={item.name} className="w-8 h-8 rounded-full object-cover group-hover:scale-110 transition-transform" />
+                        ) : (
+                          <div 
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-sm group-hover:scale-110 transition-transform"
+                            style={{ backgroundColor: itemDisplay.color + '33' }}
+                          >
+                            {itemDisplay.icon}
+                          </div>
+                        )}
                         <div className="text-[10px] text-muted-foreground text-center truncate w-full group-hover:text-accent-orange transition-colors">
-                          {item.shortName}
+                          {item.short_name || item.name}
                         </div>
                       </div>
                     );
@@ -768,6 +796,8 @@ const LeaderboardContent = () => {
             <div className="mt-6 text-xs text-muted-foreground">
               <span className="font-medium">{t('note')}:</span> {t('leaderboardNote')}
             </div>
+          </>
+          )}
           </>
         ) : (
           <AdvancedAnalysisContent traders={filteredData} t={t} selectedTrader={selectedKol} />

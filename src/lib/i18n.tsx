@@ -171,6 +171,7 @@ export const translations: Translations = {
   dailyProfit: { zh: '日收益', en: 'Daily Profit' },
   traderPerformance: { zh: 'KOL表现', en: 'Trader Performance' },
   totalTrades: { zh: '总交易次数', en: 'Total Trades' },
+  tradingDays: { zh: '交易天数', en: 'Trading Days' },
   avgProfit: { zh: '平均收益', en: 'Avg Profit' },
   profitFactor: { zh: '盈亏比', en: 'Profit Factor' },
 
