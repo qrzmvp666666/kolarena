@@ -50,6 +50,7 @@ export const useBinanceWebSocket = (externalSymbols?: string[]): UseBinanceWebSo
   const pendingUpdatesRef = useRef<Record<string, TickerData>>({});
   const symbolsRef = useRef(SYMBOLS);
   symbolsRef.current = SYMBOLS;
+  const lastUpdateRef = useRef<number>(0);
 
   // 节流更新价格
   const throttledUpdatePrice = useCallback((symbol: string, newData: TickerData) => {
@@ -88,6 +89,7 @@ export const useBinanceWebSocket = (externalSymbols?: string[]): UseBinanceWebSo
             }, 300);
           }
 
+          lastUpdateRef.current = Date.now();
           return { ...prev, [symbol]: data };
         });
 
@@ -95,6 +97,15 @@ export const useBinanceWebSocket = (externalSymbols?: string[]): UseBinanceWebSo
       }
       delete throttleTimersRef.current[symbol];
     }, THROTTLE_DELAY);
+  }, []);
+
+  // 停止HTTP轮询
+  const stopHttpFallback = useCallback(() => {
+    if (fallbackIntervalRef.current) {
+      clearInterval(fallbackIntervalRef.current);
+      fallbackIntervalRef.current = undefined;
+    }
+    setIsFallback(false);
   }, []);
 
   // WebSocket连接
@@ -110,7 +121,7 @@ export const useBinanceWebSocket = (externalSymbols?: string[]): UseBinanceWebSo
       wsRef.current.onopen = () => {
         console.log('✅ Binance WebSocket connected');
         setIsConnected(true);
-        setIsFallback(false);
+        stopHttpFallback();
         reconnectAttemptsRef.current = 0;
 
         // 启动心跳
@@ -182,7 +193,7 @@ export const useBinanceWebSocket = (externalSymbols?: string[]): UseBinanceWebSo
       console.error('Error creating WebSocket:', error);
       startHttpFallback();
     }
-  }, [throttledUpdatePrice, toast]);
+  }, [throttledUpdatePrice, stopHttpFallback, toast]);
 
   // HTTP备用方案
   const startHttpFallback = useCallback(() => {
@@ -225,14 +236,19 @@ export const useBinanceWebSocket = (externalSymbols?: string[]): UseBinanceWebSo
     fallbackIntervalRef.current = setInterval(fetchPrices, 2000);
   }, [throttledUpdatePrice]);
 
-  // 停止HTTP轮询
-  const stopHttpFallback = useCallback(() => {
-    if (fallbackIntervalRef.current) {
-      clearInterval(fallbackIntervalRef.current);
-      fallbackIntervalRef.current = undefined;
-    }
-    setIsFallback(false);
-  }, []);
+  // 如果长时间没有更新，自动切换到 HTTP 轮询
+  useEffect(() => {
+    const staleCheck = setInterval(() => {
+      const last = lastUpdateRef.current;
+      if (last === 0) return;
+      const staleMs = Date.now() - last;
+      if (staleMs > 12000 && !isFallback) {
+        startHttpFallback();
+      }
+    }, 4000);
+
+    return () => clearInterval(staleCheck);
+  }, [isFallback, startHttpFallback]);
 
   // 初始化连接 — symbolsKey 变化时重新连接
   useEffect(() => {
