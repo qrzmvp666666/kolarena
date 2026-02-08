@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { CreditCard, Wallet, Bitcoin, Clock, CheckCircle, XCircle, Gift, Ticket, Zap, Star, Crown, Info, ArrowRight, User } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { CreditCard, Wallet, Bitcoin, Clock, CheckCircle, XCircle, Gift, Ticket, Zap, Star, Crown, Info, ArrowRight, User, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import { useUser } from '@/contexts/UserContext';
 import TopNav from '@/components/TopNav';
@@ -38,45 +38,18 @@ interface TradingAccount {
   balance: string;
 }
 
-interface RedemptionRecord {
-  id: string;
+interface RedemptionRecordData {
+  id: number;
   code: string;
-  date: string;
-  reward: string;
-  rewardType: 'membership' | 'credits' | 'vip';
-  duration?: string;
-  status: 'success' | 'expired' | 'used';
+  plan_name: string;
+  plan_duration: string;
+  previous_tier: string | null;
+  new_tier: string;
+  previous_expires_at: string | null;
+  new_expires_at: string | null;
+  status: string;
+  created_at: string;
 }
-
-// Mock data
-const mockRedemptions: RedemptionRecord[] = [
-  {
-    id: '1',
-    code: 'PROMO2024VIP',
-    date: '2024-01-20 10:30',
-    reward: 'Pro会员',
-    rewardType: 'membership',
-    duration: '30天',
-    status: 'success',
-  },
-  {
-    id: '2',
-    code: 'WELCOME100',
-    date: '2024-01-15 16:45',
-    reward: '100积分',
-    rewardType: 'credits',
-    status: 'success',
-  },
-  {
-    id: '3',
-    code: 'NEWYEAR2024',
-    date: '2024-01-01 00:05',
-    reward: 'VIP体验',
-    rewardType: 'vip',
-    duration: '7天',
-    status: 'success',
-  },
-];
 const mockPurchases: PurchaseRecord[] = [
   {
     id: '1',
@@ -151,14 +124,99 @@ const Account = () => {
   const [danmakuEnabled, setDanmakuEnabled] = useState(true);
   const [redeemCode, setRedeemCode] = useState('');
   const [isRedeeming, setIsRedeeming] = useState(false);
+  const [redemptionRecords, setRedemptionRecords] = useState<RedemptionRecordData[]>([]);
+  const [redemptionTotal, setRedemptionTotal] = useState(0);
+  const [redemptionPage, setRedemptionPage] = useState(0);
+  const [isLoadingRecords, setIsLoadingRecords] = useState(false);
+  const RECORDS_PER_PAGE = 20;
   const [newPassword, setNewPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
+  const [membershipTier, setMembershipTier] = useState<string>('free');
+  const [membershipExpiresAt, setMembershipExpiresAt] = useState<string | null>(null);
+  const [isLoadingMembership, setIsLoadingMembership] = useState(false);
 
   const userId = contextUser?.id || '';
   const email = contextUser?.email || '';
   const avatarUrl = contextUser?.avatar || '';
+
+  const fetchRedemptionRecords = useCallback(async (page = 0) => {
+    setIsLoadingRecords(true);
+    try {
+      const { data, error } = await supabase.rpc('get_redemption_records', {
+        p_limit: RECORDS_PER_PAGE,
+        p_offset: page * RECORDS_PER_PAGE,
+      });
+      if (error) throw error;
+      const result = data as { success: boolean; total: number; records: RedemptionRecordData[] };
+      if (result.success) {
+        setRedemptionRecords(result.records || []);
+        setRedemptionTotal(result.total || 0);
+      }
+    } catch (error) {
+      console.error('获取兑换记录失败:', error);
+    } finally {
+      setIsLoadingRecords(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'redemption' && userId) {
+      fetchRedemptionRecords(redemptionPage);
+
+      const channel = supabase
+        .channel('redemption_records_changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'redemption_records' },
+          () => { fetchRedemptionRecords(redemptionPage); }
+        )
+        .subscribe();
+
+      return () => { supabase.removeChannel(channel); };
+    }
+  }, [activeTab, userId, redemptionPage, fetchRedemptionRecords]);
+
+  // Fetch membership status
+  const fetchMembership = useCallback(async () => {
+    setIsLoadingMembership(true);
+    try {
+      const { data, error } = await supabase.rpc('get_user_membership');
+      if (error) throw error;
+      const result = data as { success: boolean; membership_tier: string; membership_expires_at: string | null };
+      if (result.success) {
+        setMembershipTier(result.membership_tier || 'free');
+        setMembershipExpiresAt(result.membership_expires_at);
+      }
+    } catch (error) {
+      console.error('获取会员状态失败:', error);
+    } finally {
+      setIsLoadingMembership(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'settings' && userId) {
+      fetchMembership();
+
+      const channel = supabase
+        .channel('user_membership_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'users',
+            filter: `id=eq.${userId}`,
+          },
+          () => { fetchMembership(); }
+        )
+        .subscribe();
+
+      return () => { supabase.removeChannel(channel); };
+    }
+  }, [activeTab, userId, fetchMembership]);
 
   const handleRedeem = async () => {
     if (!redeemCode.trim()) {
@@ -169,17 +227,40 @@ const Account = () => {
       });
       return;
     }
-    
+
     setIsRedeeming(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast({
-      title: t('redeemSuccess'),
-      description: t('redeemSuccessDesc'),
-    });
-    setRedeemCode('');
-    setIsRedeeming(false);
+    try {
+      const { data, error } = await supabase.rpc('redeem_code', {
+        p_code: redeemCode.trim(),
+      });
+      if (error) throw error;
+
+      const result = data as { success: boolean; message: string; plan_name?: string; new_tier?: string; new_expires_at?: string };
+      if (result.success) {
+        toast({
+          title: t('redeemSuccess'),
+          description: `${result.plan_name} — ${t('redeemSuccessDesc')}`,
+        });
+        setRedeemCode('');
+        fetchRedemptionRecords(0);
+        setRedemptionPage(0);
+      } else {
+        const errorKey = `redeem_${result.message}` as any;
+        toast({
+          title: t('redeemError'),
+          description: t(errorKey) || result.message,
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: t('redeemError'),
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsRedeeming(false);
+    }
   };
 
   const handleUpdateAvatar = async (file: File) => {
@@ -608,7 +689,7 @@ const Account = () => {
                     value={redeemCode}
                     onChange={(e) => setRedeemCode(e.target.value.toUpperCase())}
                     className="font-mono flex-1"
-                    maxLength={20}
+                    maxLength={40}
                   />
                   <Button 
                     onClick={handleRedeem} 
@@ -645,41 +726,71 @@ const Account = () => {
 
               {/* Redemption Records */}
               <h2 className="font-mono font-medium mb-4">{t('redemptionRecords')}</h2>
-              <div className="space-y-4">
-                {mockRedemptions.map((record) => (
-                  <div
-                    key={record.id}
-                    className="bg-card border border-border rounded-lg p-4 flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                        <Ticket className="w-5 h-5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <div className="font-mono font-medium flex items-center gap-2">
-                          {record.code}
-                          {getRewardTypeBadge(record.rewardType)}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {record.reward}
-                          {record.duration && ` • ${record.duration}`}
-                          {' • '}{record.date}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                      {getRedemptionStatusBadge(record.status)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              {mockRedemptions.length === 0 && (
+              {isLoadingRecords ? (
+                <div className="text-center text-sm text-muted-foreground py-8">{t('loading')}</div>
+              ) : redemptionRecords.length === 0 ? (
                 <div className="text-center text-muted-foreground py-12">
                   <Gift className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>{t('noRedemptionRecords')}</p>
                 </div>
+              ) : (
+                <>
+                  <div className="space-y-4">
+                    {redemptionRecords.map((record) => (
+                      <div
+                        key={record.id}
+                        className="bg-card border border-border rounded-lg p-4 flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                            <Ticket className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <div className="font-mono font-medium flex items-center gap-2">
+                              {record.code}
+                              <Badge className="bg-primary/20 text-primary border-0">{record.plan_name}</Badge>
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {record.previous_tier || 'free'} → {record.new_tier}
+                              {record.new_expires_at && ` • ${t('expiresAt')}: ${new Date(record.new_expires_at).toLocaleDateString()}`}
+                              {' • '}{new Date(record.created_at).toLocaleString()}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <Badge variant="outline" className="border-green-500 text-green-500 gap-1">
+                            <CheckCircle className="w-3 h-3" />
+                            {t('redeemStatusSuccess')}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Pagination */}
+                  {redemptionTotal > RECORDS_PER_PAGE && (
+                    <div className="flex justify-center gap-2 mt-6">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={redemptionPage === 0}
+                        onClick={() => { setRedemptionPage(p => p - 1); }}
+                      >
+                        {t('previousPage')}
+                      </Button>
+                      <span className="text-sm text-muted-foreground flex items-center">
+                        {redemptionPage + 1} / {Math.ceil(redemptionTotal / RECORDS_PER_PAGE)}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={(redemptionPage + 1) * RECORDS_PER_PAGE >= redemptionTotal}
+                        onClick={() => { setRedemptionPage(p => p + 1); }}
+                      >
+                        {t('nextPage')}
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -720,6 +831,75 @@ const Account = () => {
                       <p className="text-xs text-muted-foreground">{t('avatarHint')}</p>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-mono text-sm flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4" />
+                    {t('membershipStatus')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {isLoadingMembership ? (
+                    <div className="text-center text-sm text-muted-foreground py-4">{t('loading')}</div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                          membershipTier === 'free' ? 'bg-muted' :
+                          membershipTier === 'monthly' ? 'bg-blue-500/20' :
+                          membershipTier === 'quarterly' ? 'bg-purple-500/20' :
+                          membershipTier === 'yearly' ? 'bg-amber-500/20' :
+                          'bg-gradient-to-br from-amber-400/20 to-orange-500/20'
+                        }`}>
+                          {membershipTier === 'free' ? (
+                            <User className="w-5 h-5 text-muted-foreground" />
+                          ) : membershipTier === 'lifetime' ? (
+                            <Crown className="w-5 h-5 text-amber-500" />
+                          ) : (
+                            <Star className="w-5 h-5 text-primary" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-medium">{t('currentTier')}</span>
+                            <Badge className={`font-mono text-xs ${
+                              membershipTier === 'free' ? 'bg-muted text-muted-foreground border-0' :
+                              membershipTier === 'monthly' ? 'bg-blue-500/20 text-blue-500 border-0' :
+                              membershipTier === 'quarterly' ? 'bg-purple-500/20 text-purple-500 border-0' :
+                              membershipTier === 'yearly' ? 'bg-amber-500/20 text-amber-600 border-0' :
+                              'bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0'
+                            }`}>
+                              {t(`tier${membershipTier.charAt(0).toUpperCase() + membershipTier.slice(1)}`)}
+                            </Badge>
+                          </div>
+                          <div className="text-sm text-muted-foreground mt-1">
+                            {membershipTier === 'lifetime'
+                              ? t('lifetimeMemberDesc')
+                              : membershipTier === 'free'
+                                ? ''
+                                : membershipExpiresAt
+                                  ? `${t('membershipExpiresAt')}: ${new Date(membershipExpiresAt).toLocaleDateString()}`
+                                  : ''
+                            }
+                          </div>
+                        </div>
+                      </div>
+                      {membershipTier === 'free' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="font-mono gap-1"
+                          onClick={() => setActiveTab('subscription')}
+                        >
+                          {t('upgradeNow')}
+                          <ArrowRight className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
