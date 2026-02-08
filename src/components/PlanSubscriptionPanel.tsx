@@ -1,11 +1,24 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CreditCard, Bitcoin, Check, Zap, TrendingUp, Shield, Clock, Users, MessageSquare, BarChart3, Crown, CircleDot } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import CryptoPaymentModal from './CryptoPaymentModal';
+import { supabase } from '@/lib/supabase';
 
-type PlanType = 'monthly' | 'quarterly' | 'yearly';
+type PlanType = 'monthly' | 'quarterly' | 'yearly' | 'lifetime';
+
+interface PlanRecord {
+  id: number;
+  name: string;
+  duration: PlanType;
+  price: number;
+  currency: string;
+  description: string | null;
+  benefits: string[] | null;
+  stripe_invoice_url: string | null;
+  nowpayment_invoice_url: string | null;
+}
 
 interface PlanFeature {
   text: string;
@@ -16,19 +29,92 @@ const PlanSubscriptionPanel = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [cryptoModalOpen, setCryptoModalOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<{ name: string; price: number } | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<{ name: string; price: number; currency: string; nowpaymentUrl?: string | null } | null>(null);
+  const [plans, setPlans] = useState<PlanRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleStripePayment = (planName: string) => {
-    toast({
-      title: t('paymentNotAvailable'),
-      description: 'Stripe integration coming soon',
-    });
+  const handleStripePayment = (planName: string, stripeUrl?: string | null) => {
+    if (!stripeUrl) {
+      toast({
+        title: t('paymentNotAvailable'),
+        description: 'Stripe link not configured',
+      });
+      return;
+    }
+    window.open(stripeUrl, '_blank', 'noopener,noreferrer');
   };
 
-  const handleCryptoPayment = (planName: string, price: number) => {
-    setSelectedPlan({ name: planName, price });
+  const handleCryptoPayment = (planName: string, price: number, currency: string, nowpaymentUrl?: string | null) => {
+    setSelectedPlan({ name: planName, price, currency, nowpaymentUrl });
     setCryptoModalOpen(true);
   };
+
+  const periodLabel = (duration: PlanType) => {
+    switch (duration) {
+      case 'monthly':
+        return t('perMonth');
+      case 'quarterly':
+        return t('perQuarter');
+      case 'yearly':
+        return t('perYear');
+      case 'lifetime':
+        return '';
+      default:
+        return '';
+    }
+  };
+
+  const planTitle = (duration: PlanType) => {
+    switch (duration) {
+      case 'monthly':
+        return t('planMonthly');
+      case 'quarterly':
+        return t('planQuarterly');
+      case 'yearly':
+        return t('planYearly');
+      case 'lifetime':
+        return t('planLifetime');
+      default:
+        return '';
+    }
+  };
+
+  const formatPrice = (price: number, currency: string) => `${price} ${currency}`;
+
+  const fetchPlans = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase.rpc('get_membership_plans');
+    if (error) {
+      console.error('获取套餐失败:', error);
+      toast({
+        title: t('error'),
+        description: t('profileLoadError'),
+      });
+      setIsLoading(false);
+      return;
+    }
+    setPlans((data || []) as PlanRecord[]);
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchPlans();
+
+    const channel = supabase
+      .channel('membership_plans_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'membership_plans' },
+        () => {
+          fetchPlans();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const monthlyFeatures: PlanFeature[] = [
     { text: t('featureLive') },
@@ -56,43 +142,38 @@ const PlanSubscriptionPanel = () => {
     { text: t('featureExclusive'), highlight: true },
   ];
 
-  const plans = [
-    {
-      type: 'monthly' as PlanType,
-      name: t('planMonthly'),
-      price: 10,
-      priceLabel: '10 USDT',
-      period: t('perMonth'),
-      description: t('planMonthlyDesc'),
-      features: monthlyFeatures,
-      featuresTitle: t('featuresTitle'),
-      isPopular: false,
-    },
-    {
-      type: 'quarterly' as PlanType,
-      name: t('planQuarterly'),
-      price: 28,
-      priceLabel: '28 USDT',
-      period: t('perQuarter'),
-      description: t('planQuarterlyDesc'),
-      features: quarterlyFeatures,
-      featuresTitle: t('featuresTitlePlus'),
-      isPopular: true,
-      save: '7%',
-    },
-    {
-      type: 'yearly' as PlanType,
-      name: t('planYearly'),
-      price: 99,
-      priceLabel: '99 USDT',
-      period: t('perYear'),
-      description: t('planYearlyDesc'),
-      features: yearlyFeatures,
-      featuresTitle: t('featuresTitlePremium'),
-      isPopular: false,
-      save: '18%',
-    },
-  ];
+  const planCards = useMemo(() => {
+    return plans.map((plan) => {
+      const baseFeatures = plan.duration === 'yearly' || plan.duration === 'lifetime'
+        ? yearlyFeatures
+        : plan.duration === 'quarterly'
+          ? quarterlyFeatures
+          : monthlyFeatures;
+
+      const benefits = Array.isArray(plan.benefits) ? plan.benefits : [];
+
+      return {
+        type: plan.duration,
+        name: planTitle(plan.duration) || plan.name,
+        price: plan.price,
+        currency: plan.currency,
+        priceLabel: formatPrice(plan.price, plan.currency),
+        period: periodLabel(plan.duration),
+        description: plan.description || '',
+        features: benefits.length
+          ? benefits.map((text) => ({ text }))
+          : baseFeatures,
+        featuresTitle: plan.duration === 'yearly' || plan.duration === 'lifetime'
+          ? t('featuresTitlePremium')
+          : plan.duration === 'quarterly'
+            ? t('featuresTitlePlus')
+            : t('featuresTitle'),
+        isPopular: plan.duration === 'quarterly',
+        stripeUrl: plan.stripe_invoice_url,
+        nowpaymentUrl: plan.nowpayment_invoice_url,
+      };
+    });
+  }, [plans, t]);
 
   return (
     <div className="space-y-8">
@@ -104,15 +185,20 @@ const PlanSubscriptionPanel = () => {
 
       {/* Plans Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {plans.map((plan) => (
-          <div 
-            key={plan.type}
-            className={`relative rounded-xl p-6 flex flex-col transition-all ${
-              plan.isPopular 
-                ? 'border-2 border-primary bg-card shadow-lg shadow-primary/10' 
-                : 'border border-border bg-card/50'
-            }`}
-          >
+        {isLoading ? (
+          <div className="col-span-full text-center text-sm text-muted-foreground">
+            {t('loading')}
+          </div>
+        ) : (
+          planCards.map((plan) => (
+            <div
+              key={plan.type}
+              className={`relative rounded-xl p-6 flex flex-col transition-all ${
+                plan.isPopular
+                  ? 'border-2 border-primary bg-card shadow-lg shadow-primary/10'
+                  : 'border border-border bg-card/50'
+              }`}
+            >
             {/* Plan Name */}
             <div className="mb-4">
               <h3 className="font-mono text-lg font-medium text-foreground">{plan.name}</h3>
@@ -122,17 +208,6 @@ const PlanSubscriptionPanel = () => {
             <div className="mb-2">
               <span className="text-3xl font-bold font-mono text-foreground">{plan.priceLabel}</span>
             </div>
-            
-            {/* Period / Save */}
-            <p className="text-sm text-muted-foreground mb-6">
-              {plan.period}
-              {plan.save && (
-                <span className="ml-2 text-primary font-medium">({t('saveMoney')} {plan.save})</span>
-              )}
-            </p>
-            
-            {/* Description */}
-            <p className="text-sm text-muted-foreground mb-6">{plan.description}</p>
             
             {/* Specs with dots */}
             <div className="space-y-2 mb-6 pb-6 border-b border-border">
@@ -176,7 +251,7 @@ const PlanSubscriptionPanel = () => {
                     ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
                     : 'bg-muted hover:bg-muted/80 text-foreground'
                 }`}
-                onClick={() => handleCryptoPayment(plan.name, plan.price)}
+                onClick={() => handleCryptoPayment(plan.name, plan.price, plan.currency, plan.nowpaymentUrl)}
               >
                 <Bitcoin className="w-4 h-4 mr-2" />
                 {t('payWithCrypto')}
@@ -184,14 +259,15 @@ const PlanSubscriptionPanel = () => {
               <Button 
                 variant="outline"
                 className="w-full"
-                onClick={() => handleStripePayment(plan.name)}
+                onClick={() => handleStripePayment(plan.name, plan.stripeUrl)}
               >
                 <CreditCard className="w-4 h-4 mr-2" />
                 {t('payWithStripe')}
               </Button>
             </div>
-          </div>
-        ))}
+            </div>
+          ))
+        )}
       </div>
 
       {/* Payment Info */}
@@ -217,6 +293,8 @@ const PlanSubscriptionPanel = () => {
           onOpenChange={setCryptoModalOpen}
           planName={selectedPlan.name}
           price={selectedPlan.price}
+          currency={selectedPlan.currency}
+          paymentUrl={selectedPlan.nowpaymentUrl}
         />
       )}
     </div>

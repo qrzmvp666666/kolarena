@@ -7,9 +7,11 @@ interface CryptoPaymentModalProps {
   onOpenChange: (open: boolean) => void;
   planName: string;
   price: number;
+  currency?: string;
+  paymentUrl?: string | null;
 }
 
-const CryptoPaymentModal = ({ open, onOpenChange, planName, price }: CryptoPaymentModalProps) => {
+const CryptoPaymentModal = ({ open, onOpenChange, planName, price, currency = 'USDT', paymentUrl }: CryptoPaymentModalProps) => {
   const { t } = useLanguage();
 
   return (
@@ -21,22 +23,28 @@ const CryptoPaymentModal = ({ open, onOpenChange, planName, price }: CryptoPayme
             {t('cryptoPayment')} - {planName}
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
-            {t('payAmount')}: <span className="font-mono font-bold">{price} USDT</span>
+            {t('payAmount')}: <span className="font-mono font-bold">{price} {currency}</span>
           </p>
         </DialogHeader>
         
         <div className="flex justify-center bg-background">
-          <iframe 
-            src="https://nowpayments.io/embeds/payment-widget?iid=5778741355"
-            width="410"
-            height="696"
-            frameBorder="0"
-            scrolling="no"
-            style={{ overflowY: 'hidden' }}
-            title="Crypto Payment Widget"
-          >
-            {t('widgetLoadError')}
-          </iframe>
+          {paymentUrl ? (
+            <iframe
+              src={paymentUrl}
+              width="410"
+              height="696"
+              frameBorder="0"
+              scrolling="no"
+              style={{ overflowY: 'hidden' }}
+              title="Crypto Payment Widget"
+            >
+              {t('widgetLoadError')}
+            </iframe>
+          ) : (
+            <div className="p-6 text-sm text-muted-foreground">
+              {t('paymentNotAvailable')}
+            </div>
+          )}
         </div>
 
         <div className="p-3 border-t border-border bg-muted/30">
