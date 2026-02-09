@@ -443,7 +443,7 @@ const ChartPage = () => {
                                 <PopoverTrigger asChild>
                                     <Button
                                         size="sm"
-                                        className="h-7 gap-2 text-xs font-semibold text-black border-0 bg-white hover:bg-gray-100"
+                                        className="h-7 gap-2 text-[11px] font-medium border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"
                                         disabled={symbolsLoading}
                                     >
                                         {symbolDisplay}
@@ -506,7 +506,7 @@ const ChartPage = () => {
                                 <PopoverTrigger asChild>
                                     <Button
                                         size="sm"
-                                        className="h-7 gap-2 text-[11px] font-semibold text-black border-0 bg-white hover:bg-gray-100 shadow-[0_0_12px_-3px_rgba(255,255,255,0.3)] hover:shadow-[0_0_18px_-3px_rgba(255,255,255,0.5)] transition-all duration-300 hover:scale-105"
+                                        className="h-7 gap-2 text-[11px] font-medium border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"
                                     >
                                         <Users className="w-3.5 h-3.5" />
                                         KOL 筛选
@@ -585,7 +585,7 @@ const ChartPage = () => {
                             <div className="flex items-center gap-2">
                                 <Button
                                     size="sm"
-                                    className="h-7 gap-1 text-[11px]"
+                                    className="h-7 gap-1 text-[11px] border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"
                                     onClick={handleAddChart}
                                 >
                                     <Plus className="w-3.5 h-3.5" />
@@ -594,7 +594,7 @@ const ChartPage = () => {
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="h-7 gap-1 text-[11px]"
+                                    className="h-7 gap-1 text-[11px] border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"
                                     onClick={handleResetLayout}
                                 >
                                     <RefreshCw className="w-3.5 h-3.5" />
@@ -684,7 +684,7 @@ const ChartPage = () => {
                                             key={chart.id}
                                             className={`h-full rounded-lg border ${
                                                 isActive
-                                                    ? 'ring-2 ring-accent-orange border-transparent'
+                                                    ? 'border-border'
                                                     : 'border-border'
                                             } bg-background/50 overflow-hidden`}
                                             onMouseDown={() => setActiveChartId(chart.id)}
