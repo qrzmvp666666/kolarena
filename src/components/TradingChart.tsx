@@ -144,9 +144,9 @@ export const TradingChart = ({
           el.style.display = 'flex';
           // Centering the marker: Subtract half width/height
           // Assuming marker is 32x32 roughly
-          el.style.transform = `translate(${x - 16}px, ${y - 32}px)`; 
-          // y - 32 places it slightly above the candle (if we consider standard pin behavior)
-          // or y - 16 to undo center pivot.
+          // Anchor container at the exact price Y so the line aligns to the price.
+          // We offset X by 16px to center the marker on the candle.
+          el.style.transform = `translate(${x - 16}px, ${y}px)`;
         }
       });
       
@@ -229,35 +229,38 @@ export const TradingChart = ({
                 if (el) signalElementsRef.current.set(signal.id, el);
                 else signalElementsRef.current.delete(signal.id);
              }}
-             className="absolute flex flex-col items-center gap-1 group pointer-events-auto cursor-pointer transition-transform will-change-transform"
+             className="absolute h-0 w-0 group pointer-events-auto cursor-pointer transition-transform will-change-transform"
              style={{ display: 'none' }} // Hidden initially until positioned
            >
-              {/* Name Label */}
-               <div className={`
-                   absolute -top-7 whitespace-nowrap text-[10px] font-bold px-1.5 py-0.5 rounded border shadow-sm z-30
-                    ${signal.type === 'long' ? 'bg-green-950/80 text-green-400 border-green-500/30' : 'bg-red-950/80 text-red-400 border-red-500/30'}
-                    ${signal.status === 'closed' ? 'bg-gray-100 text-gray-500 border-gray-200' : ''}
-               `}>
-                   {signal.kolName}
-               </div>
+              {/* Avatar + Name (anchored above the price line) */}
+              <div className="absolute left-1/2 -translate-x-[75%] -translate-y-full flex flex-col items-center gap-1">
+                {/* Name Label */}
+                <div className={`
+                  absolute -top-7 whitespace-nowrap text-[10px] font-bold px-1.5 py-0.5 rounded border shadow-sm z-30
+                  ${signal.type === 'long' ? 'bg-green-950/80 text-green-400 border-green-500/30' : 'bg-red-950/80 text-red-400 border-red-500/30'}
+                  ${signal.status === 'closed' ? 'bg-gray-100 text-gray-500 border-gray-200' : ''}
+                `}>
+                  {signal.kolName}
+                </div>
 
-              {/* Avatar Bubble */}
-              <div className={`
-                 relative p-0.5 rounded-full border-2 z-20 bg-background
-                 ${signal.type === 'long' ? 'border-green-500' : 'border-red-500'}
-                 ${signal.status === 'closed' || signal.status === 'cancelled' ? 'opacity-50 grayscale border-gray-400' : ''}
-              `}>
-                <Avatar className="w-8 h-8">
+                {/* Avatar Bubble */}
+                <div className={`
+                  relative p-0.5 rounded-full border-2 z-20 bg-background
+                  ${signal.type === 'long' ? 'border-green-500' : 'border-red-500'}
+                  ${signal.status === 'closed' || signal.status === 'cancelled' ? 'opacity-50 grayscale border-gray-400' : ''}
+                `}>
+                  <Avatar className="w-8 h-8">
                     <AvatarImage src={signal.avatarUrl} />
                     <AvatarFallback>{signal.kolName?.substring(0,2)}</AvatarFallback>
-                </Avatar>
+                  </Avatar>
+                </div>
               </div>
 
               {/* Price Line & Label */}
-               <div className={`
-                  absolute left-full top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-10
-                  ${signal.status === 'closed' || signal.status === 'cancelled' ? 'opacity-30 grayscale' : 'opacity-80'}
-               `}>
+              <div className={`
+                absolute left-full top-0 -translate-y-1/2 flex items-center pointer-events-none z-10
+                ${signal.status === 'closed' || signal.status === 'cancelled' ? 'opacity-30 grayscale' : 'opacity-80'}
+              `}>
                    {/* Dashed Line */}
                    <div 
                      className={`h-[1px] border-t-2 border-dashed opacity-0 group-hover:opacity-100 transition-opacity ${signal.type === 'long' ? 'border-green-500' : 'border-red-500'}`}
