@@ -199,6 +199,29 @@ All colors MUST be HSL.
   background: hsl(var(--border));
   border-radius: 2px;
 }
+
+/* Chart area scrollbar (subtle, hover-enhanced) */
+.chart-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(0 0% 30% / 0.5) transparent;
+}
+
+.chart-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chart-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chart-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(0 0% 30% / 0.35);
+  border-radius: 999px;
+}
+
+.chart-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: hsl(0 0% 60% / 0.6);
+}
 @keyframes border-breathe {
   0% { border-color: hsl(var(--primary)); box-shadow: 0 0 0 0px hsl(var(--primary) / 0.2); }
   50% { border-color: hsl(var(--primary)); box-shadow: 0 0 0 4px hsl(var(--primary) / 0.4); }

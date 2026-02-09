@@ -78,6 +78,10 @@ export const TradingChart = ({
       timeScale: {
         timeVisible: true,
         secondsVisible: false,
+        borderVisible: true,
+        ticksVisible: true,
+        visible: true,
+          minimumHeight: 32,
       },
       crosshair: {
         mode: 1, // CrosshairMode.Normal
@@ -106,8 +110,8 @@ export const TradingChart = ({
     });
     volumeSeries.priceScale().applyOptions({
       scaleMargins: {
-        top: 0.8, // Place volume at the bottom 20%
-        bottom: 0,
+        top: 0.76, // Place volume at the bottom with more space for time axis
+        bottom: 0.12,
       },
     });
     volumeSeriesRef.current = volumeSeries;
@@ -204,7 +208,7 @@ export const TradingChart = ({
   }, [data, upColor, downColor]);
 
   return (
-    <div className="relative w-full h-full border border-border rounded-lg overflow-hidden bg-card">
+    <div className="relative w-full h-full border border-border rounded-lg bg-card">
        {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10 text-foreground">
           Loading Data...
@@ -251,8 +255,9 @@ export const TradingChart = ({
 
               {/* Price Line & Label */}
                <div className={`
-                    absolute left-full top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-10
-                    ${signal.status === 'closed' || signal.status === 'cancelled' ? 'opacity-30 grayscale' : 'opacity-80'}
+                  absolute left-full top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-10
+                  opacity-0 transition-opacity group-hover:opacity-100
+                  ${signal.status === 'closed' || signal.status === 'cancelled' ? 'group-hover:opacity-30 grayscale' : 'group-hover:opacity-80'}
                `}>
                    {/* Dashed Line */}
                    <div 
