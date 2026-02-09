@@ -256,12 +256,11 @@ export const TradingChart = ({
               {/* Price Line & Label */}
                <div className={`
                   absolute left-full top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-10
-                  opacity-0 transition-opacity group-hover:opacity-100
-                  ${signal.status === 'closed' || signal.status === 'cancelled' ? 'group-hover:opacity-30 grayscale' : 'group-hover:opacity-80'}
+                  ${signal.status === 'closed' || signal.status === 'cancelled' ? 'opacity-30 grayscale' : 'opacity-80'}
                `}>
                    {/* Dashed Line */}
                    <div 
-                      className={`h-[1px] border-t-2 border-dashed ${signal.type === 'long' ? 'border-green-500' : 'border-red-500'}`}
+                     className={`h-[1px] border-t-2 border-dashed opacity-0 group-hover:opacity-100 transition-opacity ${signal.type === 'long' ? 'border-green-500' : 'border-red-500'}`}
                       style={{ width: '2000px' }}
                    />
                    
