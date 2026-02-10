@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import TopNav from '@/components/TopNav';
 import TickerBar from '@/components/TickerBar';
 import PerformanceChart from '@/components/PerformanceChart';
@@ -591,6 +592,7 @@ const ProfitComparisonPanel = () => {
 
 const LeaderboardContent = () => {
   const { t, language } = useLanguage();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'overall' | 'comparison' | 'advanced'>('overall');
   const [marketType, setMarketType] = useState<'futures' | 'spot'>('futures');
   const [searchQuery, setSearchQuery] = useState('');
@@ -606,6 +608,11 @@ const LeaderboardContent = () => {
   const [loading, setLoading] = useState(true);
   const [selectedKol, setSelectedKol] = useState('');
 
+  const requestedKolId = useMemo(() => {
+    const raw = searchParams.get('kol');
+    return raw ? raw.trim() : '';
+  }, [searchParams]);
+
   // Fetch leaderboard data via RPC
   const fetchLeaderboard = useCallback(async () => {
     try {
@@ -616,16 +623,13 @@ const LeaderboardContent = () => {
       }
       if (data) {
         setKolsData(data as KolData[]);
-        if (!selectedKol && data.length > 0) {
-          setSelectedKol(data[0].id);
-        }
       }
     } catch (err) {
       console.error('Error fetching leaderboard:', err);
     } finally {
       setLoading(false);
     }
-  }, [selectedKol]);
+  }, []);
 
   // Initial fetch + Realtime subscription
   useEffect(() => {
@@ -648,6 +652,28 @@ const LeaderboardContent = () => {
       supabase.removeChannel(channel);
     };
   }, [fetchLeaderboard]);
+
+  useEffect(() => {
+    if (searchParams.get('tab') === 'advanced' || requestedKolId) {
+      setActiveTab('advanced');
+    }
+  }, [searchParams, requestedKolId]);
+
+  useEffect(() => {
+    if (kolsData.length === 0) return;
+
+    if (requestedKolId) {
+      const exists = kolsData.some(kol => kol.id === requestedKolId);
+      if (exists) {
+        setSelectedKol(requestedKolId);
+        return;
+      }
+    }
+
+    if (!selectedKol) {
+      setSelectedKol(kolsData[0].id);
+    }
+  }, [kolsData, requestedKolId, selectedKol]);
 
   // Filtered data
   const filteredData = useMemo(() => {

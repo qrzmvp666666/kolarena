@@ -197,10 +197,11 @@ Deno.serve(async (req: Request) => {
     colIdx[name] = i;
   });
 
-  const results = {
-    total: body.Values.length,
-    inserted: 0,
-    skipped: 0,
+  const stats = {
+    received: body.Values.length,
+    spotFiltered: 0,
+    otherFiltered: 0,
+    stored: 0,
     errors: [] as string[],
   };
 
@@ -215,33 +216,39 @@ Deno.serve(async (req: Request) => {
     const leverageRaw = row[colIdx["杠杆"]] ?? "";
     const entryTimeRaw = row[colIdx["创建时间"]] ?? "";
 
+    // 1. Check Spot (现货) first
+    if (directionRaw === "现货") {
+      stats.spotFiltered++;
+      continue;
+    }
+
     // ── Resolve KOL ──
     const kolId = findKolId(kolName);
     if (!kolId) {
-      results.skipped++;
-      results.errors.push(`KOL not found: "${kolName}"`);
+      stats.otherFiltered++;
+      stats.errors.push(`KOL not found: "${kolName}"`);
       continue;
     }
 
     // ── Parse fields ──
     const direction = DIRECTION_MAP[directionRaw];
     if (!direction) {
-      results.skipped++;
-      results.errors.push(`Unknown direction: "${directionRaw}" for KOL "${kolName}"`);
+      stats.otherFiltered++;
+      stats.errors.push(`Unknown direction: "${directionRaw}" for KOL "${kolName}"`);
       continue;
     }
 
     const symbol = normalizeSymbol(symbolRaw);
     if (!symbol) {
-      results.skipped++;
-      results.errors.push(`Invalid symbol for KOL "${kolName}"`);
+      stats.otherFiltered++;
+      stats.errors.push(`Invalid symbol for KOL "${kolName}"`);
       continue;
     }
 
     const entryPrice = parsePrice(entryPriceRaw);
     if (entryPrice === null) {
-      results.skipped++;
-      results.errors.push(`No valid entry price for KOL "${kolName}" on ${symbol}`);
+      stats.otherFiltered++;
+      stats.errors.push(`No valid entry price for KOL "${kolName}" on ${symbol}`);
       continue;
     }
 
@@ -252,14 +259,14 @@ Deno.serve(async (req: Request) => {
 
     // Skip if both take_profit and stop_loss are missing
     if (takeProfit === null && stopLoss === null) {
-      results.skipped++;
-      results.errors.push(`No TP/SL for KOL "${kolName}" on ${symbol}, skipped`);
+      stats.otherFiltered++;
+      stats.errors.push(`No TP/SL for KOL "${kolName}" on ${symbol}, skipped`);
       continue;
     }
 
     if (!entryTime) {
-      results.skipped++;
-      results.errors.push(`No valid entry time for KOL "${kolName}" on ${symbol}`);
+      stats.otherFiltered++;
+      stats.errors.push(`No valid entry time for KOL "${kolName}" on ${symbol}`);
       continue;
     }
 
@@ -288,21 +295,19 @@ Deno.serve(async (req: Request) => {
       });
 
     if (insertErr) {
-      // Duplicate key is expected and fine
-      if (insertErr.code === "23505") {
-        results.skipped++;
-      } else {
-        results.errors.push(
-          `Insert error for "${kolName}" ${symbol}: ${insertErr.message}`
-        );
-        results.skipped++;
-      }
+       // Even with ignoreDuplicates, real errors might occur
+       stats.otherFiltered++;
+       stats.errors.push(`Insert error for "${kolName}" ${symbol}: ${insertErr.message}`);
     } else {
-      results.inserted++;
+       // Success or duplicate ignored (both count as 'stored' or 'processed successfully')
+       stats.stored++;
     }
   }
 
-  return new Response(JSON.stringify(results, null, 2), {
+  // Summary Log
+  console.log(`已接收信号 ${stats.received}，已过滤现货 ${stats.spotFiltered}，已过滤无效 ${stats.otherFiltered}，实际存储 ${stats.stored}`);
+
+  return new Response(JSON.stringify(stats, null, 2), {
     status: 200,
     headers: {
       "Content-Type": "application/json",

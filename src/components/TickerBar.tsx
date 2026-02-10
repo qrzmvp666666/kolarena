@@ -1,6 +1,7 @@
 import { TrendingUp, TrendingDown, Wifi, WifiOff } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useBinanceWebSocket } from '@/hooks/useBinanceWebSocket';
 import { useBinanceSymbols } from '@/hooks/useBinanceSymbols';
@@ -24,6 +25,7 @@ interface TickerBarProps {
 
 const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const { symbols: binanceSymbols } = useBinanceSymbols();
 
   // Derive Binance-format symbol list for WebSocket subscription
@@ -115,8 +117,9 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
     const lowestItem = sorted[sorted.length - 1];
 
     const mapKol = (k: KolRow) => ({
+      id: k.id,
       name: k.name,
-      shortName: k.short_name,
+      shortName: k.short_name || k.name,
       color: k.color,
       icon: k.icon,
       avatar: k.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${k.name}`,
@@ -149,6 +152,14 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
     const sign = rate >= 0 ? '+' : '';
     return `${sign}${rate.toFixed(2)}%`;
   };
+
+  const handleKolNavigate = useCallback(
+    (kolId?: string) => {
+      if (!kolId) return;
+      navigate(`/leaderboard?tab=advanced&kol=${encodeURIComponent(kolId)}`);
+    },
+    [navigate]
+  );
 
   const getPriceChangeColor = (symbol: string) => {
     const change = priceChanges[symbol];
@@ -202,7 +213,10 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
           // Rankings moved to Left (Component view)
           <>
             {weeklyTop && (
-              <div className="flex items-center gap-2 font-mono">
+              <div
+                className="flex items-center gap-2 font-mono cursor-pointer"
+                onClick={() => handleKolNavigate(weeklyTop.id)}
+              >
                 <span className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider bg-accent/50 px-1.5 py-0.5 rounded-sm flex items-center">
                   {t('weeklyRank') || 'Weekly'}
                 </span>
@@ -219,7 +233,10 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
             )}
 
             {monthlyTop && (
-              <div className="flex items-center gap-2 font-mono">
+              <div
+                className="flex items-center gap-2 font-mono cursor-pointer"
+                onClick={() => handleKolNavigate(monthlyTop.id)}
+              >
                 <span className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider bg-accent/50 px-1.5 py-0.5 rounded-sm flex items-center">
                   {t('monthlyRank') || 'Monthly'}
                 </span>
@@ -236,7 +253,10 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
             )}
             
             {seasonTop && (
-              <div className="flex items-center gap-2 font-mono">
+              <div
+                className="flex items-center gap-2 font-mono cursor-pointer"
+                onClick={() => handleKolNavigate(seasonTop.id)}
+              >
                 <span className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider bg-accent/50 px-1.5 py-0.5 rounded-sm flex items-center">
                   {t('seasonRank') || 'Season'}
                 </span>
@@ -259,7 +279,10 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
       {showCryptoTicker ? (
         <div className="flex items-center gap-6">
           {weeklyTop && (
-            <div className="flex items-center gap-2 font-mono">
+            <div
+              className="flex items-center gap-2 font-mono cursor-pointer"
+              onClick={() => handleKolNavigate(weeklyTop.id)}
+            >
               <span className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider bg-accent/50 px-1.5 py-0.5 rounded-sm flex items-center">
                 {t('weeklyRank') || 'Weekly'}
               </span>
@@ -276,7 +299,10 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
           )}
 
           {monthlyTop && (
-            <div className="flex items-center gap-2 font-mono">
+            <div
+              className="flex items-center gap-2 font-mono cursor-pointer"
+              onClick={() => handleKolNavigate(monthlyTop.id)}
+            >
               <span className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider bg-accent/50 px-1.5 py-0.5 rounded-sm flex items-center">
                 {t('monthlyRank') || 'Monthly'}
               </span>
@@ -293,7 +319,10 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
           )}
           
           {seasonTop && (
-            <div className="flex items-center gap-2 font-mono">
+            <div
+              className="flex items-center gap-2 font-mono cursor-pointer"
+              onClick={() => handleKolNavigate(seasonTop.id)}
+            >
               <span className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider bg-accent/50 px-1.5 py-0.5 rounded-sm flex items-center">
                 {t('seasonRank') || 'Season'}
               </span>
@@ -313,7 +342,10 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
         // Right side for Chart Page: Show Highest and Lowest
         <div className="flex items-center gap-6">
           {highest && (
-            <div className="flex items-center gap-2 font-mono">
+            <div
+              className="flex items-center gap-2 font-mono cursor-pointer"
+              onClick={() => handleKolNavigate(highest.id)}
+            >
               <span className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider bg-accent/50 px-1.5 py-0.5 rounded-sm flex items-center">
                 {t('highest') || 'High'}
               </span>
@@ -330,7 +362,10 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
           )}
           
           {lowest && lowest.name !== highest?.name && (
-            <div className="flex items-center gap-2 font-mono">
+            <div
+              className="flex items-center gap-2 font-mono cursor-pointer"
+              onClick={() => handleKolNavigate(lowest.id)}
+            >
               <span className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider bg-accent/50 px-1.5 py-0.5 rounded-sm flex items-center">
                 {t('lowest') || 'Low'}
               </span>
