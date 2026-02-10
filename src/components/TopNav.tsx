@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Sun, Moon, MessageSquare, MessageSquareOff, Globe, User, LogOut, ChevronDown } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { useLanguage } from '@/lib/i18n';
@@ -23,6 +23,7 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, logout } = useUser();
   
   const [loginModalOpen, setLoginModalOpen] = useState(false);
@@ -34,6 +35,14 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
   
   const handleLogout = async () => {
     await logout();
+  };
+
+  const handleProClick = () => {
+    if (!user) {
+      setLoginModalOpen(true);
+      return;
+    }
+    navigate('/account');
   };
 
   const toggleLanguage = () => {
@@ -85,6 +94,13 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
           className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           {t('joinCommunity')}
+        </button>
+        <span className="text-muted-foreground">|</span>
+        <button
+          onClick={handleProClick}
+          className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Pro会员
         </button>
         <span className="text-muted-foreground">|</span>
         <Link 
