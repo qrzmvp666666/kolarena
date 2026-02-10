@@ -174,7 +174,7 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
 
         {showCryptoTicker ? (
           // Crypto Prices (Default view)
-          binanceSymbols.map((sym) => {
+          binanceSymbols.slice(0, 5).map((sym) => {
             const tickerData = prices[sym.binanceSymbol];
             const price = tickerData?.price || 0;
 
