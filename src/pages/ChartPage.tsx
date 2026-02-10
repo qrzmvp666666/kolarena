@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Users, X, Plus, RefreshCw, Square, Columns2, LayoutGrid, ChevronLeft, ChevronRight, MessageSquare, Activity, History } from 'lucide-react';
+import { Users, X, Plus, RefreshCw, Square, Columns2, Rows2, LayoutGrid, ChevronLeft, ChevronRight, MessageSquare, Activity, History } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import { ResponsiveGridLayout, useContainerWidth, type LayoutItem, type ResponsiveLayouts } from 'react-grid-layout';
 
@@ -395,7 +395,32 @@ const ChartPage = () => {
             cols: Math.max(1, colsCount),
         };
         setLayoutPreset(preset);
-        setLayouts(buildLayoutsForCharts(charts, preset));
+
+        let nextCharts = [...charts];
+        const targetCount = preset.rows * preset.cols;
+
+        if (nextCharts.length < targetCount) {
+            const baseSymbol = nextCharts[0]?.symbol || 'BTCUSDT';
+            for (let i = nextCharts.length; i < targetCount; i++) {
+                nextCharts.push({
+                    id: `chart-${chartIdCounter.current++}`,
+                    symbol: baseSymbol,
+                    interval: '15m',
+                });
+            }
+            setCharts(nextCharts);
+            
+            // Update selectedSymbols to reflect the new chart count/types
+            const nextSymbols = nextCharts.map(c => c.symbol);
+            setSelectedSymbols(nextSymbols);
+        } else if (nextCharts.length > targetCount) {
+             nextCharts = nextCharts.slice(0, targetCount);
+             setCharts(nextCharts);
+             const nextSymbols = nextCharts.map(c => c.symbol);
+             setSelectedSymbols(nextSymbols);
+        }
+
+        setLayouts(buildLayoutsForCharts(nextCharts, preset));
     };
 
     const handleResetLayout = () => {
@@ -636,6 +661,18 @@ const ChartPage = () => {
                                     title="一行两列"
                                 >
                                     <Columns2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                    className={`px-2 py-1 rounded border ${
+                                        layoutPreset.rows === 2 && layoutPreset.cols === 1
+                                            ? 'border-accent-orange text-foreground'
+                                            : 'border-border hover:text-foreground'
+                                    }`}
+                                    onClick={() => applyLayoutPreset(2, 1)}
+                                    aria-label="两行一列"
+                                    title="两行一列"
+                                >
+                                    <Rows2 className="w-3.5 h-3.5" />
                                 </button>
                                 <button
                                     className={`px-2 py-1 rounded border ${
