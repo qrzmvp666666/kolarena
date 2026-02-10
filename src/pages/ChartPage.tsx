@@ -643,23 +643,6 @@ const ChartPage = () => {
                                     <LayoutGrid className="w-3.5 h-3.5" />
                                 </button>
                             </div>
-                            <div className="flex flex-nowrap bg-muted rounded p-1 overflow-x-auto max-w-full">
-                                {Object.keys(INTERVALS).map(i => (
-                                    <button
-                                        key={i}
-                                        onClick={() =>
-                                            activeChart && updateChart(activeChart.id, { interval: i as Interval })
-                                        }
-                                        className={`px-3 py-1 text-xs font-medium rounded transition-all ${
-                                            activeChart?.interval === i
-                                                ? 'bg-background text-foreground shadow-sm'
-                                                : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                                        }`}
-                                    >
-                                        {i}
-                                    </button>
-                                ))}
-                            </div>
                         </div>
                     </div>
 
@@ -701,6 +684,24 @@ const ChartPage = () => {
                                                     <span className="text-muted-foreground">{chart.interval}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
+                                                    <div className="flex bg-muted rounded p-1">
+                                                        {Object.keys(INTERVALS).map(i => (
+                                                            <button
+                                                                key={i}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    updateChart(chart.id, { interval: i as Interval });
+                                                                }}
+                                                                className={`px-2 py-1 text-[11px] font-medium rounded transition-all ${
+                                                                    chart.interval === i
+                                                                        ? 'bg-background text-foreground shadow-sm'
+                                                                        : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                                                                }`}
+                                                            >
+                                                                {i}
+                                                            </button>
+                                                        ))}
+                                                    </div>
                                                     <button
                                                         className="text-muted-foreground hover:text-foreground"
                                                         onClick={e => {

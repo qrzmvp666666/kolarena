@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/lib/supabase';
 import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/hooks/use-toast';
+import LoginModal from '@/components/LoginModal';
 import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 import type { DateRange } from 'react-day-picker';
 import { enUS, zhCN } from 'date-fns/locale';
@@ -97,6 +98,7 @@ const SignalsContent = () => {
   const { t, language } = useLanguage();
   const { user } = useUser();
   const { toast } = useToast();
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [subscriptionFilter, setSubscriptionFilter] = useState<'all' | 'subscribed' | 'unsubscribed'>('all');
   const [followFilter, setFollowFilter] = useState<'all' | 'followed' | 'unfollowed'>('all');
   const [marketType, setMarketType] = useState<'futures' | 'spot'>('futures');
@@ -139,7 +141,10 @@ const SignalsContent = () => {
 
   // Toggle follow handler
   const handleToggleFollow = useCallback(async (kolId: string) => {
-    if (!user) return;
+    if (!user) {
+      setLoginModalOpen(true);
+      return;
+    }
     try {
       const { data, error } = await supabase.rpc('toggle_follow', { p_kol_id: kolId });
       if (error) {
@@ -162,7 +167,10 @@ const SignalsContent = () => {
 
   // Toggle subscribe handler
   const handleToggleSubscribe = useCallback(async (kolId: string) => {
-    if (!user) return;
+    if (!user) {
+      setLoginModalOpen(true);
+      return;
+    }
     try {
       const { data, error } = await supabase.rpc('toggle_subscription', { p_kol_id: kolId });
       if (error) {
@@ -649,6 +657,12 @@ const SignalsContent = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <LoginModal
+        open={loginModalOpen}
+        onOpenChange={setLoginModalOpen}
+        onLogin={() => {}}
+      />
     </div>
   );
 };
