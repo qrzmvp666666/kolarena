@@ -76,7 +76,7 @@ const transformSignal = (row: SignalRow, isHistory: boolean) => {
     avatar: row.kol_avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${row.kol_name}`,
     pair: `${row.symbol} 永续`,
     signalType: row.direction,
-    leverage: row.leverage ? `${row.leverage}x` : '-',
+    leverage: row.leverage ? `${row.leverage}x` : '未提供',
     entryPrice: String(row.entry_price),
     positionMode: row.margin_mode === 'cross' ? '全仓' : '逐仓',
     orderTime: entryTimeStr,

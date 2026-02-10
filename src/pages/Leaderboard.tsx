@@ -134,7 +134,7 @@ const mapSignalToTrade = (signal: SignalRow): TradeRow => {
     id: signal.id,
     pair: signal.symbol,
     direction: signal.direction,
-    leverage: signal.leverage ? `${signal.leverage}x` : '-',
+    leverage: signal.leverage ? `${signal.leverage}x` : '未提供',
     marginMode: signal.margin_mode,
     entryPrice: Number(signal.entry_price).toFixed(2),
     tp: signal.take_profit ? Number(signal.take_profit).toFixed(2) : '-',

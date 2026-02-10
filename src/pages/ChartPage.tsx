@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Users, X, Plus, RefreshCw } from 'lucide-react';
+import { Users, X, Plus, RefreshCw, Square, Columns2, LayoutGrid } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import { ResponsiveGridLayout, useContainerWidth, type LayoutItem, type ResponsiveLayouts } from 'react-grid-layout';
 
@@ -437,8 +437,8 @@ const ChartPage = () => {
                 />
 
                 <div className="flex-1 flex flex-col bg-background min-w-0">
-                    <div className="h-[60px] flex items-center justify-between px-4 border-b border-border bg-card shrink-0 gap-4">
-                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="min-h-[60px] flex flex-col lg:flex-row lg:items-center lg:justify-between px-4 py-2 border-b border-border bg-card shrink-0 gap-3">
+                        <div className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button
@@ -594,18 +594,18 @@ const ChartPage = () => {
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="h-7 gap-1 text-[11px] border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"
+                                    className="h-7 w-7 p-0 border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"
                                     onClick={handleResetLayout}
+                                    aria-label="重置布局"
+                                    title="重置布局"
                                 >
                                     <RefreshCw className="w-3.5 h-3.5" />
-                                    重置布局
                                 </Button>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 min-w-[260px] justify-end">
+                        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto lg:min-w-[260px] justify-start lg:justify-end">
                             <div className="hidden lg:flex items-center gap-2 text-xs text-muted-foreground">
-                                <span>布局</span>
                                 <button
                                     className={`px-2 py-1 rounded border ${
                                         layoutPreset.rows === 1 && layoutPreset.cols === 1
@@ -613,8 +613,10 @@ const ChartPage = () => {
                                             : 'border-border hover:text-foreground'
                                     }`}
                                     onClick={() => applyLayoutPreset(1, 1)}
+                                    aria-label="单窗"
+                                    title="单窗"
                                 >
-                                    单窗
+                                    <Square className="w-3.5 h-3.5" />
                                 </button>
                                 <button
                                     className={`px-2 py-1 rounded border ${
@@ -623,21 +625,25 @@ const ChartPage = () => {
                                             : 'border-border hover:text-foreground'
                                     }`}
                                     onClick={() => applyLayoutPreset(1, 2)}
+                                    aria-label="一行两列"
+                                    title="一行两列"
                                 >
-                                    一行两列
+                                    <Columns2 className="w-3.5 h-3.5" />
                                 </button>
                                 <button
                                     className={`px-2 py-1 rounded border ${
-                                        layoutPreset.rows === 2 && layoutPreset.cols === 3
+                                        layoutPreset.rows === 2 && layoutPreset.cols === 2
                                             ? 'border-accent-orange text-foreground'
                                             : 'border-border hover:text-foreground'
                                     }`}
-                                    onClick={() => applyLayoutPreset(2, 3)}
+                                    onClick={() => applyLayoutPreset(2, 2)}
+                                    aria-label="两行两列"
+                                    title="两行两列"
                                 >
-                                    两行三列
+                                    <LayoutGrid className="w-3.5 h-3.5" />
                                 </button>
                             </div>
-                            <div className="flex bg-muted rounded p-1">
+                            <div className="flex flex-nowrap bg-muted rounded p-1 overflow-x-auto max-w-full">
                                 {Object.keys(INTERVALS).map(i => (
                                     <button
                                         key={i}

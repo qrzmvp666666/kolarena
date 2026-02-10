@@ -130,12 +130,14 @@ const SignalListCard = ({ signal, isHistory = false, isFollowed = false, isSubsc
       </div>
 
       {/* Pair & Type & Leverage */}
-      <div className="flex items-center gap-2 mb-4">
-        <span className="text-lg font-bold text-foreground">{signal.pair}</span>
-        <span className={`text-xs px-2 py-0.5 rounded border ${getSignalTypeStyle(signal.signalType)}`}>
-          {getSignalTypeLabel(signal.signalType)}
-        </span>
-        <span className="text-xs px-2 py-0.5 rounded border bg-muted text-muted-foreground border-border">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-lg font-bold text-foreground whitespace-nowrap">{signal.pair}</span>
+          <span className={`text-xs px-2 py-0.5 rounded border whitespace-nowrap ${getSignalTypeStyle(signal.signalType)}`}>
+            {getSignalTypeLabel(signal.signalType)}
+          </span>
+        </div>
+        <span className="text-xs px-2 py-0.5 rounded border bg-muted text-muted-foreground border-border inline-flex items-center h-6 leading-none whitespace-nowrap shrink-0">
           {signal.leverage}
         </span>
       </div>
@@ -161,7 +163,7 @@ const SignalListCard = ({ signal, isHistory = false, isFollowed = false, isSubsc
           ) : (
             <>
               <div className="text-xs text-muted-foreground mb-1">{t('orderTime')}</div>
-              <div className="text-sm font-bold text-foreground">{signal.orderTime}</div>
+              <div className="text-[10px] sm:text-xs md:text-sm font-bold text-foreground leading-tight">{signal.orderTime}</div>
             </>
           )}
         </div>
