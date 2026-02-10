@@ -81,15 +81,21 @@ export const MarketSidebar = ({ currentSymbol, onSelectSymbol }: MarketSidebarPr
                   badgeClass = "bg-[#ef5350]/30 text-[#ef5350]";
                 }
 
+                const flashBgClass =
+                  flashDirection === 'up'
+                    ? 'bg-[#26a69a]/10'
+                    : flashDirection === 'down'
+                      ? 'bg-[#ef5350]/10'
+                      : '';
+
                 return (
                   <button
                     key={binanceSym}
                     onClick={() => onSelectSymbol(binanceSym)}
                     className={cn(
                       "flex items-center justify-between p-3 px-4 hover:bg-muted transition-colors border-l-2",
-                      currentSymbol === binanceSym
-                        ? "bg-muted border-l-primary"
-                        : "border-l-transparent"
+                      currentSymbol === binanceSym ? "border-l-primary" : "border-l-transparent",
+                      flashBgClass
                     )}
                   >
                     <div className="flex items-center gap-3">
