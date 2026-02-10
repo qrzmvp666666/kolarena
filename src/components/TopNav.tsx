@@ -42,7 +42,7 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
       setLoginModalOpen(true);
       return;
     }
-    navigate('/account');
+    navigate('/account?tab=subscription');
   };
 
   const toggleLanguage = () => {

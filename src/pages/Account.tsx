@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { CreditCard, Wallet, Bitcoin, Clock, CheckCircle, XCircle, Gift, Ticket, Zap, Star, Crown, Info, ArrowRight, User, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import { useUser } from '@/contexts/UserContext';
@@ -120,6 +121,8 @@ const Account = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const { user: contextUser, updateAvatar: updateContextAvatar } = useUser();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('subscription');
   const [danmakuEnabled, setDanmakuEnabled] = useState(true);
   const [redeemCode, setRedeemCode] = useState('');
@@ -138,6 +141,21 @@ const Account = () => {
   const [isLoadingMembership, setIsLoadingMembership] = useState(false);
 
   const userId = contextUser?.id || '';
+
+  const setTab = useCallback((tab: TabType) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(location.search);
+    params.set('tab', tab);
+    navigate({ pathname: '/account', search: `?${params.toString()}` }, { replace: true });
+  }, [location.search, navigate]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab') as TabType | null;
+    if (tab && ['subscription', 'purchases', 'accounts', 'redemption', 'settings'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [location.search]);
   const email = contextUser?.email || '';
   const avatarUrl = contextUser?.avatar || '';
 
@@ -501,7 +519,7 @@ const Account = () => {
           
           <nav className="space-y-1">
             <button
-              onClick={() => setActiveTab('subscription')}
+              onClick={() => setTab('subscription')}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-md font-mono text-sm transition-colors ${
                 activeTab === 'subscription'
                   ? 'bg-accent text-foreground'
@@ -512,7 +530,7 @@ const Account = () => {
               {t('subscriptionPlans')}
             </button>
             <button
-              onClick={() => setActiveTab('purchases')}
+              onClick={() => setTab('purchases')}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-md font-mono text-sm transition-colors ${
                 activeTab === 'purchases'
                   ? 'bg-accent text-foreground'
@@ -523,7 +541,7 @@ const Account = () => {
               {t('purchaseRecords')}
             </button>
             <button
-              onClick={() => setActiveTab('redemption')}
+              onClick={() => setTab('redemption')}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-md font-mono text-sm transition-colors ${
                 activeTab === 'redemption'
                   ? 'bg-accent text-foreground'
@@ -534,7 +552,7 @@ const Account = () => {
               {t('redemptionCenter')}
             </button>
             <button
-              onClick={() => setActiveTab('settings')}
+              onClick={() => setTab('settings')}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-md font-mono text-sm transition-colors ${
                 activeTab === 'settings'
                   ? 'bg-accent text-foreground'
@@ -892,7 +910,7 @@ const Account = () => {
                           variant="outline"
                           size="sm"
                           className="font-mono gap-1"
-                          onClick={() => setActiveTab('subscription')}
+                          onClick={() => setTab('subscription')}
                         >
                           {t('upgradeNow')}
                           <ArrowRight className="w-3 h-3" />
