@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Users, X, Plus, RefreshCw, Square, Columns2, LayoutGrid } from 'lucide-react';
+import { Users, X, Plus, RefreshCw, Square, Columns2, LayoutGrid, ChevronLeft, ChevronRight, MessageSquare, Activity, History } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import { ResponsiveGridLayout, useContainerWidth, type LayoutItem, type ResponsiveLayouts } from 'react-grid-layout';
 
@@ -192,6 +192,8 @@ const ChartPage = () => {
     const [layoutPreset, setLayoutPreset] = useState({ rows: 1, cols: 1 });
     const [selectedSymbols, setSelectedSymbols] = useState<string[]>(['BTCUSDT']);
     const chartIdCounter = useRef(2);
+    const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
+    const [rightSidebarTab, setRightSidebarTab] = useState<'comments' | 'pending' | 'history'>('comments');
 
     const [availableKolsByChart, setAvailableKolsByChart] = useState<
         Record<string, KolOption[]>
@@ -253,6 +255,11 @@ const ChartPage = () => {
     const [gridHeight, setGridHeight] = useState(0);
     const [currentBreakpoint, setCurrentBreakpoint] = useState<keyof typeof cols>('lg');
     const { symbols: binanceSymbols, loading: symbolsLoading } = useBinanceSymbols();
+
+    const handleExpandSidebar = useCallback((tab?: 'comments' | 'pending' | 'history') => {
+        if (tab) setRightSidebarTab(tab);
+        setRightSidebarCollapsed(false);
+    }, []);
 
     const handleAvailableKolsChange = useCallback((id: string, kols: KolOption[]) => {
         setAvailableKolsByChart(prev => ({ ...prev, [id]: kols }));
@@ -732,8 +739,62 @@ const ChartPage = () => {
                     </div>
                 </div>
 
-                <div className="w-[350px] border-l border-border bg-card hidden md:block">
-                    <Sidebar />
+                <div
+                    className={`border-l border-border bg-card hidden md:block relative group ${
+                        rightSidebarCollapsed ? 'w-[56px]' : 'w-[350px]'
+                    }`}
+                >
+                    {rightSidebarCollapsed ? (
+                        <div className="h-full flex flex-col items-center py-2 gap-2">
+                            <button
+                                className="h-9 w-9 inline-flex items-center justify-center rounded border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"
+                                onClick={() => handleExpandSidebar()}
+                                aria-label="展开侧边栏"
+                                title="展开"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <button
+                                className="h-9 w-9 inline-flex items-center justify-center rounded border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"
+                                onClick={() => handleExpandSidebar('comments')}
+                                aria-label="评论"
+                                title="评论"
+                            >
+                                <MessageSquare className="w-4 h-4" />
+                            </button>
+                            <button
+                                className="h-9 w-9 inline-flex items-center justify-center rounded border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"
+                                onClick={() => handleExpandSidebar('pending')}
+                                aria-label="有效信号"
+                                title="有效信号"
+                            >
+                                <Activity className="w-4 h-4" />
+                            </button>
+                            <button
+                                className="h-9 w-9 inline-flex items-center justify-center rounded border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"
+                                onClick={() => handleExpandSidebar('history')}
+                                aria-label="历史信号"
+                                title="历史信号"
+                            >
+                                <History className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ) : (
+                        <>
+                            <button
+                                className="absolute top-2 left-0 z-10 h-8 w-8 inline-flex items-center justify-center rounded-r border border-border bg-muted text-white hover:text-foreground hover:bg-background/50 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => setRightSidebarCollapsed(true)}
+                                aria-label="收起侧边栏"
+                                title="收起"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                            <Sidebar
+                                activeTab={rightSidebarTab}
+                                onTabChange={setRightSidebarTab}
+                            />
+                        </>
+                    )}
                 </div>
             </div>
         </div>

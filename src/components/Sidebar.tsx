@@ -79,7 +79,14 @@ interface CompletedTrade {
 // We need to fetch real signals similar to Signal.tsx or ChartPage.tsx
 // I will rewrite the component to include state for pending/history orders and fetch them.
 
-const Sidebar = () => {
+type SidebarTab = 'comments' | 'pending' | 'history';
+
+interface SidebarProps {
+  activeTab?: SidebarTab;
+  onTabChange?: (tab: SidebarTab) => void;
+}
+
+const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentInput, setCommentInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -242,10 +249,16 @@ const Sidebar = () => {
     }
   };
 
+  const currentTab = activeTab ?? 'comments';
+
   return (
     <div className="w-full bg-card flex flex-col h-full overflow-hidden">
-      <Tabs defaultValue="comments" className="flex flex-col h-full overflow-hidden">
-        <TabsList className="w-full rounded-none border-b border-border bg-transparent p-0 h-auto flex-shrink-0 flex">
+      <Tabs
+        value={currentTab}
+        onValueChange={(value) => onTabChange?.(value as SidebarTab)}
+        className="flex flex-col h-full overflow-hidden"
+      >
+        <TabsList className="w-full rounded-none border-b border-border bg-transparent p-0 h-auto flex-shrink-0 flex items-center">
           <TabsTrigger
             value="comments"
             className="flex-1 rounded-none border-r border-border py-2 px-0 font-mono text-sm text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold truncate"
@@ -259,15 +272,15 @@ const Sidebar = () => {
             {t('pendingOrders')}
           </TabsTrigger>
           <TabsTrigger
-            value="trades"
+            value="history"
             className="flex-1 rounded-none py-2 px-0 font-mono text-sm text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold truncate"
           >
-            {t('completedTrades')}
+            {t('historySignals')}
           </TabsTrigger>
         </TabsList>
 
         {/* Completed Trades Tab */}
-        <TabsContent value="trades" className="flex-1 mt-0 overflow-hidden flex flex-col">
+        <TabsContent value="history" className="flex-1 mt-0 overflow-hidden flex flex-col">
           <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent p-3">
             <div className="space-y-3">
               {historySignals.map((trade) => (
@@ -541,16 +554,15 @@ const Sidebar = () => {
                 </Button>
               </div>
             ) : (
-              <div className="relative w-full">
-                <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-lg blur-lg opacity-70" />
-                <Button
-                  variant="outline"
-                  className="relative w-full h-[52px] font-mono text-sm gap-2 bg-background/60 backdrop-blur-md border-primary/40 hover:bg-primary/20 hover:border-primary/60 transition-all duration-300 shadow-xl hover:shadow-primary/30"
-                >
-                  <LogIn className="w-4 h-4 text-primary" />
-                  <span className="text-primary font-semibold">{t('loginToComment')}</span>
-                </Button>
-              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-[52px] w-full gap-2"
+                onClick={() => {}}
+              >
+                <LogIn className="w-4 h-4 text-primary" />
+                <span className="text-primary font-semibold">{t('loginToComment')}</span>
+              </Button>
             )}
           </div>
         </TabsContent>
