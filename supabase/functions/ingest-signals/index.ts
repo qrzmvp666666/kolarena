@@ -69,6 +69,26 @@ function parseEntryTime(raw: string | null | undefined): string | null {
   return null;
 }
 
+// ── Helper: fix shorthand price for high-value pairs ──
+// Some KOLs (e.g. 舒琴) write BTC entry price as "6.5" meaning 65000.
+// For BTCUSDT: if price < 1000, multiply by 10000 (BTC hasn't been < $1000 since 2017).
+// This applies to entry_price, take_profit, and stop_loss.
+const SHORTHAND_PRICE_RULES: Record<string, { threshold: number; multiplier: number }> = {
+  BTCUSDT: { threshold: 1000, multiplier: 10000 },
+};
+
+function fixShorthandPrice(
+  price: number | null,
+  symbol: string,
+): number | null {
+  if (price === null) return null;
+  const rule = SHORTHAND_PRICE_RULES[symbol];
+  if (rule && price < rule.threshold) {
+    return price * rule.multiplier;
+  }
+  return price;
+}
+
 // ── Helper: normalize symbol ──
 // Input: "SOL/USDT" → "SOLUSDT", "DOTUSDT/USDT" → "DOTUSDT"
 function normalizeSymbol(raw: string): string {
@@ -245,15 +265,15 @@ Deno.serve(async (req: Request) => {
       continue;
     }
 
-    const entryPrice = parsePrice(entryPriceRaw);
+    const entryPrice = fixShorthandPrice(parsePrice(entryPriceRaw), symbol);
     if (entryPrice === null) {
       stats.otherFiltered++;
       stats.errors.push(`No valid entry price for KOL "${kolName}" on ${symbol}`);
       continue;
     }
 
-    const takeProfit = parsePrice(takeProfitRaw);
-    const stopLoss = parsePrice(stopLossRaw);
+    const takeProfit = fixShorthandPrice(parsePrice(takeProfitRaw), symbol);
+    const stopLoss = fixShorthandPrice(parsePrice(stopLossRaw), symbol);
     const leverage = parseLeverage(leverageRaw);
     const entryTime = parseEntryTime(entryTimeRaw);
 
