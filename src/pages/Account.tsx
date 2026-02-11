@@ -153,9 +153,14 @@ const Account = () => {
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab') as TabType | null;
     if (tab && ['subscription', 'purchases', 'accounts', 'redemption', 'settings'].includes(tab)) {
-      setActiveTab(tab);
+      // If not logged in, only allow 'subscription' tab
+      if (!contextUser && tab !== 'subscription') {
+        setActiveTab('subscription');
+      } else {
+        setActiveTab(tab);
+      }
     }
-  }, [location.search]);
+  }, [location.search, contextUser]);
   const email = contextUser?.email || '';
   const avatarUrl = contextUser?.avatar || '';
 
@@ -513,7 +518,8 @@ const Account = () => {
       />
       
       <div className="flex flex-1">
-        {/* Sidebar */}
+        {/* Sidebar - only show full sidebar when logged in */}
+        {contextUser && (
         <div className="w-64 border-r border-border bg-card p-4">
           <h2 className="font-mono text-lg font-semibold mb-4 px-2">{t('myAccount')}</h2>
           
@@ -564,6 +570,7 @@ const Account = () => {
             </button>
           </nav>
         </div>
+        )}
 
         <div className="flex-1 p-6 overflow-y-auto">
           {activeTab === 'subscription' && (

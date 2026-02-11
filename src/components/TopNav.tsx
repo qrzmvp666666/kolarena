@@ -38,10 +38,6 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
   };
 
   const handleProClick = () => {
-    if (!user) {
-      setLoginModalOpen(true);
-      return;
-    }
     navigate('/account?tab=subscription');
   };
 

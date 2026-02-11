@@ -4,7 +4,9 @@ import { useLanguage } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import CryptoPaymentModal from './CryptoPaymentModal';
+import LoginModal from './LoginModal';
 import { supabase } from '@/lib/supabase';
+import { useUser } from '@/contexts/UserContext';
 
 type PlanType = 'monthly' | 'quarterly' | 'yearly' | 'lifetime';
 
@@ -28,12 +30,18 @@ interface PlanFeature {
 const PlanSubscriptionPanel = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const { user } = useUser();
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [cryptoModalOpen, setCryptoModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<{ name: string; price: number; currency: string; nowpaymentUrl?: string | null } | null>(null);
   const [plans, setPlans] = useState<PlanRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const handleStripePayment = (planName: string, stripeUrl?: string | null) => {
+    if (!user) {
+      setLoginModalOpen(true);
+      return;
+    }
     if (!stripeUrl) {
       toast({
         title: t('paymentNotAvailable'),
@@ -45,6 +53,10 @@ const PlanSubscriptionPanel = () => {
   };
 
   const handleCryptoPayment = (planName: string, price: number, currency: string, nowpaymentUrl?: string | null) => {
+    if (!user) {
+      setLoginModalOpen(true);
+      return;
+    }
     setSelectedPlan({ name: planName, price, currency, nowpaymentUrl });
     setCryptoModalOpen(true);
   };
@@ -282,6 +294,9 @@ const PlanSubscriptionPanel = () => {
           paymentUrl={selectedPlan.nowpaymentUrl}
         />
       )}
+
+      {/* Login Modal for unauthenticated users */}
+      <LoginModal open={loginModalOpen} onOpenChange={setLoginModalOpen} />
     </div>
   );
 };
