@@ -45,7 +45,7 @@ type BinanceKline = [
  */
 export async function fetchKlines(
   symbol: string,
-  interval: Interval = '15m',
+  interval: Interval = '1d',
   limit: number = 1000
 ): Promise<Candle[]> {
   try {

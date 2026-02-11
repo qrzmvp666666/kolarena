@@ -39,7 +39,8 @@ const getIntervalSeconds = (interval: Interval): number => {
     case 'm': return value * 60;
     case 'h': return value * 3600;
     case 'd': return value * 86400;
-    default: return 900; // 15m default
+    case 'w': return value * 604800;
+    default: return 86400; // 1d default
   }
 };
 
@@ -199,7 +200,7 @@ const ChartPage = () => {
     const [danmakuEnabled, setDanmakuEnabled] = useState(true);
 
     const [charts, setCharts] = useState<ChartWindowState[]>([
-        { id: 'chart-1', symbol: 'BTCUSDT', interval: '15m' },
+        { id: 'chart-1', symbol: 'BTCUSDT', interval: '1d' },
     ]);
     const [activeChartId, setActiveChartId] = useState('chart-1');
     const [layoutPreset, setLayoutPreset] = useState({ rows: 1, cols: 1 });
@@ -258,7 +259,7 @@ const ChartPage = () => {
 
     const [layouts, setLayouts] = useState<ResponsiveLayouts>(() =>
         buildLayoutsForCharts(
-            [{ id: 'chart-1', symbol: 'BTCUSDT', interval: '15m' }],
+            [{ id: 'chart-1', symbol: 'BTCUSDT', interval: '1d' }],
             { rows: 1, cols: 1 }
         )
     );
@@ -345,7 +346,7 @@ const ChartPage = () => {
                     return {
                         id: `chart-${chartIdCounter.current++}`,
                         symbol,
-                        interval: activeChart?.interval || '15m',
+                        interval: activeChart?.interval || '1d',
                     } as ChartWindowState;
                 });
 
@@ -437,7 +438,7 @@ const ChartPage = () => {
                 nextCharts.push({
                     id: `chart-${chartIdCounter.current++}`,
                     symbol: baseSymbol,
-                    interval: '15m',
+                    interval: '1d',
                 });
             }
             setCharts(nextCharts);
