@@ -15,7 +15,7 @@ export const translations: Translations = {
   chartPage: { zh: '聚合K线', en: 'Aggregated Chart' },
   leaderboard: { zh: '排行榜', en: 'LEADERBOARD' },
   models: { zh: '信号', en: 'SIGNALS' },
-  joinCommunity: { zh: '加入社区', en: 'COMMUNITY' },
+  joinCommunity: { zh: '社区', en: 'COMMUNITY' },
   aboutUs: { zh: '关于我们', en: 'ABOUT US' },
   toggleDanmaku: { zh: '切换弹幕', en: 'Toggle Danmaku' },
   closeDanmaku: { zh: '关闭弹幕', en: 'Close Danmaku' },
@@ -355,7 +355,7 @@ export const translations: Translations = {
 
   // Redemption Steps
   redemptionStepsTitle: { zh: '兑换流程', en: 'How to Redeem' },
-  redemptionStep1: { zh: '点击顶部「加入社区」获取兑换码', en: 'Click "Join Community" at top to get codes' },
+  redemptionStep1: { zh: '点击顶部「社区」获取兑换码', en: 'Click "Community" at top to get codes' },
   redemptionStep2: { zh: '在上方输入框输入兑换码', en: 'Enter the code in the input field above' },
   redemptionStep3: { zh: '点击「立即兑换」完成兑换', en: 'Click "Redeem" to complete' },
   redemptionStep4: { zh: '奖励将自动发放到您的账户', en: 'Rewards will be added to your account automatically' },
