@@ -112,7 +112,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                 avatar: s.kol_avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.kol_name}`,
                 pair: `${s.symbol} 永续`, // Assuming symbol like BTC/USDT or BTCUSDT
                 signalType: s.direction,
-                leverage: `${s.leverage}x`,
+                leverage: s.leverage ? `${s.leverage}x` : '未提供',
                 entryPrice: String(s.entry_price),
                 positionMode: s.margin_mode === 'cross' ? '全仓' : '逐仓',
                 orderTime: new Date(s.entry_time).toLocaleString('zh-CN', {
@@ -131,7 +131,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                 avatar: s.kol_avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.kol_name}`,
                 pair: `${s.symbol} 永续`,
                 signalType: s.direction,
-                leverage: `${s.leverage}x`,
+                leverage: s.leverage ? `${s.leverage}x` : '未提供',
                 entryPrice: String(s.entry_price),
                 closePrice: String(s.exit_price || s.entry_price), // Fallback if null
                 positionMode: s.margin_mode === 'cross' ? '全仓' : '逐仓',
