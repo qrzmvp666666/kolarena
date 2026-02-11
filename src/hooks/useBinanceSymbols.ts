@@ -14,6 +14,8 @@ export interface BinanceSymbol {
   base: string;
   /** Display quote, e.g. "USDT" */
   quote: string;
+  /** Market type: spot or futures */
+  marketType: 'spot' | 'futures';
 }
 
 /**
@@ -34,15 +36,33 @@ export const useBinanceSymbols = () => {
       const { data, error } = await supabase.rpc('get_binance_symbols');
       if (error) throw error;
       if (data) {
-        const mapped: BinanceSymbol[] = (data as { id?: number; symbol: string; icon_url: string | null }[]).map((row) => {
-          const parts = row.symbol.split('/');
+        // cast data to include market_type
+        const mapped: BinanceSymbol[] = (data as { id?: number; symbol: string; icon_url: string | null; market_type: 'spot' | 'futures' }[]).map((row) => {
+          // Handle both BTC/USDT and BTCUSDT formats
+          let base = row.symbol;
+          let quote = 'USDT';
+
+          if (row.symbol.includes('/')) {
+            const parts = row.symbol.split('/');
+            base = parts[0];
+            quote = parts[1];
+          } else {
+             // Basic parsing for standard pairs ending in USDT
+             // Improvements can be made if other quotes (BTC, ETH, BUSD) are introduced
+             if (row.symbol.endsWith('USDT')) {
+               base = row.symbol.replace('USDT', '');
+               quote = 'USDT';
+             }
+          }
+
           return {
             id: row.id,
             symbol: row.symbol,
             icon_url: row.icon_url,
             binanceSymbol: toBinanceFormat(row.symbol),
-            base: parts[0] || row.symbol,
-            quote: parts[1] || 'USDT',
+            base: base,
+            quote: quote,
+            marketType: row.market_type
           };
         });
         const sorted = [...mapped].sort((a, b) => {

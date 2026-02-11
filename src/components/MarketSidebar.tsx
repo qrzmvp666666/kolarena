@@ -104,8 +104,14 @@ export const MarketSidebar = ({ currentSymbol, onSelectSymbol }: MarketSidebarPr
                         <AvatarFallback>{sym.base.substring(0, 2)}</AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col items-start">
-                        <span className="text-sm font-bold text-foreground">{sym.base}</span>
-                        <span className="text-[10px] text-muted-foreground font-mono">{sym.quote}</span>
+                        <span className="text-sm font-bold text-foreground">{sym.binanceSymbol}</span>
+                        {sym.marketType === 'futures' && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[9px] px-1 py-[1px] rounded bg-muted text-muted-foreground/80 border border-border/40 select-none">
+                              永续
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
