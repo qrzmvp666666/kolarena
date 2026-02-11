@@ -104,10 +104,23 @@ const ChartWindow = ({
                 });
                 const kolArray = Array.from(kols.values());
                 onAvailableKolsChange(chartId, kolArray);
-
+                
+                // If new KOLs appear in the updated list that weren't selected before, 
+                // we should probably auto-select them if it's the first load OR if we want live updates.
+                // However, the current logic only auto-selects on first load (hasInitializedSelection).
+                // To support live updates showing new signals from new KOLs:
                 if (!hasInitializedSelection.current && kolArray.length > 0) {
                     onAutoSelectAll(chartId, kolArray.map(k => k.name));
                     hasInitializedSelection.current = true;
+                } else if (hasInitializedSelection.current) {
+                     // Check if there are new KOLs and auto-select them
+                     // We need to pass the new KOLs to parent to add to selection
+                     // We can't access selectedKols here easily without adding it to dependency array and causing loops.
+                     // Instead, we can let the parent handle "auto-select new KOLs".
+                     // But onAvailableKolsChange receives the full list.
+                     
+                     // Alternative: passed `onNewKolsDetected`?
+                     // Or just rely on parent comparing `prev` and `next` in `setAvailableKolsByChart`.
                 }
             } catch (err) {
                 console.error('Failed to fetch signals for chart:', err);
@@ -262,7 +275,26 @@ const ChartPage = () => {
     }, []);
 
     const handleAvailableKolsChange = useCallback((id: string, kols: KolOption[]) => {
-        setAvailableKolsByChart(prev => ({ ...prev, [id]: kols }));
+        setAvailableKolsByChart(prev => {
+            const existingKols = prev[id] || [];
+            
+            // Check for new KOLs to auto-select them
+            const existingNames = new Set(existingKols.map(k => k.name));
+            const newRunKols = kols.filter(k => !existingNames.has(k.name));
+
+            if (newRunKols.length > 0) {
+                 setSelectedKolsByChart(prevSel => {
+                    const currentSel = prevSel[id] || new Set();
+                    const nextSel = new Set(currentSel);
+                    newRunKols.forEach(k => nextSel.add(k.name));
+                    return { ...prevSel, [id]: nextSel };
+                 });
+            }
+            
+            // Only update state if list actually changed to avoid render loops if references differ but content same
+            if (JSON.stringify(existingKols) === JSON.stringify(kols)) return prev;
+            return { ...prev, [id]: kols };
+        });
     }, []);
 
     const handleAutoSelectAll = useCallback((id: string, kolNames: string[]) => {
