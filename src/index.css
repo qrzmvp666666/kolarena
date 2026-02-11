@@ -130,6 +130,12 @@ All colors MUST be HSL.
   display: inline-block;
 }
 
+.logo-text {
+  color: #ffffff;
+  font-family: 'STKaiti', 'Kaiti SC', 'KaiTi', '楷体', 'Songti SC', serif;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.35);
+}
+
 .logo-shine::after {
   content: '';
   position: absolute;
