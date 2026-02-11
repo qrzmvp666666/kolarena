@@ -69,6 +69,10 @@ export const translations: Translations = {
   clickToExpand: { zh: '点击展开', en: 'click to expand' },
   writeComment: { zh: '写下你的评论...', en: 'Write your comment...' },
   loginToComment: { zh: '登录后评论', en: 'Login to comment' },
+  signalStrong: { zh: '信号强', en: 'Strong' },
+  signalWeak: { zh: '信号弱', en: 'Weak' },
+  signalPoor: { zh: '信号极差', en: 'Very Poor' },
+  signalNone: { zh: '没信号', en: 'No Signal' },
   
   // TickerBar
   highest: { zh: '最高', en: 'HIGHEST' },

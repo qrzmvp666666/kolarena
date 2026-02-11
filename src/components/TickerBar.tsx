@@ -33,6 +33,26 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
 
   const { prices, priceChanges, isConnected, isFallback } = useBinanceWebSocket(wsSymbols);
 
+  const signalStatus = useMemo(() => {
+    if (!isConnected && !isFallback) return 'none';
+    if (!isConnected && isFallback) return 'poor';
+    if (isConnected && isFallback) return 'weak';
+    return 'strong';
+  }, [isConnected, isFallback]);
+
+  const signalColor = useMemo(() => {
+    switch (signalStatus) {
+      case 'strong':
+        return 'text-green-500';
+      case 'weak':
+        return 'text-yellow-500';
+      case 'poor':
+        return 'text-red-500';
+      default:
+        return 'text-muted-foreground';
+    }
+  }, [signalStatus]);
+
   // Fetch KOL data from Supabase for highest/lowest
   const [kolData, setKolData] = useState<KolRow[]>([]);
 
@@ -171,15 +191,12 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
     <div className="flex items-center justify-between px-4 py-2 bg-secondary border-b border-border text-xs">
       {/* Left Side Content */}
       <div className="flex items-center gap-6">
-        {/* Connection Status - Always Visible */}
-        <div className="flex items-center gap-1.5">
-          {isConnected ? (
-            <Wifi size={14} className="text-green-500" />
+        {/* Signal Strength (icon only) */}
+        <div className="flex items-center">
+          {signalStatus === 'none' ? (
+            <WifiOff size={14} className={signalColor} />
           ) : (
-            <WifiOff size={14} className="text-yellow-500" />
-          )}
-          {isFallback && (
-            <span className="text-yellow-500 text-[10px]">HTTP</span>
+            <Wifi size={14} className={signalColor} />
           )}
         </div>
 

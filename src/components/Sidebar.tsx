@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send, LogIn, ArrowRight } from 'lucide-react';
+import LoginModal from '@/components/LoginModal';
 import { useLanguage } from '@/lib/i18n';
 import { useUser } from '@/contexts/UserContext';
 import { supabase } from '@/lib/supabase';
@@ -92,6 +93,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeSignals, setActiveSignals] = useState<PendingOrder[]>([]);
   const [historySignals, setHistorySignals] = useState<CompletedTrade[]>([]);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguage();
@@ -558,7 +560,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                 size="sm"
                 variant="outline"
                 className="h-[52px] w-full gap-2"
-                onClick={() => {}}
+                onClick={() => setLoginModalOpen(true)}
               >
                 <LogIn className="w-4 h-4 text-primary" />
                 <span className="text-primary font-semibold">{t('loginToComment')}</span>
@@ -567,6 +569,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
           </div>
         </TabsContent>
       </Tabs>
+      <LoginModal open={loginModalOpen} onOpenChange={setLoginModalOpen} />
     </div>
   );
 };
