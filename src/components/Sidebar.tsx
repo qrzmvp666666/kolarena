@@ -284,12 +284,17 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
         {/* Completed Trades Tab */}
         <TabsContent value="history" className="flex-1 mt-0 overflow-hidden flex flex-col">
           <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent p-3">
-            <div className="space-y-3">
-              {historySignals.map((trade) => (
-                <div
-                  key={trade.id}
-                  className="relative p-3 rounded-lg bg-card border border-border hover:border-foreground/20 transition-all cursor-pointer group overflow-hidden"
-                >
+            {historySignals.length === 0 ? (
+              <div className="flex items-center justify-center py-10 text-muted-foreground text-sm">
+                {t('noCompletedTrades')}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {historySignals.map((trade) => (
+                  <div
+                    key={trade.id}
+                    className="relative p-3 rounded-lg bg-card border border-border hover:border-foreground/20 transition-all cursor-pointer group overflow-hidden"
+                  >
                   {/* Outcome Badge - Top Right */}
                   <div className={`absolute top-2 right-2 px-3 py-1 text-xs font-bold text-black rounded ${
                     trade.outcome === 'takeProfit' ? 'bg-[rgb(51,240,140)]' :
@@ -382,21 +387,27 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                       <div className="font-mono text-xs font-medium text-foreground">{trade.closeTime}</div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </TabsContent>
 
         {/* Pending Orders Tab */}
         <TabsContent value="pending" className="flex-1 mt-0 overflow-hidden flex flex-col">
           <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent p-3">
-            <div className="space-y-3">
-              {activeSignals.map((order) => (
-                <div
-                  key={order.id}
-                  className="p-3 rounded-lg bg-card border border-border hover:border-foreground/20 transition-all cursor-pointer group"
-                >
+            {activeSignals.length === 0 ? (
+              <div className="flex items-center justify-center py-10 text-muted-foreground text-sm">
+                {t('noPendingOrders')}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {activeSignals.map((order) => (
+                  <div
+                    key={order.id}
+                    className="p-3 rounded-lg bg-card border border-border hover:border-foreground/20 transition-all cursor-pointer group"
+                  >
                   {/* Header */}
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -455,9 +466,10 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                       <div className="text-xs font-semibold text-foreground">0:0</div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </TabsContent>
 
