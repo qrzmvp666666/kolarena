@@ -94,9 +94,11 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
         <span className="text-muted-foreground">|</span>
         <button
           onClick={handleProClick}
-          className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className={`font-mono text-sm transition-colors ${
+            location.pathname === '/account' ? 'text-foreground text-base font-bold' : 'text-muted-foreground hover:text-foreground'
+          }`}
         >
-          Pro会员
+          套餐
         </button>
         <span className="text-muted-foreground">|</span>
         <Link 
