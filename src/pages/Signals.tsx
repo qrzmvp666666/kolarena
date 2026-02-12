@@ -423,7 +423,7 @@ const SignalsContent = () => {
               <button
                 onClick={() => setMarketType('futures')}
                 className={`px-4 py-2 text-sm font-medium transition-colors ${marketType === 'futures'
-                    ? 'bg-accent-orange text-white'
+                    ? 'bg-foreground text-background'
                     : 'bg-card text-muted-foreground hover:text-foreground'
                   }`}
               >
@@ -453,13 +453,13 @@ const SignalsContent = () => {
                 setFollowFilter('all');
               }}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${subscriptionFilter === 'all' && followFilter === 'all'
-                  ? 'bg-card border-accent-orange text-foreground'
+                  ? 'bg-card border-foreground text-foreground'
                   : 'bg-transparent border-border text-muted-foreground hover:border-foreground/30'
                 }`}
             >
               <span className="text-sm">{t('signalAll')}</span>
               <span className={`text-xs px-1.5 py-0.5 rounded ${subscriptionFilter === 'all' && followFilter === 'all'
-                  ? 'bg-accent-orange/20 text-accent-orange'
+                  ? 'bg-foreground text-background font-semibold'
                   : 'bg-muted text-muted-foreground'
                 }`}>
                 {allSignals.length}
@@ -474,12 +474,12 @@ const SignalsContent = () => {
                   key={tab.id}
                   onClick={() => setSubscriptionFilter(tab.id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${subscriptionFilter === tab.id
-                      ? 'bg-card border-accent-orange text-foreground'
+                      ? 'bg-card border-foreground text-foreground'
                       : 'bg-transparent border-border text-muted-foreground hover:border-foreground/30'
                     }`}
                 >
                   <span className="text-sm">{tab.label}</span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded ${subscriptionFilter === tab.id ? 'bg-accent-orange/20 text-accent-orange' : 'bg-muted text-muted-foreground'
+                  <span className={`text-xs px-1.5 py-0.5 rounded ${subscriptionFilter === tab.id ? 'bg-foreground text-background font-semibold' : 'bg-muted text-muted-foreground'
                     }`}>
                     {tab.count}
                   </span>
@@ -494,12 +494,12 @@ const SignalsContent = () => {
                   key={tab.id}
                   onClick={() => setFollowFilter(tab.id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${followFilter === tab.id
-                      ? 'bg-card border-accent-orange text-foreground'
+                      ? 'bg-card border-foreground text-foreground'
                       : 'bg-transparent border-border text-muted-foreground hover:border-foreground/30'
                     }`}
                 >
                   <span className="text-sm">{tab.label}</span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded ${followFilter === tab.id ? 'bg-accent-orange/20 text-accent-orange' : 'bg-muted text-muted-foreground'
+                  <span className={`text-xs px-1.5 py-0.5 rounded ${followFilter === tab.id ? 'bg-foreground text-background font-semibold' : 'bg-muted text-muted-foreground'
                     }`}>
                     {tab.count}
                   </span>
@@ -612,13 +612,13 @@ const SignalsContent = () => {
           <TabsList className="mb-4 bg-transparent border-b border-border rounded-none p-0 h-auto w-full justify-start">
             <TabsTrigger
               value="active"
-              className="rounded-none border-b-2 border-transparent py-2 px-4 font-mono text-sm text-muted-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold"
+              className="rounded-none border-b-2 border-transparent py-2 px-4 font-mono text-sm text-muted-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:border-b-foreground data-[state=active]:font-semibold"
             >
               {t('activeSignals')}
             </TabsTrigger>
             <TabsTrigger
               value="history"
-              className="rounded-none border-b-2 border-transparent py-2 px-4 font-mono text-sm text-muted-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold"
+              className="rounded-none border-b-2 border-transparent py-2 px-4 font-mono text-sm text-muted-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:border-b-foreground data-[state=active]:font-semibold"
             >
               {t('historySignals')}
             </TabsTrigger>

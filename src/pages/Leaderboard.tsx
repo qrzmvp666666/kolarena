@@ -521,7 +521,7 @@ const ProfitComparisonPanel = () => {
               onClick={() => setDisplayMode('$')}
               className={`px-3 py-1 font-mono text-sm transition-colors ${
                 displayMode === '$'
-                  ? 'bg-accent-orange/10 text-accent-orange font-semibold'
+                  ? 'bg-foreground/10 text-foreground font-semibold'
                   : 'bg-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -531,7 +531,7 @@ const ProfitComparisonPanel = () => {
               onClick={() => setDisplayMode('profit')}
               className={`px-3 py-1 font-mono text-sm transition-colors ${
                 displayMode === 'profit'
-                  ? 'bg-accent-orange/10 text-accent-orange font-semibold'
+                  ? 'bg-foreground/10 text-foreground font-semibold'
                   : 'bg-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -541,7 +541,7 @@ const ProfitComparisonPanel = () => {
               onClick={() => setDisplayMode('%')}
               className={`px-3 py-1 font-mono text-sm transition-colors ${
                 displayMode === '%'
-                  ? 'bg-accent-orange/10 text-accent-orange font-semibold'
+                  ? 'bg-foreground/10 text-foreground font-semibold'
                   : 'bg-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -560,7 +560,7 @@ const ProfitComparisonPanel = () => {
               onClick={() => setTimeRange('7D')}
               className={`px-3 py-1 font-mono text-sm transition-colors ${
                 timeRange === '7D'
-                  ? 'bg-accent-orange/10 text-accent-orange font-semibold'
+                  ? 'bg-foreground/10 text-foreground font-semibold'
                   : 'bg-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -570,7 +570,7 @@ const ProfitComparisonPanel = () => {
               onClick={() => setTimeRange('1M')}
               className={`px-3 py-1 font-mono text-sm transition-colors ${
                 timeRange === '1M'
-                  ? 'bg-accent-orange/10 text-accent-orange font-semibold'
+                  ? 'bg-foreground/10 text-foreground font-semibold'
                   : 'bg-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -739,7 +739,7 @@ const LeaderboardContent = () => {
                 onClick={() => setMarketType('futures')}
                 className={`px-4 py-2 text-sm font-medium transition-colors ${
                   marketType === 'futures'
-                    ? 'bg-accent-orange text-white'
+                    ? 'bg-foreground text-background'
                     : 'bg-card text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -767,13 +767,13 @@ const LeaderboardContent = () => {
               onClick={() => setActiveTab('overall')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
                 activeTab === 'overall'
-                  ? 'bg-card border-accent-orange text-foreground'
+                  ? 'bg-card border-foreground text-foreground'
                   : 'bg-transparent border-border text-muted-foreground hover:border-foreground/30'
               }`}
             >
               <span className="text-sm">{t('overallData')}</span>
               <span className={`text-xs px-1.5 py-0.5 rounded ${
-                activeTab === 'overall' ? 'bg-accent-orange/20 text-accent-orange' : 'bg-muted text-muted-foreground'
+                activeTab === 'overall' ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground'
               }`}>
                 {filteredData.length}
               </span>
@@ -782,7 +782,7 @@ const LeaderboardContent = () => {
               onClick={() => setActiveTab('comparison')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
                 activeTab === 'comparison'
-                  ? 'bg-card border-accent-orange text-foreground'
+                  ? 'bg-card border-foreground text-foreground'
                   : 'bg-transparent border-border text-muted-foreground hover:border-foreground/30'
               }`}
             >
@@ -792,7 +792,7 @@ const LeaderboardContent = () => {
               onClick={() => setActiveTab('advanced')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
                 activeTab === 'advanced'
-                  ? 'bg-card border-accent-orange text-foreground'
+                  ? 'bg-card border-foreground text-foreground'
                   : 'bg-transparent border-border text-muted-foreground hover:border-foreground/30'
               }`}
             >
@@ -912,7 +912,7 @@ const LeaderboardContent = () => {
                     onClick={() => setTimeRange(range)}
                     className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
                       timeRange === range
-                        ? 'bg-accent-orange text-white'
+                        ? 'bg-foreground text-background'
                         : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
                     }`}
                   >
@@ -924,7 +924,7 @@ const LeaderboardContent = () => {
                     <button
                       className={`px-3 py-1.5 text-xs rounded-md transition-colors flex items-center gap-1.5 ${
                         timeRange === 'custom'
-                          ? 'bg-accent-orange text-white'
+                          ? 'bg-foreground text-background'
                           : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
                       }`}
                     >
@@ -1017,7 +1017,7 @@ const LeaderboardContent = () => {
                         <td className="px-4 py-3 text-foreground font-medium">{index + 1}</td>
                         <td className="px-4 py-3">
                           <div 
-                            className="flex items-center gap-2 cursor-pointer hover:text-accent-orange transition-colors"
+                            className="flex items-center gap-2 cursor-pointer hover:underline transition-colors"
                             onClick={() => {
                               setSelectedKol(row.id);
                               setActiveTab('advanced');
@@ -1028,7 +1028,7 @@ const LeaderboardContent = () => {
                             ) : (
                               <span>{display.icon}</span>
                             )}
-                            <span className="text-foreground font-medium hover:text-accent-orange">{row.name}</span>
+                            <span className="text-foreground font-medium">{row.name}</span>
                           </div>
                         </td>
                         <td className="px-4 py-3 text-right text-foreground font-medium">
@@ -1120,7 +1120,7 @@ const LeaderboardContent = () => {
                             {itemDisplay.icon}
                           </div>
                         )}
-                        <div className="text-[10px] text-muted-foreground text-center truncate w-full group-hover:text-accent-orange transition-colors">
+                        <div className="text-[10px] text-muted-foreground text-center truncate w-full group-hover:text-foreground group-hover:font-semibold transition-colors">
                           {item.short_name || item.name}
                         </div>
                       </div>

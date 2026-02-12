@@ -85,7 +85,7 @@ const Community = () => {
         {/* Community Platforms - Moved to Top */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
           {communities.map((comm) => (
-            <div key={comm.id} className="group p-8 rounded-2xl border border-border bg-card hover:border-accent-orange hover:shadow-2xl hover:shadow-accent-orange/5 transition-all duration-300 flex flex-col items-center">
+            <div key={comm.id} className="group p-8 rounded-2xl border border-border bg-card hover:border-foreground hover:shadow-2xl hover:shadow-foreground/5 transition-all duration-300 flex flex-col items-center">
               {/* Platform Info - Now at the top of the card */}
               <div className="flex items-center justify-between w-full mb-6 bg-muted/20 p-4 rounded-xl border border-border/50">
                 <div className="flex items-center gap-4">
@@ -100,13 +100,13 @@ const Community = () => {
                     <p className="text-sm text-muted-foreground font-medium">{comm.handle}</p>
                   </div>
                 </div>
-                <div className="p-2 rounded-lg bg-background/50 text-muted-foreground group-hover:text-accent-orange group-hover:bg-accent-orange/10 transition-colors">
+                <div className="p-2 rounded-lg bg-background/50 text-muted-foreground group-hover:text-foreground group-hover:bg-foreground/10 transition-colors">
                   <QrCode size={20} />
                 </div>
               </div>
 
               {/* QR Code Area */}
-              <div className="w-56 h-56 bg-white p-4 rounded-2xl border-2 border-muted relative group-hover:border-accent-orange/30 transition-colors shadow-inner mb-8">
+              <div className="w-56 h-56 bg-white p-4 rounded-2xl border-2 border-muted relative group-hover:border-foreground/30 transition-colors shadow-inner mb-8">
                 <div className="w-full h-full bg-muted/30 flex flex-col items-center justify-center text-muted-foreground font-bold text-center gap-2">
                   <span className="text-sm opacity-50 uppercase tracking-widest">{comm.name}</span>
                   <span className="text-xs font-normal">二维码生成中...</span>
@@ -137,8 +137,8 @@ const Community = () => {
           <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
             {advantages.map((adv, i) => (
               <div key={i} className="p-6 rounded-xl border border-border bg-card/50 hover:bg-card transition-colors flex flex-col gap-3 group">
-                <div className="w-12 h-12 rounded-full bg-accent-orange/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <adv.icon className="w-6 h-6 text-accent-orange" />
+                <div className="w-12 h-12 rounded-full bg-foreground/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <adv.icon className="w-6 h-6 text-foreground" />
                 </div>
                 <h3 className="text-lg font-bold text-foreground">{adv.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{adv.desc}</p>
@@ -146,19 +146,19 @@ const Community = () => {
             ))}
           </div>
 
-          <div className="p-8 rounded-xl border-2 border-accent-orange bg-accent-orange/5 flex flex-col items-center justify-center text-center relative overflow-hidden group">
+          <div className="p-8 rounded-xl border-2 border-foreground bg-foreground/5 flex flex-col items-center justify-center text-center relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-2 transform rotate-12 translate-x-1 -translate-y-1">
-              <Star className="w-12 h-12 text-accent-orange/20" />
+              <Star className="w-12 h-12 text-foreground/20" />
             </div>
             
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
               专属邀请码
             </h3>
-            <div className="w-full bg-background border-2 border-dashed border-accent-orange/30 px-6 py-4 rounded-lg text-3xl font-bold tracking-widest mb-6 text-accent-orange">
+            <div className="w-full bg-background border-2 border-dashed border-foreground/30 px-6 py-4 rounded-lg text-3xl font-bold tracking-widest mb-6 text-foreground">
               {invitationCode}
             </div>
             <Button 
-              className="w-full gap-2 bg-accent-orange hover:bg-accent-orange/90 text-white font-bold py-6"
+              className="w-full gap-2 bg-foreground hover:bg-foreground/90 text-background font-bold py-6"
               onClick={handleCopyCode}
             >
               {copied ? <CheckCircle2 className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
