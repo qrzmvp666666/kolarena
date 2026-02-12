@@ -29,6 +29,8 @@ interface SignalRow {
   kol_avatar_url: string;
   kol_name: string;
   kol_id?: string;
+    take_profit?: number | null;
+    stop_loss?: number | null;
 }
 
 // Helper to get seconds for interval
@@ -59,6 +61,7 @@ interface ChartWindowProps {
     selectedKols: Set<string>;
     onAvailableKolsChange: (chartId: string, kols: KolOption[]) => void;
     onAutoSelectAll: (chartId: string, kolNames: string[]) => void;
+    hoveredSignalId?: string | null;
 }
 
 const ChartWindow = ({
@@ -68,6 +71,7 @@ const ChartWindow = ({
     selectedKols,
     onAvailableKolsChange,
     onAutoSelectAll,
+    hoveredSignalId,
 }: ChartWindowProps) => {
     const { candles, loading } = useBinanceCandles(symbol, interval);
     const [rawSignals, setRawSignals] = useState<SignalRow[]>([]);
@@ -157,6 +161,7 @@ const ChartWindow = ({
     useEffect(() => {
         let filtered = rawSignals;
         filtered = filtered.filter(s => selectedKols.has(s.kol_name));
+        filtered = filtered.filter(s => s.status !== 'closed' && s.status !== 'cancelled');
 
         const intervalSeconds = getIntervalSeconds(interval);
         const mapped: ChartSignal[] = filtered.map(s => {
@@ -172,12 +177,20 @@ const ChartWindow = ({
                     s.kol_avatar_url ||
                     `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.kol_name}`,
                 kolName: s.kol_name,
-                status: s.status as 'active' | 'closed' | 'cancelled',
+                status: s.status as 'active' | 'closed' | 'cancelled' | 'pending_entry' | 'entered',
+                takeProfit: s.take_profit ?? null,
+                stopLoss: s.stop_loss ?? null,
             };
         });
 
-        setChartSignals(mapped);
-    }, [rawSignals, selectedKols, interval]);
+        if (candles.length > 0) {
+            const minTime = candles[0].time;
+            const maxTime = candles[candles.length - 1].time;
+            setChartSignals(mapped.filter(s => s.time >= minTime && s.time <= maxTime));
+        } else {
+            setChartSignals(mapped);
+        }
+    }, [rawSignals, selectedKols, interval, candles]);
 
     return (
         <Card className="w-full h-full border-none rounded-none bg-transparent shadow-none">
@@ -186,6 +199,7 @@ const ChartWindow = ({
                     data={candles}
                     isLoading={loading}
                     signals={chartSignals}
+                    hoveredSignalId={hoveredSignalId}
                     colors={{
                         backgroundColor: 'transparent',
                         textColor: '#d1d4dc',
@@ -202,6 +216,7 @@ const ChartWindow = ({
 
 const ChartPage = () => {
     const [danmakuEnabled, setDanmakuEnabled] = useState(true);
+    const [hoveredSignalId, setHoveredSignalId] = useState<string | null>(null);
 
     const [charts, setCharts] = useState<ChartWindowState[]>([
         { id: 'chart-1', symbol: 'BTCUSDT', interval: '1d' },
@@ -219,6 +234,7 @@ const ChartPage = () => {
     const [selectedKolsByChart, setSelectedKolsByChart] = useState<
         Record<string, Set<string>>
     >({ 'chart-1': new Set() });
+    const manualKolsSelectionRef = useRef<Record<string, boolean>>({});
 
     const cols = useMemo(
         () => ({ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }),
@@ -287,7 +303,7 @@ const ChartPage = () => {
             const existingNames = new Set(existingKols.map(k => k.name));
             const newRunKols = kols.filter(k => !existingNames.has(k.name));
 
-            if (newRunKols.length > 0) {
+            if (newRunKols.length > 0 && !manualKolsSelectionRef.current[id]) {
                  setSelectedKolsByChart(prevSel => {
                     const currentSel = prevSel[id] || new Set();
                     const nextSel = new Set(currentSel);
@@ -304,6 +320,10 @@ const ChartPage = () => {
 
     const handleAutoSelectAll = useCallback((id: string, kolNames: string[]) => {
         setSelectedKolsByChart(prev => ({ ...prev, [id]: new Set(kolNames) }));
+    }, []);
+
+    const markManualKolsSelection = useCallback((id: string) => {
+        manualKolsSelectionRef.current[id] = true;
     }, []);
 
     const activeChart = charts.find(c => c.id === activeChartId) || charts[0];
@@ -592,10 +612,13 @@ const ChartPage = () => {
                                                     className="text-[10px] text-primary hover:underline"
                                                     onClick={() =>
                                                         activeChart &&
-                                                        setSelectedKolsByChart(prev => ({
-                                                            ...prev,
-                                                            [activeChart.id]: new Set(activeAvailableKols.map(k => k.name)),
-                                                        }))
+                                                        (() => {
+                                                            markManualKolsSelection(activeChart.id);
+                                                            setSelectedKolsByChart(prev => ({
+                                                                ...prev,
+                                                                [activeChart.id]: new Set(activeAvailableKols.map(k => k.name)),
+                                                            }));
+                                                        })()
                                                     }
                                                 >
                                                     Select All
@@ -604,10 +627,13 @@ const ChartPage = () => {
                                                     className="text-[10px] text-muted-foreground hover:underline"
                                                     onClick={() =>
                                                         activeChart &&
-                                                        setSelectedKolsByChart(prev => ({
-                                                            ...prev,
-                                                            [activeChart.id]: new Set(),
-                                                        }))
+                                                        (() => {
+                                                            markManualKolsSelection(activeChart.id);
+                                                            setSelectedKolsByChart(prev => ({
+                                                                ...prev,
+                                                                [activeChart.id]: new Set(),
+                                                            }));
+                                                        })()
                                                     }
                                                 >
                                                     Clear
@@ -621,6 +647,7 @@ const ChartPage = () => {
                                                     className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded cursor-pointer transition-colors"
                                                     onClick={() => {
                                                         if (!activeChart) return;
+                                                        markManualKolsSelection(activeChart.id);
                                                         const newSet = new Set(activeSelectedKols);
                                                         if (newSet.has(kol.name)) newSet.delete(kol.name);
                                                         else newSet.add(kol.name);
@@ -803,6 +830,7 @@ const ChartPage = () => {
                                                     selectedKols={selectedKolsByChart[chart.id] || new Set()}
                                                     onAvailableKolsChange={handleAvailableKolsChange}
                                                     onAutoSelectAll={handleAutoSelectAll}
+                                                    hoveredSignalId={hoveredSignalId}
                                                 />
                                             </div>
                                         </div>
@@ -866,6 +894,7 @@ const ChartPage = () => {
                             <Sidebar
                                 activeTab={rightSidebarTab}
                                 onTabChange={setRightSidebarTab}
+                                onSignalHover={setHoveredSignalId}
                             />
                         </>
                     )}

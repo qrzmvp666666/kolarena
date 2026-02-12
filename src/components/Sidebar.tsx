@@ -86,9 +86,10 @@ type SidebarTab = 'comments' | 'pending' | 'history';
 interface SidebarProps {
   activeTab?: SidebarTab;
   onTabChange?: (tab: SidebarTab) => void;
+  onSignalHover?: (signalId: string | null) => void;
 }
 
-const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
+const Sidebar = ({ activeTab, onTabChange, onSignalHover }: SidebarProps) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentInput, setCommentInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -423,6 +424,12 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                   <div
                     key={order.id}
                     className="relative p-3 rounded-lg bg-card border border-border hover:border-foreground/20 transition-all cursor-pointer group"
+                    onMouseEnter={() => {
+                      if (order.entryStatus === 'pending' || order.entryStatus === 'entered') {
+                        onSignalHover?.(order.id);
+                      }
+                    }}
+                    onMouseLeave={() => onSignalHover?.(null)}
                   >
                   {/* Header */}
                   <div className="flex items-center justify-between gap-2 mb-3">
