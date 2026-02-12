@@ -45,7 +45,7 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
       case 'strong':
         return 'text-green-500';
       case 'weak':
-        return 'text-yellow-500';
+        return 'text-foreground/40';
       case 'poor':
         return 'text-red-500';
       default:

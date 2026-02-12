@@ -493,9 +493,9 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, custom
       <div className="border border-border rounded-lg overflow-hidden bg-card">
         <Tabs defaultValue="active" className="w-full">
             <div className="px-4 py-3 border-b border-border flex items-center gap-4">
-              <TabsList className="bg-muted/50 p-1 rounded-md">
-                <TabsTrigger value="active" className="text-xs h-7 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">{t('activeSignals')}</TabsTrigger>
-                <TabsTrigger value="history" className="text-xs h-7 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">{t('historySignals')}</TabsTrigger>
+              <TabsList className="bg-muted p-1 rounded-md">
+                <TabsTrigger value="active" className="text-xs h-7 px-3 data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-sm transition-all">{t('activeSignals')}</TabsTrigger>
+                <TabsTrigger value="history" className="text-xs h-7 px-3 data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-sm transition-all">{t('historySignals')}</TabsTrigger>
               </TabsList>
             </div>
             
@@ -775,35 +775,35 @@ const LeaderboardContent = () => {
             {/* Tabs */}
             <button
               onClick={() => setActiveTab('overall')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
                 activeTab === 'overall'
-                  ? 'bg-card border-foreground text-foreground'
-                  : 'bg-transparent border-border text-muted-foreground hover:border-foreground/30'
+                  ? 'bg-foreground text-background border-foreground shadow-sm'
+                  : 'bg-card border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground'
               }`}
             >
               <span className="text-sm">{t('overallData')}</span>
               <span className={`text-xs px-1.5 py-0.5 rounded ${
-                activeTab === 'overall' ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground'
+                activeTab === 'overall' ? 'bg-background/20 text-background' : 'bg-muted text-muted-foreground font-semibold'
               }`}>
                 {filteredData.length}
               </span>
             </button>
             <button
               onClick={() => setActiveTab('comparison')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
                 activeTab === 'comparison'
-                  ? 'bg-card border-foreground text-foreground'
-                  : 'bg-transparent border-border text-muted-foreground hover:border-foreground/30'
+                  ? 'bg-foreground text-background border-foreground shadow-sm'
+                  : 'bg-card border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground'
               }`}
             >
               <span className="text-sm">{t('profitComparison')}</span>
             </button>
             <button
               onClick={() => setActiveTab('advanced')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
                 activeTab === 'advanced'
-                  ? 'bg-card border-foreground text-foreground'
-                  : 'bg-transparent border-border text-muted-foreground hover:border-foreground/30'
+                  ? 'bg-foreground text-background border-foreground shadow-sm'
+                  : 'bg-card border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground'
               }`}
             >
               <span className="text-sm">{t('advancedAnalysis')}</span>

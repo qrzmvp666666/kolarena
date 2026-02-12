@@ -442,7 +442,7 @@ const Account = () => {
       case 'membership':
         return <Badge className="bg-primary/20 text-primary border-0">{t('rewardMembership')}</Badge>;
       case 'credits':
-        return <Badge className="bg-yellow-500/20 text-yellow-500 border-0">{t('rewardCredits')}</Badge>;
+        return <Badge className="bg-foreground text-background border-0">{t('rewardCredits')}</Badge>;
       case 'vip':
         return <Badge className="bg-purple-500/20 text-purple-500 border-0">{t('rewardVip')}</Badge>;
     }
@@ -464,7 +464,7 @@ const Account = () => {
         );
       case 'yearly':
         return (
-          <Badge className="bg-yellow-500/20 text-yellow-400 border-0">
+          <Badge className="bg-foreground text-background border-0">
             {t('planYearly')} ({t('planPriceYearly')})
           </Badge>
         );
@@ -482,7 +482,7 @@ const Account = () => {
         );
       case 'pending':
         return (
-          <Badge variant="outline" className="border-yellow-500 text-yellow-500 gap-1">
+          <Badge variant="outline" className="border-border text-foreground hover:bg-muted gap-1">
             <Clock className="w-3 h-3" />
             {t('pending')}
           </Badge>
@@ -876,13 +876,13 @@ const Account = () => {
                           membershipTier === 'free' ? 'bg-muted' :
                           membershipTier === 'monthly' ? 'bg-blue-500/20' :
                           membershipTier === 'quarterly' ? 'bg-purple-500/20' :
-                          membershipTier === 'yearly' ? 'bg-amber-500/20' :
-                          'bg-gradient-to-br from-amber-400/20 to-orange-500/20'
+                          membershipTier === 'yearly' ? 'bg-foreground/10' :
+                          'bg-foreground/20'
                         }`}>
                           {membershipTier === 'free' ? (
                             <User className="w-5 h-5 text-muted-foreground" />
                           ) : membershipTier === 'lifetime' ? (
-                            <Crown className="w-5 h-5 text-amber-500" />
+                            <Crown className="w-5 h-5 text-foreground" />
                           ) : (
                             <Star className="w-5 h-5 text-primary" />
                           )}
@@ -892,10 +892,10 @@ const Account = () => {
                             <span className="font-mono font-medium">{t('currentTier')}</span>
                             <Badge className={`font-mono text-xs ${
                               membershipTier === 'free' ? 'bg-muted text-muted-foreground border-0' :
-                              membershipTier === 'monthly' ? 'bg-blue-500/20 text-blue-500 border-0' :
-                              membershipTier === 'quarterly' ? 'bg-purple-500/20 text-purple-500 border-0' :
-                              membershipTier === 'yearly' ? 'bg-amber-500/20 text-amber-600 border-0' :
-                              'bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0'
+                              membershipTier === 'monthly' ? 'bg-blue-500/20 text-blue-400 border-0' :
+                              membershipTier === 'quarterly' ? 'bg-purple-500/20 text-purple-400 border-0' :
+                              membershipTier === 'yearly' ? 'bg-foreground text-background border-0' :
+                              'bg-foreground text-background border-0 shadow-sm'
                             }`}>
                               {t(`tier${membershipTier.charAt(0).toUpperCase() + membershipTier.slice(1)}`)}
                             </Badge>

@@ -452,15 +452,15 @@ const SignalsContent = () => {
                 setSubscriptionFilter('all');
                 setFollowFilter('all');
               }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${subscriptionFilter === 'all' && followFilter === 'all'
-                  ? 'bg-card border-foreground text-foreground'
-                  : 'bg-transparent border-border text-muted-foreground hover:border-foreground/30'
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${subscriptionFilter === 'all' && followFilter === 'all'
+                  ? 'bg-foreground text-background border-foreground shadow-sm'
+                  : 'bg-card border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground'
                 }`}
             >
               <span className="text-sm">{t('signalAll')}</span>
               <span className={`text-xs px-1.5 py-0.5 rounded ${subscriptionFilter === 'all' && followFilter === 'all'
-                  ? 'bg-foreground text-background font-semibold'
-                  : 'bg-muted text-muted-foreground'
+                  ? 'bg-background/20 text-background font-semibold'
+                  : 'bg-muted text-muted-foreground font-semibold'
                 }`}>
                 {allSignals.length}
               </span>
@@ -473,13 +473,13 @@ const SignalsContent = () => {
                 <button
                   key={tab.id}
                   onClick={() => setSubscriptionFilter(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${subscriptionFilter === tab.id
-                      ? 'bg-card border-foreground text-foreground'
-                      : 'bg-transparent border-border text-muted-foreground hover:border-foreground/30'
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${subscriptionFilter === tab.id
+                      ? 'bg-foreground text-background border-foreground shadow-sm'
+                      : 'bg-card border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground'
                     }`}
                 >
                   <span className="text-sm">{tab.label}</span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded ${subscriptionFilter === tab.id ? 'bg-foreground text-background font-semibold' : 'bg-muted text-muted-foreground'
+                  <span className={`text-xs px-1.5 py-0.5 rounded ${subscriptionFilter === tab.id ? 'bg-background/20 text-background font-semibold' : 'bg-muted text-muted-foreground font-semibold'
                     }`}>
                     {tab.count}
                   </span>
@@ -493,13 +493,13 @@ const SignalsContent = () => {
                 <button
                   key={tab.id}
                   onClick={() => setFollowFilter(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${followFilter === tab.id
-                      ? 'bg-card border-foreground text-foreground'
-                      : 'bg-transparent border-border text-muted-foreground hover:border-foreground/30'
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${followFilter === tab.id
+                      ? 'bg-foreground text-background border-foreground shadow-sm'
+                      : 'bg-card border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground'
                     }`}
                 >
                   <span className="text-sm">{tab.label}</span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded ${followFilter === tab.id ? 'bg-foreground text-background font-semibold' : 'bg-muted text-muted-foreground'
+                  <span className={`text-xs px-1.5 py-0.5 rounded ${followFilter === tab.id ? 'bg-background/20 text-background font-semibold' : 'bg-muted text-muted-foreground font-semibold'
                     }`}>
                     {tab.count}
                   </span>

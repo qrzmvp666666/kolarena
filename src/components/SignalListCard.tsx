@@ -82,12 +82,12 @@ const SignalListCard = ({ signal, isHistory = false, isFollowed = false, isSubsc
                 onClick={(e) => { e.stopPropagation(); onToggleFollow(kolId); }}
                 className={`p-1.5 rounded-md transition-colors ${
                   isFollowed
-                    ? 'text-yellow-400 hover:text-yellow-300'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'text-foreground bg-foreground/10'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
                 title={isFollowed ? t('unfollow') : t('follow')}
               >
-                <Star className={`w-4 h-4 ${isFollowed ? 'fill-yellow-400' : ''}`} />
+                <Star className={`w-4 h-4 ${isFollowed ? 'fill-foreground' : ''}`} />
               </button>
             )}
             {/* Subscribe Bell Button */}
@@ -96,8 +96,8 @@ const SignalListCard = ({ signal, isHistory = false, isFollowed = false, isSubsc
                 onClick={(e) => { e.stopPropagation(); onToggleSubscribe(kolId); }}
                 className={`p-1.5 rounded-md transition-colors ${
                   isSubscribed
-                    ? 'text-foreground hover:text-foreground/80'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'text-foreground bg-foreground/10 hover:bg-foreground/20'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
                 title={isSubscribed ? t('unsubscribe') : t('subscribe')}
               >
@@ -133,7 +133,7 @@ const SignalListCard = ({ signal, isHistory = false, isFollowed = false, isSubsc
         <span className={`text-xs px-2 py-0.5 rounded border whitespace-nowrap ${getSignalTypeStyle(signal.signalType)}`}>
           {getSignalTypeLabel(signal.signalType)}
         </span>
-        <span className="text-xs px-2 py-0.5 rounded border bg-muted text-muted-foreground border-border inline-flex items-center h-6 leading-none whitespace-nowrap shrink-0">
+        <span className="text-xs px-2 py-0.5 rounded border bg-secondary/50 text-foreground border-border inline-flex items-center h-6 leading-none whitespace-nowrap shrink-0">
           {signal.leverage}
         </span>
       </div>

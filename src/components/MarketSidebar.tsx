@@ -39,7 +39,7 @@ export const MarketSidebar = ({ currentSymbol, onSelectSymbol }: MarketSidebarPr
         {!collapsed && <h2 className="text-sm text-foreground font-semibold">{t('markets')}</h2>}
         <button
           onClick={() => setCollapsed(v => !v)}
-          className="h-7 w-7 inline-flex items-center justify-center rounded border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"
+          className="h-7 w-7 inline-flex items-center justify-center rounded border border-border bg-card text-foreground hover:bg-muted transition-colors"
           aria-label={collapsed ? '展开市场' : '收起市场'}
           title={collapsed ? '展开市场' : '收起市场'}
         >

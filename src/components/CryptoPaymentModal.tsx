@@ -19,7 +19,7 @@ const CryptoPaymentModal = ({ open, onOpenChange, planName, price, currency = 'U
       <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden">
         <DialogHeader className="p-4 pb-2 border-b border-border">
           <DialogTitle className="flex items-center gap-2 font-mono">
-            <Bitcoin className="w-5 h-5 text-orange-500" />
+            <Bitcoin className="w-5 h-5 text-foreground" />
             {t('cryptoPayment')} - {planName}
           </DialogTitle>
           <p className="text-sm text-muted-foreground">

@@ -57,15 +57,15 @@ const SignalCard = ({ signal }: SignalCardProps) => {
         <Button 
           variant="ghost" 
           size="sm" 
-          className={`h-7 w-7 p-0 ${isFavorite ? 'text-yellow-500' : 'text-muted-foreground hover:text-yellow-500'}`}
+          className={`h-7 w-7 p-0 ${isFavorite ? 'text-foreground bg-foreground/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
           onClick={() => setIsFavorite(!isFavorite)}
         >
-          <Star className={`w-4 h-4 ${isFavorite ? 'fill-yellow-500' : ''}`} />
+          <Star className={`w-4 h-4 ${isFavorite ? 'fill-foreground' : ''}`} />
         </Button>
         <Button 
           variant="outline" 
           size="sm" 
-          className="h-7 text-xs bg-foreground text-background border-none hover:bg-foreground/90 transition-colors"
+          className="h-7 text-xs bg-foreground text-background border-none hover:bg-foreground/90 transition-all shadow-sm"
         >
           {t('subscribe')}
         </Button>
@@ -122,18 +122,18 @@ const SignalCard = ({ signal }: SignalCardProps) => {
         <span className={`text-xs px-2 py-1 rounded border ${
           signal.takeProfit 
             ? 'bg-[rgb(51,240,140)]/10 text-[rgb(51,240,140)] border-[rgb(51,240,140)]/30' 
-            : 'bg-muted text-muted-foreground border-border'
+            : 'bg-secondary/50 text-muted-foreground border-border'
         }`}>
           {t('takeProfit')} {signal.takeProfit || t('notProvided')}
         </span>
         <span className={`text-xs px-2 py-1 rounded border ${
           signal.stopLoss 
             ? 'bg-[rgb(240,80,80)]/10 text-[rgb(240,80,80)] border-[rgb(240,80,80)]/30' 
-            : 'bg-muted text-muted-foreground border-border'
+            : 'bg-secondary/50 text-muted-foreground border-border'
         }`}>
           {t('stopLoss')} {signal.stopLoss || t('notProvided')}
         </span>
-        <span className="text-xs px-2 py-1 rounded border bg-muted text-muted-foreground border-border">
+        <span className="text-xs px-2 py-1 rounded border bg-secondary/50 text-foreground border-border">
           {t('leverage')} {signal.leverage || t('notProvided')}
         </span>
       </div>

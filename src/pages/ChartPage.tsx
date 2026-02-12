@@ -512,7 +512,7 @@ const ChartPage = () => {
                                 <PopoverTrigger asChild>
                                     <Button
                                         size="sm"
-                                        className="h-7 gap-2 text-[11px] font-medium border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"
+                                        className="h-7 gap-2 text-[11px] font-medium border border-border bg-card text-foreground hover:bg-muted transition-colors"
                                         disabled={symbolsLoading}
                                     >
                                         {symbolDisplay}
@@ -575,7 +575,7 @@ const ChartPage = () => {
                                 <PopoverTrigger asChild>
                                     <Button
                                         size="sm"
-                                        className="h-7 gap-2 text-[11px] font-medium border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"
+                                        className="h-7 gap-2 text-[11px] font-medium border border-border bg-card text-foreground hover:bg-muted transition-colors"
                                     >
                                         <Users className="w-3.5 h-3.5" />
                                         KOL 筛选
@@ -654,7 +654,7 @@ const ChartPage = () => {
                             <div className="flex items-center gap-2">
                                 <Button
                                     size="sm"
-                                    className="h-7 gap-1 text-[11px] border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"
+                                    className="h-7 gap-1 text-[11px] border border-border bg-card text-foreground hover:bg-muted transition-colors"
                                     onClick={handleAddChart}
                                 >
                                     <Plus className="w-3.5 h-3.5" />
@@ -663,7 +663,7 @@ const ChartPage = () => {
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="h-7 w-7 p-0 border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"
+                                    className="h-7 w-7 p-0 border border-border bg-card text-foreground hover:bg-muted transition-colors"
                                     onClick={handleResetLayout}
                                     aria-label="重置布局"
                                     title="重置布局"
@@ -821,7 +821,7 @@ const ChartPage = () => {
                     {rightSidebarCollapsed ? (
                         <div className="h-full flex flex-col items-center py-2 gap-2">
                             <button
-                                className="h-9 w-9 inline-flex items-center justify-center rounded border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"
+                                className="h-9 w-9 inline-flex items-center justify-center rounded border border-border bg-card text-foreground hover:bg-muted transition-colors"
                                 onClick={() => handleExpandSidebar()}
                                 aria-label="展开侧边栏"
                                 title="展开"
@@ -829,7 +829,7 @@ const ChartPage = () => {
                                 <ChevronLeft className="w-4 h-4" />
                             </button>
                             <button
-                                className="h-9 w-9 inline-flex items-center justify-center rounded border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"
+                                className="h-9 w-9 inline-flex items-center justify-center rounded border border-border bg-card text-foreground hover:bg-muted transition-colors"
                                 onClick={() => handleExpandSidebar('comments')}
                                 aria-label="评论"
                                 title="评论"
@@ -837,7 +837,7 @@ const ChartPage = () => {
                                 <MessageSquare className="w-4 h-4" />
                             </button>
                             <button
-                                className="h-9 w-9 inline-flex items-center justify-center rounded border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"
+                                className="h-9 w-9 inline-flex items-center justify-center rounded border border-border bg-card text-foreground hover:bg-muted transition-colors"
                                 onClick={() => handleExpandSidebar('pending')}
                                 aria-label="有效信号"
                                 title="有效信号"
@@ -845,7 +845,7 @@ const ChartPage = () => {
                                 <Activity className="w-4 h-4" />
                             </button>
                             <button
-                                className="h-9 w-9 inline-flex items-center justify-center rounded border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"
+                                className="h-9 w-9 inline-flex items-center justify-center rounded border border-border bg-card text-foreground hover:bg-muted transition-colors"
                                 onClick={() => handleExpandSidebar('history')}
                                 aria-label="历史信号"
                                 title="历史信号"
@@ -856,7 +856,7 @@ const ChartPage = () => {
                     ) : (
                         <>
                             <button
-                                className="absolute top-2 left-0 z-10 h-8 w-8 inline-flex items-center justify-center rounded-r border border-border bg-muted text-white hover:text-foreground hover:bg-background/50 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="absolute top-2 left-0 z-10 h-8 w-8 inline-flex items-center justify-center rounded-r border border-border bg-card text-foreground hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity"
                                 onClick={() => setRightSidebarCollapsed(true)}
                                 aria-label="收起侧边栏"
                                 title="收起"

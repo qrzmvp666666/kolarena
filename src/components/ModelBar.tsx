@@ -40,8 +40,8 @@ const ModelBar = ({ visibleModels, onToggleModel }: ModelBarProps) => {
               index !== sortedModels.length - 1 ? 'border-r border-border' : ''
             } ${
               isActive
-                ? 'opacity-100 bg-card'
-                : 'opacity-40 hover:opacity-60 bg-muted/30'
+                ? 'opacity-100 bg-background/50'
+                : 'opacity-50 hover:opacity-100 hover:bg-muted/50 bg-muted/20'
             }`}
           >
             <span className="flex items-center gap-2 text-muted-foreground w-full">

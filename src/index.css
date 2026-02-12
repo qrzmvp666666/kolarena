@@ -10,26 +10,26 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 210 20% 98%;
     --foreground: 0 0% 10%;
-    --card: 0 0% 98%;
+    --card: 0 0% 100%;
     --card-foreground: 0 0% 10%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 10%;
     --primary: 0 0% 10%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96%;
+    --secondary: 210 20% 94%;
     --secondary-foreground: 0 0% 10%;
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 0 0% 96%;
+    --muted: 210 10% 92%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 210 10% 92%;
     --accent-foreground: 0 0% 10%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
     --ring: 0 0% 10%;
-    --radius: 0.25rem;
+    --radius: 0.5rem;
 
     /* Chart colors */
     --chart-gpt5: 168 100% 40%;
@@ -40,20 +40,20 @@ All colors MUST be HSL.
     --chart-qwen: 200 100% 50%;
     --chart-btc: 45 100% 50%;
     
-    /* Accent colors */
-    --accent-cyan: 180 100% 50%;
-    --accent-orange: 25 100% 55%;
-    --accent-purple: 280 100% 60%;
-    --accent-green: 145 85% 57%;
-    --accent-red: 0 80% 63%;
-    --accent-blue: 210 100% 55%;
-    --accent-yellow: 45 100% 55%;
+    /* Accent colors adjusted for better light mode visibility */
+    --accent-cyan: 180 100% 40%;
+    --accent-orange: 25 100% 50%;
+    --accent-purple: 280 80% 50%;
+    --accent-green: 145 70% 38%; /* Darker green for white bg */
+    --accent-red: 0 75% 55%;    /* Darker red for white bg */
+    --accent-blue: 210 90% 45%;  /* Darker blue for white bg */
+    --accent-yellow: 45 90% 45%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 20%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 15%;
     --sidebar-primary: 0 0% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 0 0% 95%;
+    --sidebar-accent: 210 20% 96%;
     --sidebar-accent-foreground: 0 0% 10%;
     --sidebar-border: 0 0% 90%;
     --sidebar-ring: 0 0% 10%;
