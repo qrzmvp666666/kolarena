@@ -49,6 +49,7 @@ export const translations: Translations = {
   // ChartHeader
   totalAccountValue: { zh: '总账户价值', en: 'TOTAL ACCOUNT VALUE' },
   all: { zh: '全部', en: 'ALL' },
+  markets: { zh: '市场', en: 'Markets' },
 
   // TickerBar
   weeklyRank: { zh: '周榜', en: 'WEEKLY' },

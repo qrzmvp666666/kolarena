@@ -5,6 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n';
 
 interface MarketSidebarProps {
   currentSymbol: string;
@@ -14,6 +15,7 @@ interface MarketSidebarProps {
 export const MarketSidebar = ({ currentSymbol, onSelectSymbol }: MarketSidebarProps) => {
   const { symbols: binanceSymbols, loading } = useBinanceSymbols();
   const [collapsed, setCollapsed] = useState(false);
+  const { t } = useLanguage();
 
   // Derive Binance-format symbol list for WebSocket subscription
   const wsSymbols = useMemo(() => binanceSymbols.map(s => s.binanceSymbol), [binanceSymbols]);
@@ -34,7 +36,7 @@ export const MarketSidebar = ({ currentSymbol, onSelectSymbol }: MarketSidebarPr
           collapsed ? "justify-center px-2" : "justify-between px-4"
         )}
       >
-        {!collapsed && <h2 className="text-sm text-foreground font-semibold">Markets</h2>}
+        {!collapsed && <h2 className="text-sm text-foreground font-semibold">{t('markets')}</h2>}
         <button
           onClick={() => setCollapsed(v => !v)}
           className="h-7 w-7 inline-flex items-center justify-center rounded border border-border bg-muted text-white hover:text-foreground hover:bg-background/50"

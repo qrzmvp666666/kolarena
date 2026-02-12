@@ -97,7 +97,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useUser();
 
   // Fetch signals
@@ -281,19 +281,19 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
         <TabsList className="w-full rounded-none border-b border-border bg-transparent p-0 h-auto flex-shrink-0 flex items-center">
           <TabsTrigger
             value="comments"
-            className="flex-1 rounded-none border-r border-border py-2 px-0 font-mono text-sm text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold truncate"
+            className={`flex-1 rounded-none border-r border-border py-2 px-1 font-mono ${language === 'en' ? 'text-[10px]' : 'text-sm'} text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold truncate transition-all`}
           >
             {t('comments')}
           </TabsTrigger>
           <TabsTrigger
             value="pending"
-            className="flex-1 rounded-none border-r border-border py-2 px-0 font-mono text-sm text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold truncate"
+            className={`flex-1 rounded-none border-r border-border py-2 px-1 font-mono ${language === 'en' ? 'text-[10px]' : 'text-sm'} text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold truncate transition-all`}
           >
             {t('pendingOrders')}
           </TabsTrigger>
           <TabsTrigger
             value="history"
-            className="flex-1 rounded-none py-2 px-0 font-mono text-sm text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold truncate"
+            className={`flex-1 rounded-none py-2 px-1 font-mono ${language === 'en' ? 'text-[10px]' : 'text-sm'} text-muted-foreground data-[state=active]:bg-accent-orange/10 data-[state=active]:text-accent-orange data-[state=active]:border-b-2 data-[state=active]:border-b-accent-orange data-[state=active]:font-semibold truncate transition-all`}
           >
             {t('historySignals')}
           </TabsTrigger>
