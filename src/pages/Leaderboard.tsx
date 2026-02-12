@@ -19,6 +19,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Search, Filter, RefreshCw, Calendar as CalendarIcon, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { zhCN, enUS } from 'date-fns/locale';
+import { DateRange } from 'react-day-picker';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip, Area, AreaChart } from 'recharts';
 
 // KOL display info mapping (name -> color/icon) derived from models
@@ -599,10 +600,7 @@ const LeaderboardContent = () => {
   const [returnRateFilter, setReturnRateFilter] = useState('all');
   const [winRateFilter, setWinRateFilter] = useState('all');
   const [timeRange, setTimeRange] = useState<'today' | '7days' | '1month' | '6months' | '1year' | 'custom'>('7days');
-  const [customDateRange, setCustomDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
-    from: undefined,
-    to: undefined,
-  });
+  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [kolsData, setKolsData] = useState<KolData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -701,12 +699,12 @@ const LeaderboardContent = () => {
     setReturnRateFilter('all');
     setWinRateFilter('all');
     setTimeRange('7days');
-    setCustomDateRange({ from: undefined, to: undefined });
+    setCustomDateRange(undefined);
     fetchLeaderboard();
   };
 
   const getTimeRangeLabel = () => {
-    if (timeRange === 'custom' && customDateRange.from && customDateRange.to) {
+    if (timeRange === 'custom' && customDateRange?.from && customDateRange?.to) {
       const locale = language === 'zh' ? zhCN : enUS;
       return `${format(customDateRange.from, 'MM/dd', { locale })} - ${format(customDateRange.to, 'MM/dd', { locale })}`;
     }
@@ -929,7 +927,7 @@ const LeaderboardContent = () => {
                       }`}
                     >
                       <CalendarIcon className="w-3 h-3" />
-                      {timeRange === 'custom' && customDateRange.from && customDateRange.to
+                      {timeRange === 'custom' && customDateRange?.from && customDateRange?.to
                         ? getTimeRangeLabel()
                         : t('timeRange_custom')}
                     </button>
@@ -938,38 +936,28 @@ const LeaderboardContent = () => {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-foreground">{t('selectDateRange')}</span>
-                        <div className="flex gap-6 text-xs text-muted-foreground">
-                          <span>{t('startDate')}</span>
-                          <span>{t('endDate')}</span>
-                        </div>
                       </div>
-                      <div className="flex border border-border rounded-lg overflow-hidden">
+                      <div className="flex border border-border rounded-lg overflow-hidden p-1 bg-card">
                         <Calendar
-                          mode="single"
-                          selected={customDateRange.from}
-                          onSelect={(date) => setCustomDateRange(prev => ({ ...prev, from: date }))}
-                          locale={language === 'zh' ? zhCN : enUS}
-                          className="pointer-events-auto border-r border-border"
-                        />
-                        <Calendar
-                          mode="single"
-                          selected={customDateRange.to}
-                          onSelect={(date) => setCustomDateRange(prev => ({ ...prev, to: date }))}
+                          initialFocus
+                          mode="range"
+                          selected={customDateRange}
+                          onSelect={setCustomDateRange}
+                          numberOfMonths={2}
                           locale={language === 'zh' ? zhCN : enUS}
                           className="pointer-events-auto"
-                          disabled={(date) => customDateRange.from ? date < customDateRange.from : false}
                         />
                       </div>
                       <Button
                         size="sm"
-                        className="w-full"
+                        className="w-full bg-foreground text-background hover:bg-foreground/90 font-bold"
                         onClick={() => {
-                          if (customDateRange.from && customDateRange.to) {
+                          if (customDateRange?.from && customDateRange?.to) {
                             setTimeRange('custom');
                             setIsCalendarOpen(false);
                           }
                         }}
-                        disabled={!customDateRange.from || !customDateRange.to}
+                        disabled={!customDateRange?.from || !customDateRange?.to}
                       >
                         {t('confirm')}
                       </Button>
