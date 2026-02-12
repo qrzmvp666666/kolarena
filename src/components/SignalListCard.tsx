@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useLanguage } from '@/lib/i18n';
 import { ArrowRight, Star, Bell } from 'lucide-react';
 
@@ -21,6 +20,7 @@ interface SignalListItem {
   signalDuration?: string;
   closeTime?: string;
   outcome?: 'takeProfit' | 'stopLoss' | 'draw';
+  entryStatus?: 'pending' | 'entered';
 }
 
 interface SignalListCardProps {
@@ -35,14 +35,13 @@ interface SignalListCardProps {
 
 const SignalListCard = ({ signal, isHistory = false, isFollowed = false, isSubscribed = false, onToggleFollow, onToggleSubscribe, kolId }: SignalListCardProps) => {
   const { t } = useLanguage();
-  const [isHovered, setIsHovered] = useState(false);
 
   const getSignalTypeStyle = (type: 'long' | 'short') => {
     switch (type) {
       case 'long':
-        return 'bg-accent-green/10 text-accent-green border-accent-green/30';
+        return 'bg-[rgb(51,240,140)]/10 text-[rgb(51,240,140)] border-[rgb(51,240,140)]/30';
       case 'short':
-        return 'bg-accent-red/10 text-accent-red border-accent-red/30';
+        return 'bg-[rgb(240,80,80)]/10 text-[rgb(240,80,80)] border-[rgb(240,80,80)]/30';
     }
   };
 
@@ -58,85 +57,82 @@ const SignalListCard = ({ signal, isHistory = false, isFollowed = false, isSubsc
   return (
     <div
       className="relative bg-card border border-border rounded-lg p-4 hover:border-foreground/20 transition-all duration-200 cursor-pointer overflow-hidden group"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Outcome Badge - Top Right (历史信号) */}
-      {isHistory && signal.outcome && (
-        <div className={`absolute top-2 right-2 px-3 py-1 text-xs font-bold text-black rounded ${
-          signal.outcome === 'takeProfit' ? 'bg-[rgb(51,240,140)]' :
-          signal.outcome === 'stopLoss' ? 'bg-[rgb(240,80,80)]' :
-          'bg-yellow-500'
-        }`}>
-          {signal.outcome === 'takeProfit' ? '止盈' :
-           signal.outcome === 'stopLoss' ? '止损' : '平局'}
-        </div>
-      )}
-
-      {/* Arrow - Below Badge */}
-      {isHistory && (
-        <div className="absolute top-10 right-3">
-          <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-        </div>
-      )}
-
-      {/* Header: Avatar + Author + Follow/Subscribe + Arrow */}
-      <div className={`flex items-center justify-between mb-3 ${isHistory ? 'pr-10' : ''}`}>
-        <div className="flex items-center gap-3">
+      {/* Header: Avatar + Author + Follow/Subscribe + Status Badge */}
+      <div className="flex items-center justify-between gap-3 mb-3">
+        {/* Left Side: Avatar + Author + Arrow */}
+        <div className="flex items-center gap-2 min-w-0">
           <img
             src={signal.avatar}
             alt={signal.author}
-            className="w-10 h-10 rounded-full border border-border"
+            className="w-10 h-10 rounded-full border border-border shrink-0"
           />
-          <span className="font-semibold text-foreground text-base">{signal.author}</span>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="font-semibold text-foreground text-base truncate max-w-[120px]">{signal.author}</span>
+            <ArrowRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {/* Follow Star Button */}
-          {kolId && onToggleFollow && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onToggleFollow(kolId); }}
-              className={`p-1.5 rounded-md transition-colors ${
-                isFollowed
-                  ? 'text-yellow-400 hover:text-yellow-300'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-              title={isFollowed ? t('unfollow') : t('follow')}
-            >
-              <Star className={`w-4 h-4 ${isFollowed ? 'fill-yellow-400' : ''}`} />
-            </button>
+
+        {/* Right Side: Follow + Subscribe + Status Badge */}
+        <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-0.5">
+            {/* Follow Star Button */}
+            {kolId && onToggleFollow && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleFollow(kolId); }}
+                className={`p-1.5 rounded-md transition-colors ${
+                  isFollowed
+                    ? 'text-yellow-400 hover:text-yellow-300'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title={isFollowed ? t('unfollow') : t('follow')}
+              >
+                <Star className={`w-4 h-4 ${isFollowed ? 'fill-yellow-400' : ''}`} />
+              </button>
+            )}
+            {/* Subscribe Bell Button */}
+            {kolId && onToggleSubscribe && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleSubscribe(kolId); }}
+                className={`p-1.5 rounded-md transition-colors ${
+                  isSubscribed
+                    ? 'text-accent-orange hover:text-accent-orange/80'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title={isSubscribed ? t('unsubscribe') : t('subscribe')}
+              >
+                <Bell className={`w-4 h-4 ${isSubscribed ? 'fill-accent-orange' : ''}`} />
+              </button>
+            )}
+          </div>
+
+          {/* Status Badge (Moved from absolute to flex row for better alignment) */}
+          {!isHistory && signal.entryStatus && (
+            <div className={`px-2 py-1 text-[11px] font-bold text-black rounded ${
+              signal.entryStatus === 'entered' ? 'bg-[rgb(51,240,140)]' : 'bg-[rgb(247,147,26)]'
+            }`}>
+              {signal.entryStatus === 'entered' ? '已入场' : '待入场'}
+            </div>
           )}
-          {/* Subscribe Bell Button */}
-          {kolId && onToggleSubscribe && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onToggleSubscribe(kolId); }}
-              className={`p-1.5 rounded-md transition-colors ${
-                isSubscribed
-                  ? 'text-accent-orange hover:text-accent-orange/80'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-              title={isSubscribed ? t('unsubscribe') : t('subscribe')}
-            >
-              <Bell className={`w-4 h-4 ${isSubscribed ? 'fill-accent-orange' : ''}`} />
-            </button>
-          )}
-          {!isHistory && (
-            <ArrowRight
-              className={`w-5 h-5 text-muted-foreground transition-all duration-200 ${
-                isHovered ? 'translate-x-1 text-foreground' : ''
-              }`}
-            />
+          {isHistory && signal.outcome && (
+            <div className={`px-2 py-1 text-[11px] font-bold text-black rounded ${
+              signal.outcome === 'takeProfit' ? 'bg-[rgb(51,240,140)]' :
+              signal.outcome === 'stopLoss' ? 'bg-[rgb(240,80,80)]' :
+              'bg-[rgb(120,120,120)] text-white'
+            }`}>
+              {signal.outcome === 'takeProfit' ? '止盈' :
+               signal.outcome === 'stopLoss' ? '止损' : '平局'}
+            </div>
           )}
         </div>
       </div>
 
       {/* Pair & Type & Leverage */}
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-lg font-bold text-foreground whitespace-nowrap">{signal.pair}</span>
-          <span className={`text-xs px-2 py-0.5 rounded border whitespace-nowrap ${getSignalTypeStyle(signal.signalType)}`}>
-            {getSignalTypeLabel(signal.signalType)}
-          </span>
-        </div>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-lg font-bold text-foreground whitespace-nowrap">{signal.pair}</span>
+        <span className={`text-xs px-2 py-0.5 rounded border whitespace-nowrap ${getSignalTypeStyle(signal.signalType)}`}>
+          {getSignalTypeLabel(signal.signalType)}
+        </span>
         <span className="text-xs px-2 py-0.5 rounded border bg-muted text-muted-foreground border-border inline-flex items-center h-6 leading-none whitespace-nowrap shrink-0">
           {signal.leverage}
         </span>
@@ -156,7 +152,7 @@ const SignalListCard = ({ signal, isHistory = false, isFollowed = false, isSubsc
           {isHistory && signal.returnRate ? (
             <>
               <div className="text-xs text-muted-foreground mb-1">{t('returnRate')}</div>
-              <div className={`text-sm font-bold ${signal.isProfit ? 'text-accent-green' : 'text-accent-red'}`}>
+              <div className={`text-sm font-bold ${signal.isProfit ? 'text-[rgb(51,240,140)]' : 'text-[rgb(240,80,80)]'}`}>
                 {signal.returnRate}
               </div>
             </>
@@ -173,13 +169,13 @@ const SignalListCard = ({ signal, isHistory = false, isFollowed = false, isSubsc
       <div className="grid grid-cols-3 gap-4 mb-4">
         <div>
           <div className="text-xs text-muted-foreground mb-1">{t('takeProfit')}</div>
-          <div className={`text-sm font-semibold ${signal.takeProfit ? 'text-accent-green' : 'text-accent-green'}`}>
+          <div className={`text-sm font-semibold ${signal.takeProfit ? 'text-[rgb(51,240,140)]' : 'text-[rgb(51,240,140)]'}`}>
             {signal.takeProfit || t('notProvided')}
           </div>
         </div>
         <div>
           <div className="text-xs text-muted-foreground mb-1">{t('stopLoss')}</div>
-          <div className={`text-sm font-semibold ${signal.stopLoss ? 'text-accent-red' : 'text-accent-red'}`}>
+          <div className={`text-sm font-semibold ${signal.stopLoss ? 'text-[rgb(240,80,80)]' : 'text-[rgb(240,80,80)]'}`}>
             {signal.stopLoss || t('notProvided')}
           </div>
         </div>

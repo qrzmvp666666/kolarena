@@ -10,6 +10,7 @@ import Signals from "./pages/Signals";
 import Leaderboard from "./pages/Leaderboard";
 import About from "./pages/About";
 import Account from "./pages/Account";
+import Community from "./pages/Community";
 import NotFound from "./pages/NotFound";
 import ChartPage from "./pages/ChartPage";
 
@@ -31,6 +32,7 @@ const App = () => (
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/account" element={<Account />} />
+                <Route path="/community" element={<Community />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

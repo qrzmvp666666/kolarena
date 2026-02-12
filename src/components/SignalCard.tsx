@@ -33,9 +33,9 @@ const SignalCard = ({ signal }: SignalCardProps) => {
       case 'spot':
         return 'bg-muted text-muted-foreground border-border';
       case 'long':
-        return 'bg-accent-green/10 text-accent-green border-accent-green/30';
+        return 'bg-[rgb(51,240,140)]/10 text-[rgb(51,240,140)] border-[rgb(51,240,140)]/30';
       case 'short':
-        return 'bg-accent-red/10 text-accent-red border-accent-red/30';
+        return 'bg-[rgb(240,80,80)]/10 text-[rgb(240,80,80)] border-[rgb(240,80,80)]/30';
     }
   };
 
@@ -121,14 +121,14 @@ const SignalCard = ({ signal }: SignalCardProps) => {
       <div className="flex items-center gap-2 mb-4">
         <span className={`text-xs px-2 py-1 rounded border ${
           signal.takeProfit 
-            ? 'bg-accent-green/10 text-accent-green border-accent-green/30' 
+            ? 'bg-[rgb(51,240,140)]/10 text-[rgb(51,240,140)] border-[rgb(51,240,140)]/30' 
             : 'bg-muted text-muted-foreground border-border'
         }`}>
           {t('takeProfit')} {signal.takeProfit || t('notProvided')}
         </span>
         <span className={`text-xs px-2 py-1 rounded border ${
           signal.stopLoss 
-            ? 'bg-accent-red/10 text-accent-red border-accent-red/30' 
+            ? 'bg-[rgb(240,80,80)]/10 text-[rgb(240,80,80)] border-[rgb(240,80,80)]/30' 
             : 'bg-muted text-muted-foreground border-border'
         }`}>
           {t('stopLoss')} {signal.stopLoss || t('notProvided')}

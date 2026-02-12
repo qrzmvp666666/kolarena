@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import LoginModal from '@/components/LoginModal';
-import CommunityModal from '@/components/CommunityModal';
 
 interface TopNavProps {
   danmakuEnabled: boolean;
@@ -27,7 +26,6 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
   const { user, logout } = useUser();
   
   const [loginModalOpen, setLoginModalOpen] = useState(false);
-  const [communityModalOpen, setCommunityModalOpen] = useState(false);
   
   const handleLogin = () => {
     // User state is now managed by UserContext
@@ -85,12 +83,14 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
           {t('models')}
         </Link>
         <span className="text-muted-foreground">|</span>
-        <button
-          onClick={() => setCommunityModalOpen(true)}
-          className="font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
+        <Link 
+          to="/community" 
+          className={`font-mono text-sm transition-colors ${
+            location.pathname === '/community' ? 'text-foreground text-base font-bold' : 'text-muted-foreground hover:text-foreground'
+          }`}
         >
           {t('joinCommunity')}
-        </button>
+        </Link>
         <span className="text-muted-foreground">|</span>
         <button
           onClick={handleProClick}
@@ -187,12 +187,6 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
           open={loginModalOpen}
           onOpenChange={setLoginModalOpen}
           onLogin={handleLogin}
-        />
-
-        {/* Community Modal */}
-        <CommunityModal
-          open={communityModalOpen}
-          onOpenChange={setCommunityModalOpen}
         />
       </div>
     </nav>

@@ -45,6 +45,7 @@ interface PendingOrder {
   orderTime: string;
   takeProfit: string | null;
   stopLoss: string | null;
+  entryStatus?: 'pending' | 'entered';
 }
 
 interface CompletedTrade {
@@ -102,13 +103,24 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
   // Fetch signals
   const fetchSignals = async () => {
     try {
-        const [activeRes, closedRes] = await Promise.all([
+           const [pendingRes, enteredRes, activeRes, closedRes] = await Promise.all([
+             supabase.rpc('get_signals', { p_status: 'pending_entry', p_limit: 50 }),
+             supabase.rpc('get_signals', { p_status: 'entered', p_limit: 50 }),
              supabase.rpc('get_signals', { p_status: 'active', p_limit: 50 }),
              supabase.rpc('get_signals', { p_status: 'closed', p_limit: 50 }),
-        ]);
+           ]);
 
-        if (activeRes.data) {
-            const mappedActive = activeRes.data.map((s: any) => ({
+        const activeLike = [
+          ...(pendingRes.data || []),
+          ...(enteredRes.data || []),
+          ...(activeRes.data || []),
+        ];
+        if (activeLike.length > 0) {
+          const activeMap = new Map<string, any>();
+          activeLike.forEach((s: any) => {
+            if (s?.id && !activeMap.has(s.id)) activeMap.set(s.id, s);
+          });
+          const mappedActive = Array.from(activeMap.values()).map((s: any) => ({
                 id: s.id,
                 author: s.kol_name,
                 avatar: s.kol_avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.kol_name}`,
@@ -117,13 +129,19 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                 leverage: s.leverage ? `${s.leverage}x` : '未提供',
                 entryPrice: String(s.entry_price),
                 positionMode: s.margin_mode === 'cross' ? '全仓' : '逐仓',
-                orderTime: new Date(s.entry_time).toLocaleString('zh-CN', {
+            orderTime: new Date(s.entry_time || s.created_at).toLocaleString('zh-CN', {
                     month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
                 }),
                 takeProfit: s.take_profit ? String(s.take_profit) : null,
                 stopLoss: s.stop_loss ? String(s.stop_loss) : null,
-            }));
-            setActiveSignals(mappedActive);
+            entryStatus: s.status === 'pending_entry' ? 'pending' : (s.status === 'entered' || s.status === 'active' ? 'entered' : undefined),
+            _sortTime: new Date(s.entry_time || s.created_at || 0).getTime(),
+          }));
+          mappedActive.sort((a, b) => (b._sortTime || 0) - (a._sortTime || 0));
+          const cleanedActive = mappedActive.map(({ _sortTime, ...rest }) => rest);
+          setActiveSignals(cleanedActive);
+        } else {
+          setActiveSignals([]);
         }
 
         if (closedRes.data) {
@@ -236,9 +254,9 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
   const getSignalTypeStyle = (type: 'long' | 'short') => {
     switch (type) {
       case 'long':
-        return 'bg-accent-green/10 text-accent-green border-accent-green/30';
+        return 'bg-[rgb(51,240,140)]/10 text-[rgb(51,240,140)] border-[rgb(51,240,140)]/30';
       case 'short':
-        return 'bg-accent-red/10 text-accent-red border-accent-red/30';
+        return 'bg-[rgb(240,80,80)]/10 text-[rgb(240,80,80)] border-[rgb(240,80,80)]/30';
     }
   };
 
@@ -295,29 +313,27 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                     key={trade.id}
                     className="relative p-3 rounded-lg bg-card border border-border hover:border-foreground/20 transition-all cursor-pointer group overflow-hidden"
                   >
-                  {/* Outcome Badge - Top Right */}
-                  <div className={`absolute top-2 right-2 px-3 py-1 text-xs font-bold text-black rounded ${
-                    trade.outcome === 'takeProfit' ? 'bg-[rgb(51,240,140)]' :
-                    trade.outcome === 'stopLoss' ? 'bg-[rgb(240,80,80)]' :
-                    'bg-yellow-500'
-                  }`}>
-                    {trade.outcome === 'takeProfit' ? '止盈' :
-                     trade.outcome === 'stopLoss' ? '止损' : '平局'}
-                  </div>
-
-                  {/* Arrow - Below Badge */}
-                  <div className="absolute top-10 right-3">
-                    <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-
                   {/* Header */}
-                  <div className="flex items-center justify-between mb-3 pr-10">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="w-7 h-7">
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Avatar className="w-7 h-7 shrink-0">
                         <AvatarImage src={trade.avatar} alt={trade.author} />
                         <AvatarFallback className="text-[10px]">{trade.author.slice(0, 2)}</AvatarFallback>
                       </Avatar>
-                      <span className="font-mono text-xs font-semibold text-foreground">{trade.author}</span>
+                      <div className="flex items-center gap-1 min-w-0">
+                        <span className="font-mono text-xs font-semibold text-foreground truncate max-w-[80px]">{trade.author}</span>
+                        <ArrowRight className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      </div>
+                    </div>
+
+                    {/* Outcome Badge (Moved from absolute for alignment) */}
+                    <div className={`px-2 py-0.5 text-[10px] font-bold text-black rounded shrink-0 ${
+                      trade.outcome === 'takeProfit' ? 'bg-[rgb(51,240,140)]' :
+                      trade.outcome === 'stopLoss' ? 'bg-[rgb(240,80,80)]' :
+                      'bg-[rgb(120,120,120)] text-white'
+                    }`}>
+                      {trade.outcome === 'takeProfit' ? '止盈' :
+                       trade.outcome === 'stopLoss' ? '止损' : '平局'}
                     </div>
                   </div>
 
@@ -344,7 +360,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                     </div>
                     <div>
                       <div className="text-[10px] text-muted-foreground">{t('returnRate')}</div>
-                      <div className={`font-mono text-xs font-medium ${trade.isProfit ? 'text-accent-green' : 'text-accent-red'}`}>
+                      <div className={`font-mono text-xs font-medium ${trade.isProfit ? 'text-[rgb(51,240,140)]' : 'text-[rgb(240,80,80)]'}`}>
                         {trade.returnRate}
                       </div>
                     </div>
@@ -354,13 +370,13 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                   <div className="grid grid-cols-3 gap-2 mb-2">
                     <div>
                       <div className="text-[10px] text-muted-foreground">{t('takeProfit')}</div>
-                      <div className="text-xs font-semibold text-accent-green">
+                      <div className="text-xs font-semibold text-[rgb(51,240,140)]">
                         {trade.takeProfit || t('notProvided')}
                       </div>
                     </div>
                     <div>
                       <div className="text-[10px] text-muted-foreground">{t('stopLoss')}</div>
-                      <div className="text-xs font-semibold text-accent-red">
+                      <div className="text-xs font-semibold text-[rgb(240,80,80)]">
                         {trade.stopLoss || t('notProvided')}
                       </div>
                     </div>
@@ -406,18 +422,29 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                 {activeSignals.map((order) => (
                   <div
                     key={order.id}
-                    className="p-3 rounded-lg bg-card border border-border hover:border-foreground/20 transition-all cursor-pointer group"
+                    className="relative p-3 rounded-lg bg-card border border-border hover:border-foreground/20 transition-all cursor-pointer group"
                   >
                   {/* Header */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="w-7 h-7">
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Avatar className="w-7 h-7 shrink-0">
                         <AvatarImage src={order.avatar} alt={order.author} />
                         <AvatarFallback className="text-[10px]">{order.author.slice(0, 2)}</AvatarFallback>
                       </Avatar>
-                      <span className="font-mono text-xs font-semibold text-foreground">{order.author}</span>
+                      <div className="flex items-center gap-1 min-w-0">
+                        <span className="font-mono text-xs font-semibold text-foreground truncate max-w-[80px]">{order.author}</span>
+                        <ArrowRight className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      </div>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                    {/* Entry Status Badge (Moved from absolute for alignment) */}
+                    {order.entryStatus && (
+                      <div className={`px-2 py-0.5 text-[10px] font-bold text-black rounded shrink-0 ${
+                        order.entryStatus === 'entered' ? 'bg-[rgb(51,240,140)]' : 'bg-[rgb(247,147,26)]'
+                      }`}>
+                        {order.entryStatus === 'entered' ? '已入场' : '待入场'}
+                      </div>
+                    )}
                   </div>
 
                   {/* Pair & Type */}
@@ -451,13 +478,13 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                   <div className="grid grid-cols-3 gap-2">
                     <div>
                       <div className="text-[10px] text-muted-foreground">{t('takeProfit')}</div>
-                      <div className="text-xs font-semibold text-accent-green">
+                      <div className="text-xs font-semibold text-[rgb(51,240,140)]">
                         {order.takeProfit || t('notProvided')}
                       </div>
                     </div>
                     <div>
                       <div className="text-[10px] text-muted-foreground">{t('stopLoss')}</div>
-                      <div className="text-xs font-semibold text-accent-red">
+                      <div className="text-xs font-semibold text-[rgb(240,80,80)]">
                         {order.stopLoss || t('notProvided')}
                       </div>
                     </div>

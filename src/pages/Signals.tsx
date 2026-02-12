@@ -36,7 +36,7 @@ interface SignalRow {
   exit_type: 'take_profit' | 'stop_loss' | 'manual' | 'draw' | null;
   pnl_percentage: number | null;
   pnl_ratio: string | null;
-  status: 'active' | 'closed' | 'cancelled';
+  status: 'pending_entry' | 'entered' | 'active' | 'closed' | 'cancelled';
   signal_duration: string | null;
   entry_time: string | null;
   exit_time: string | null;
@@ -71,6 +71,10 @@ const transformSignal = (row: SignalRow, isHistory: boolean) => {
     manual: 'draw',
   };
 
+  const entryStatus = !isHistory
+    ? (row.status === 'pending_entry' ? 'pending' : row.status === 'entered' || row.status === 'active' ? 'entered' : undefined)
+    : undefined;
+
   return {
     id: row.id,
     author: row.kol_name,
@@ -84,6 +88,7 @@ const transformSignal = (row: SignalRow, isHistory: boolean) => {
     takeProfit: row.take_profit !== null ? String(row.take_profit) : null,
     stopLoss: row.stop_loss !== null ? String(row.stop_loss) : null,
     profitRatio: row.pnl_ratio || '0:0',
+    entryStatus,
     ...(isHistory ? {
       returnRate,
       isProfit,
@@ -193,12 +198,37 @@ const SignalsContent = () => {
 
   const fetchSignals = useCallback(async () => {
     setLoading(true);
-    const [activeRes, closedRes] = await Promise.all([
+    const [pendingRes, enteredRes, activeRes, closedRes] = await Promise.all([
+      supabase.rpc('get_signals', { p_status: 'pending_entry', p_limit: 50 }),
+      supabase.rpc('get_signals', { p_status: 'entered', p_limit: 50 }),
       supabase.rpc('get_signals', { p_status: 'active', p_limit: 50 }),
       supabase.rpc('get_signals', { p_status: 'closed', p_limit: 50 }),
     ]);
-    if (activeRes.data) setActiveSignals(activeRes.data as SignalRow[]);
-    if (closedRes.data) setHistorySignals(closedRes.data as SignalRow[]);
+
+    const activeLike = [
+      ...(pendingRes.data || []),
+      ...(enteredRes.data || []),
+      ...(activeRes.data || []),
+    ] as SignalRow[];
+    const activeMap = new Map<string, SignalRow>();
+    activeLike.forEach((row) => {
+      if (row?.id && !activeMap.has(row.id)) activeMap.set(row.id, row);
+    });
+    const activeSorted = Array.from(activeMap.values()).sort((a, b) => {
+      const aTime = new Date(a.entry_time ?? a.created_at ?? 0).getTime() || 0;
+      const bTime = new Date(b.entry_time ?? b.created_at ?? 0).getTime() || 0;
+      return bTime - aTime;
+    });
+    setActiveSignals(activeSorted);
+
+    const historySorted = (closedRes.data as SignalRow[] | null | undefined)
+      ? [...(closedRes.data as SignalRow[])].sort((a, b) => {
+          const aTime = new Date(a.exit_time ?? a.entry_time ?? a.created_at ?? 0).getTime() || 0;
+          const bTime = new Date(b.exit_time ?? b.entry_time ?? b.created_at ?? 0).getTime() || 0;
+          return bTime - aTime;
+        })
+      : [];
+    setHistorySignals(historySorted);
     setLoading(false);
   }, []);
 
@@ -329,7 +359,7 @@ const SignalsContent = () => {
 
     const activeRange = buildRange();
 
-    const matchesFilters = (row: SignalRow) => {
+    const matchesFilters = (row: SignalRow, useExitTime = false) => {
       if (marketType === 'spot') return false;
       if (subscriptionFilter === 'subscribed' && !subscribedKolIds.has(row.kol_id)) return false;
       if (subscriptionFilter === 'unsubscribed' && subscribedKolIds.has(row.kol_id)) return false;
@@ -344,7 +374,9 @@ const SignalsContent = () => {
         if (!symbolText.includes(query) && !nameText.includes(query)) return false;
       }
       if (activeRange) {
-        const timeValue = row.entry_time ?? row.created_at;
+        const timeValue = useExitTime
+          ? (row.exit_time ?? row.entry_time ?? row.created_at)
+          : (row.entry_time ?? row.created_at);
         if (!timeValue) return false;
         const time = new Date(timeValue);
         if (Number.isNaN(time.getTime())) return false;
@@ -354,8 +386,8 @@ const SignalsContent = () => {
     };
 
     return {
-      active: activeSignals.filter(matchesFilters),
-      history: historySignals.filter(matchesFilters),
+      active: activeSignals.filter((row) => matchesFilters(row, false)),
+      history: historySignals.filter((row) => matchesFilters(row, true)),
     };
   }, [
     activeSignals,
@@ -382,12 +414,6 @@ const SignalsContent = () => {
 
       {/* Main Content */}
       <div className="px-6 py-3">
-        {/* Header */}
-        <div className="mb-4">
-          <h1 className="text-xl font-bold text-foreground mb-0.5">{t('tradingSignals')}</h1>
-          <p className="text-xs text-muted-foreground">{t('signalSummary')}</p>
-        </div>
-
         {/* Filter Bar - Row 1 */}
         <div className="flex items-center justify-between mb-4">
           {/* Left: Market Type Toggle + Tabs */}

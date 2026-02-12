@@ -77,12 +77,16 @@ const ChartWindow = ({
     useEffect(() => {
         const fetchSignals = async () => {
             try {
-                const [activeRes, closedRes] = await Promise.all([
+                const [pendingRes, enteredRes, activeRes, closedRes] = await Promise.all([
+                    supabase.rpc('get_signals', { p_status: 'pending_entry', p_limit: 500 }),
+                    supabase.rpc('get_signals', { p_status: 'entered', p_limit: 500 }),
                     supabase.rpc('get_signals', { p_status: 'active', p_limit: 500 }),
                     supabase.rpc('get_signals', { p_status: 'closed', p_limit: 500 }),
                 ]);
 
                 const allData = [
+                    ...(pendingRes.data || []),
+                    ...(enteredRes.data || []),
                     ...(activeRes.data || []),
                     ...(closedRes.data || []),
                 ] as SignalRow[];
