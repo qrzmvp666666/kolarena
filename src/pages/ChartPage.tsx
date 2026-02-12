@@ -75,7 +75,8 @@ const ChartWindow = ({
 }: ChartWindowProps) => {
     const { candles, loading } = useBinanceCandles(symbol, interval);
     const [rawSignals, setRawSignals] = useState<SignalRow[]>([]);
-    const [chartSignals, setChartSignals] = useState<ChartSignal[]>([]);
+    // Removed chartSignals state to use useMemo derived state for instant updates
+    // const [chartSignals, setChartSignals] = useState<ChartSignal[]>([]);
     const hasInitializedSelection = React.useRef(false);
 
     useEffect(() => {
@@ -121,15 +122,6 @@ const ChartWindow = ({
                 if (!hasInitializedSelection.current && kolArray.length > 0) {
                     onAutoSelectAll(chartId, kolArray.map(k => k.name));
                     hasInitializedSelection.current = true;
-                } else if (hasInitializedSelection.current) {
-                     // Check if there are new KOLs and auto-select them
-                     // We need to pass the new KOLs to parent to add to selection
-                     // We can't access selectedKols here easily without adding it to dependency array and causing loops.
-                     // Instead, we can let the parent handle "auto-select new KOLs".
-                     // But onAvailableKolsChange receives the full list.
-                     
-                     // Alternative: passed `onNewKolsDetected`?
-                     // Or just rely on parent comparing `prev` and `next` in `setAvailableKolsByChart`.
                 }
             } catch (err) {
                 console.error('Failed to fetch signals for chart:', err);
@@ -158,7 +150,7 @@ const ChartWindow = ({
         hasInitializedSelection.current = false;
     }, [symbol]);
 
-    useEffect(() => {
+    const chartSignals = useMemo(() => {
         let filtered = rawSignals;
         filtered = filtered.filter(s => selectedKols.has(s.kol_name));
         filtered = filtered.filter(s => s.status !== 'closed' && s.status !== 'cancelled');
@@ -186,9 +178,9 @@ const ChartWindow = ({
         if (candles.length > 0) {
             const minTime = candles[0].time;
             const maxTime = candles[candles.length - 1].time;
-            setChartSignals(mapped.filter(s => s.time >= minTime && s.time <= maxTime));
+            return mapped.filter(s => s.time >= minTime && s.time <= maxTime);
         } else {
-            setChartSignals(mapped);
+            return mapped;
         }
     }, [rawSignals, selectedKols, interval, candles]);
 
@@ -231,9 +223,12 @@ const ChartPage = () => {
     const [availableKolsByChart, setAvailableKolsByChart] = useState<
         Record<string, KolOption[]>
     >({});
-    const [selectedKolsByChart, setSelectedKolsByChart] = useState<
-        Record<string, Set<string>>
-    >({ 'chart-1': new Set() });
+    
+    // Global Set of Selected KOLs (used by ALL charts equally)
+    const [globalSelectedKols, setGlobalSelectedKols] = useState<Set<string>>(new Set());
+    
+    // We still track manual selection flag per chart to avoid auto-select clashing with user intent
+    // (though with global selection, we might just need one global flag, but per-chart is safer for loading states)
     const manualKolsSelectionRef = useRef<Record<string, boolean>>({});
 
     const cols = useMemo(
@@ -299,27 +294,46 @@ const ChartPage = () => {
         setAvailableKolsByChart(prev => {
             const existingKols = prev[id] || [];
             
-            // Check for new KOLs to auto-select them
-            const existingNames = new Set(existingKols.map(k => k.name));
-            const newRunKols = kols.filter(k => !existingNames.has(k.name));
-
-            if (newRunKols.length > 0 && !manualKolsSelectionRef.current[id]) {
-                 setSelectedKolsByChart(prevSel => {
-                    const currentSel = prevSel[id] || new Set();
-                    const nextSel = new Set(currentSel);
-                    newRunKols.forEach(k => nextSel.add(k.name));
-                    return { ...prevSel, [id]: nextSel };
-                 });
-            }
+            // Allow this part to read "globalSelectedKols" via closure might be stale? 
+            // Actually, handleAvailableKolsChange is created with useCallback [], so it has stale closure over globalSelectedKols.
+            // We need to use functional updates or Refs.
+            
+            // BETTER APPROACH: We just update availableKols here. 
+            // The "Auto Select" logic should be separate or handle it carefully.
             
             // Only update state if list actually changed to avoid render loops if references differ but content same
             if (JSON.stringify(existingKols) === JSON.stringify(kols)) return prev;
             return { ...prev, [id]: kols };
         });
+        
+        // Auto-select logic moved to effect below to access fresh state
     }, []);
 
+    // Effect to handle auto-selection when available KOLs change
+    useEffect(() => {
+        Object.entries(availableKolsByChart).forEach(([chartId, kols]) => {
+             if (manualKolsSelectionRef.current[chartId]) return;
+             
+             setGlobalSelectedKols(prev => {
+                 const next = new Set(prev);
+                 let changed = false;
+                 kols.forEach(k => {
+                     if (!next.has(k.name)) {
+                         next.add(k.name);
+                         changed = true;
+                     }
+                 });
+                 return changed ? next : prev;
+             });
+        });
+    }, [availableKolsByChart]);
+
     const handleAutoSelectAll = useCallback((id: string, kolNames: string[]) => {
-        setSelectedKolsByChart(prev => ({ ...prev, [id]: new Set(kolNames) }));
+        setGlobalSelectedKols(prev => {
+            const next = new Set(prev);
+            kolNames.forEach(n => next.add(n));
+            return next;
+        });
     }, []);
 
     const markManualKolsSelection = useCallback((id: string) => {
@@ -330,8 +344,9 @@ const ChartPage = () => {
 
     const activeAvailableKols =
         (activeChart && availableKolsByChart[activeChart.id]) || [];
-    const activeSelectedKols =
-        (activeChart && selectedKolsByChart[activeChart.id]) || new Set<string>();
+    // activeSelectedKols is just the global set now
+    const activeSelectedKols = globalSelectedKols;
+    
     const symbolDisplay = selectedSymbols.length === 1
         ? selectedSymbols[0].replace('USDT', '') + '/USDT'
         : `已选 ${selectedSymbols.length} 个`;
@@ -372,14 +387,6 @@ const ChartPage = () => {
                         symbol,
                         interval: activeChart?.interval || '1d',
                     } as ChartWindowState;
-                });
-
-                setSelectedKolsByChart(prevSelected => {
-                    const nextSelected: Record<string, Set<string>> = {};
-                    nextCharts.forEach(chart => {
-                        nextSelected[chart.id] = prevSelected[chart.id] || new Set();
-                    });
-                    return nextSelected;
                 });
 
                 setAvailableKolsByChart(prevAvailable => {
@@ -434,11 +441,13 @@ const ChartPage = () => {
             delete next[chartId];
             return next;
         });
-        setSelectedKolsByChart(prev => {
-            const next = { ...prev };
-            delete next[chartId];
-            return next;
-        });
+        
+        // Remove manual selection flag for closed chart
+        if (manualKolsSelectionRef.current[chartId]) {
+            delete manualKolsSelectionRef.current[chartId];
+        }
+        
+        // No need to clean up selectedKolsByChart as it is global now (or rather gone)
 
         if (activeChartId === chartId) {
             const remaining = charts.filter(c => c.id !== chartId);
@@ -610,31 +619,27 @@ const ChartPage = () => {
                                             <div className="flex gap-2">
                                                 <button
                                                     className="text-[10px] text-primary hover:underline"
-                                                    onClick={() =>
-                                                        activeChart &&
-                                                        (() => {
-                                                            markManualKolsSelection(activeChart.id);
-                                                            setSelectedKolsByChart(prev => ({
-                                                                ...prev,
-                                                                [activeChart.id]: new Set(activeAvailableKols.map(k => k.name)),
-                                                            }));
-                                                        })()
-                                                    }
+                                                    onClick={() => {
+                                                        // Global Select All
+                                                        Object.keys(availableKolsByChart).forEach(id => markManualKolsSelection(id));
+                                                        setGlobalSelectedKols(prev => {
+                                                            const next = new Set(prev);
+                                                            Object.values(availableKolsByChart).forEach(kols => {
+                                                                kols.forEach(k => next.add(k.name));
+                                                            });
+                                                            return next;
+                                                        });
+                                                    }}
                                                 >
                                                     Select All
                                                 </button>
                                                 <button
                                                     className="text-[10px] text-muted-foreground hover:underline"
-                                                    onClick={() =>
-                                                        activeChart &&
-                                                        (() => {
-                                                            markManualKolsSelection(activeChart.id);
-                                                            setSelectedKolsByChart(prev => ({
-                                                                ...prev,
-                                                                [activeChart.id]: new Set(),
-                                                            }));
-                                                        })()
-                                                    }
+                                                    onClick={() => {
+                                                        // Global Clear
+                                                        Object.keys(availableKolsByChart).forEach(id => markManualKolsSelection(id));
+                                                        setGlobalSelectedKols(new Set());
+                                                    }}
                                                 >
                                                     Clear
                                                 </button>
@@ -646,15 +651,20 @@ const ChartPage = () => {
                                                     key={kol.name}
                                                     className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded cursor-pointer transition-colors"
                                                     onClick={() => {
-                                                        if (!activeChart) return;
-                                                        markManualKolsSelection(activeChart.id);
-                                                        const newSet = new Set(activeSelectedKols);
-                                                        if (newSet.has(kol.name)) newSet.delete(kol.name);
-                                                        else newSet.add(kol.name);
-                                                        setSelectedKolsByChart(prev => ({
-                                                            ...prev,
-                                                            [activeChart.id]: newSet,
-                                                        }));
+                                                        const isSelected = activeSelectedKols.has(kol.name);
+                                                        
+                                                        // Update manual selection flag for all current charts to prevent auto-select interference
+                                                        Object.keys(availableKolsByChart).forEach(id => markManualKolsSelection(id));
+
+                                                        setGlobalSelectedKols(prev => {
+                                                            const next = new Set(prev);
+                                                            if (isSelected) {
+                                                                 next.delete(kol.name);
+                                                            } else {
+                                                                 next.add(kol.name);
+                                                            }
+                                                            return next;
+                                                        });
                                                     }}
                                                 >
                                                     <Checkbox
@@ -827,7 +837,7 @@ const ChartPage = () => {
                                                     chartId={chart.id}
                                                     symbol={chart.symbol}
                                                     interval={chart.interval}
-                                                    selectedKols={selectedKolsByChart[chart.id] || new Set()}
+                                                    selectedKols={globalSelectedKols}
                                                     onAvailableKolsChange={handleAvailableKolsChange}
                                                     onAutoSelectAll={handleAutoSelectAll}
                                                     hoveredSignalId={hoveredSignalId}

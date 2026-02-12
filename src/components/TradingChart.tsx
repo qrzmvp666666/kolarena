@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { createChart, ColorType, IChartApi, ISeriesApi, Time, CandlestickSeries } from 'lightweight-charts';
 import { Candle } from '@/lib/binance';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -98,9 +98,39 @@ export const TradingChart = ({
     });
   };
 
-  // Update refs when props change
-  useEffect(() => {
+  // Update refs when props change. 
+  // useLayoutEffect ensures the ref is updated before browser paint, 
+  // so the RAF loop gets the new data immediately, preventing "flash" of old content.
+  useLayoutEffect(() => {
     signalsRef.current = signals;
+    
+    // Also, trigger an immediate manual update of positions to force cleanup right now
+    // This handles the "react unmount" vs "RAF loop" race condition
+    if (signalElementsRef.current && overlayRef.current) {
+        const markers = buildSignalMarkers(signals);
+        const activeKeys = new Set<string>();
+        markers.forEach(m => activeKeys.add(m.key));
+        
+        // Use the same robust cleanup function (redefined here or duplicated logic)
+        // Since we can't easily hoist the closure-dependent function cleanly without refactoring big chunks,
+        // we'll inline the logic which is safer than breaking effects.
+        
+        // 1. Map Cleanup
+        signalElementsRef.current.forEach((el, key) => {
+            if (!activeKeys.has(key)) el.style.display = 'none';
+        });
+
+        // 2. DOM Cleanup
+        const children = overlayRef.current.children;
+        for (let i = 0; i < children.length; i++) {
+            const child = children[i] as HTMLElement;
+            const markerKey = child.getAttribute('data-signal-key');
+            if (markerKey && !activeKeys.has(markerKey)) {
+                child.style.display = 'none';
+            }
+        }
+    }
+
   }, [signals]);
 
   useEffect(() => {
@@ -160,6 +190,29 @@ export const TradingChart = ({
     let animationFrameId: number;
     const timeScale = chart.timeScale();
 
+    const cleanupOrphanedMarkers = (activeKeys: Set<string>) => {
+        // 1. Cleanup based on Map references (fast path)
+        signalElementsRef.current.forEach((el, key) => {
+            if (!activeKeys.has(key)) {
+                el.style.display = 'none';
+            }
+        });
+
+        // 2. Cleanup based on DOM traversal (robust path)
+        // This handles cases where React ref cleanup ran but actual DOM removal is delayed
+        if (overlayRef.current) {
+            const children = overlayRef.current.children;
+            for (let i = 0; i < children.length; i++) {
+                const child = children[i] as HTMLElement;
+                const markerKey = child.getAttribute('data-signal-key');
+                // Only touch elements that are identified as signal markers
+                if (markerKey && !activeKeys.has(markerKey)) {
+                    child.style.display = 'none';
+                }
+            }
+        }
+    };
+
     const updateSignalPositions = () => {
       if (!chartRef.current || !candleSeriesRef.current || !overlayRef.current) return;
       
@@ -167,6 +220,14 @@ export const TradingChart = ({
       // const timeScale = chart.timeScale(); // Already defined in closure
 
       const markers = buildSignalMarkers(signalsRef.current);
+
+      // Force hide elements that are no longer in the current signals list
+      // This ensures immediate visual feedback even if React DOM reconciliation is pending
+      const activeKeys = new Set<string>();
+      markers.forEach(m => activeKeys.add(m.key));
+      
+      cleanupOrphanedMarkers(activeKeys);
+
       markers.forEach(marker => {
         const el = signalElementsRef.current.get(marker.key);
         if (!el) return;
@@ -345,6 +406,7 @@ export const TradingChart = ({
         {buildSignalMarkers(signals).map((marker) => (
            <div
              key={marker.key}
+             data-signal-key={marker.key}
              ref={el => {
                 if (el) signalElementsRef.current.set(marker.key, el);
                 else signalElementsRef.current.delete(marker.key);
