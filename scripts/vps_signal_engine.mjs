@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import WebSocket from "ws";
 
 const SUPABASE_URL = "https://kokvcgiuhbtymsnwdxtr.supabase.co";
 const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtva3ZjZ2l1aGJ0eW1zbndkeHRyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDMxNDk1OCwiZXhwIjoyMDg1ODkwOTU4fQ.vY33ql0QZ8qughmmhBN0myLuyfy19gtYIY_VugCSL4M";
@@ -41,6 +42,10 @@ function logSuccessHighlight(tag, message) {
   console.log(`${ANSI_GREEN}[${tag}] ${message}${ANSI_RESET}`);
 }
 
+if (!globalThis.WebSocket) {
+  globalThis.WebSocket = WebSocket;
+}
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
@@ -60,6 +65,7 @@ let subscribedSymbolsKey = "";
 let wsConnected = false;
 let restPollInFlight = false;
 let lastRestActiveLogAt = 0;
+let lastWsPriceLogAt = 0;
 let wsCycleToken = 0;
 let restFallbackActive = false;
 
@@ -147,7 +153,7 @@ async function loadInitialSignals() {
   idsBySymbol.clear();
   for (const row of data || []) addToIndexes(row);
 
-  console.log(`[init] loaded ${signalsById.size} active-family signals across ${idsBySymbol.size} symbols`);
+  logSuccessHighlight("init", `loaded ${signalsById.size} active-family signals across ${idsBySymbol.size} symbols`);
   scheduleWsRefresh();
 }
 
@@ -193,7 +199,11 @@ function connectWs(symbols) {
 
   subscribedSymbolsKey = symbols.join(",");
   const token = ++wsCycleToken;
+  if (restFallbackActive) {
+    logSuccessHighlight("ws", "leaving REST fallback, attempting WS reconnect");
+  }
   restFallbackActive = false;
+  console.log(`[ws] prepare connect (${symbols.length} symbols) endpoints=${BINANCE_WS_BASES.join(", ")}`);
   attemptWsEndpoint(symbols, token, 0);
 }
 
@@ -203,7 +213,10 @@ function attemptWsEndpoint(symbols, token, endpointIndex) {
   const wsBase = BINANCE_WS_BASES[endpointIndex];
   if (!wsBase) {
     restFallbackActive = true;
-    console.warn("[ws] no endpoint available, fallback to REST polling");
+    logErrorHighlight(
+      "ws:error",
+      `no endpoint available, fallback to REST polling (endpoints=${BINANCE_WS_BASES.join(", ")})`,
+    );
     scheduleReconnect();
     return;
   }
@@ -211,6 +224,7 @@ function attemptWsEndpoint(symbols, token, endpointIndex) {
   const streams = symbols.map((s) => `${s.toLowerCase()}@aggTrade`).join("/");
   const url = `${wsBase}/stream?streams=${streams}`;
   console.log(`[ws] attempt ${endpointIndex + 1}/${BINANCE_WS_BASES.length} via ${wsBase}`);
+  console.log(`[ws] url=${url}`);
 
   const ws = new WebSocket(url);
   binanceWs = ws;
@@ -234,13 +248,13 @@ function attemptWsEndpoint(symbols, token, endpointIndex) {
     const nextIndex = endpointIndex + 1;
     if (nextIndex < BINANCE_WS_BASES.length) {
       const nextBase = BINANCE_WS_BASES[nextIndex];
-      console.warn(`[ws] endpoint failed, switch -> ${nextBase}`);
+      logErrorHighlight("ws:error", `endpoint failed, switch -> ${nextBase}`);
       setTimeout(() => attemptWsEndpoint(symbols, token, nextIndex), 250);
       return;
     }
 
     restFallbackActive = true;
-    console.warn("[ws] all endpoints failed, fallback -> REST polling");
+    logErrorHighlight("ws:error", `all endpoints failed, fallback -> REST polling (last=${wsBase})`);
     scheduleReconnect();
   };
 
@@ -248,10 +262,13 @@ function attemptWsEndpoint(symbols, token, endpointIndex) {
     if (token !== wsCycleToken) return;
     opened = true;
     reconnectAttempts = 0;
+    if (restFallbackActive) {
+      logSuccessHighlight("ws", "connected, disabling REST fallback");
+    }
     restFallbackActive = false;
     lastWsMessageAt = Date.now();
     wsConnected = true;
-    console.log(`[ws] connected via ${wsBase}`);
+    logSuccessHighlight("ws", `connected via ${wsBase}`);
   };
 
   ws.onmessage = async (event) => {
@@ -293,7 +310,7 @@ function attemptWsEndpoint(symbols, token, endpointIndex) {
     }
 
     wsConnected = false;
-    console.warn(`[ws] disconnected code=${code} reason=${reason}`);
+    logErrorHighlight("ws:error", `disconnected code=${code} reason=${reason}`);
     scheduleReconnect();
   };
 }
@@ -429,6 +446,12 @@ async function handleTrade(symbolNorm, price) {
   const ids = idsBySymbol.get(symbolNorm);
   if (!ids || ids.size === 0) return;
 
+  const now = Date.now();
+  if (now - lastWsPriceLogAt > 10_000) {
+    logSuccessHighlight("ws:tick", `${symbolNorm} @ ${price}`);
+    lastWsPriceLogAt = now;
+  }
+
   for (const id of [...ids]) {
     const sig = signalsById.get(id);
     if (!sig) continue;
@@ -464,7 +487,11 @@ async function startRealtime() {
     .channel("vps-signal-engine")
     .on("postgres_changes", { event: "*", schema: "public", table: "signals" }, handleRealtimePayload)
     .subscribe((status) => {
-      console.log(`[realtime] ${status}`);
+      if (status === "SUBSCRIBED") {
+        logSuccessHighlight("realtime", status);
+      } else {
+        logErrorHighlight("realtime", status);
+      }
     });
 
   return channel;
@@ -478,6 +505,9 @@ async function pollRestPricesOnce() {
   try {
     const symbolsParam = encodeURIComponent(JSON.stringify(symbols));
     const url = `${BINANCE_REST_BASE}/api/v3/ticker/price?symbols=${symbolsParam}`;
+    if (Date.now() - lastRestActiveLogAt > 10_000) {
+      console.log(`[rest] polling ${url}`);
+    }
     const res = await fetch(url);
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}`);
@@ -537,7 +567,7 @@ function startHealthChecks() {
 }
 
 async function main() {
-  console.log("[engine] starting signal engine...");
+  logSuccessHighlight("engine", "starting signal engine...");
   await loadInitialSignals();
   await startRealtime();
   connectWs(currentSymbols());
