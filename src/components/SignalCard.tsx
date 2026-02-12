@@ -65,7 +65,7 @@ const SignalCard = ({ signal }: SignalCardProps) => {
         <Button 
           variant="outline" 
           size="sm" 
-          className="h-7 text-xs border-accent-orange text-accent-orange hover:bg-accent-orange hover:text-white"
+          className="h-7 text-xs bg-foreground text-background border-none hover:bg-foreground/90 transition-colors"
         >
           {t('subscribe')}
         </Button>
@@ -113,7 +113,7 @@ const SignalCard = ({ signal }: SignalCardProps) => {
         </div>
         <div className="text-right">
           <div className="text-xs text-muted-foreground">{t('entryPrice')}</div>
-          <div className="text-xl font-bold text-accent-orange">{signal.entryPrice}</div>
+          <div className="text-xl font-bold text-foreground">{signal.entryPrice}</div>
         </div>
       </div>
 

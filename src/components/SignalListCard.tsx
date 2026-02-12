@@ -96,20 +96,20 @@ const SignalListCard = ({ signal, isHistory = false, isFollowed = false, isSubsc
                 onClick={(e) => { e.stopPropagation(); onToggleSubscribe(kolId); }}
                 className={`p-1.5 rounded-md transition-colors ${
                   isSubscribed
-                    ? 'text-accent-orange hover:text-accent-orange/80'
+                    ? 'text-foreground hover:text-foreground/80'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
                 title={isSubscribed ? t('unsubscribe') : t('subscribe')}
               >
-                <Bell className={`w-4 h-4 ${isSubscribed ? 'fill-accent-orange' : ''}`} />
+                <Bell className={`w-4 h-4 ${isSubscribed ? 'fill-foreground' : ''}`} />
               </button>
             )}
           </div>
 
           {/* Status Badge (Moved from absolute to flex row for better alignment) */}
           {!isHistory && signal.entryStatus && (
-            <div className={`px-2 py-1 text-[11px] font-bold text-black rounded ${
-              signal.entryStatus === 'entered' ? 'bg-[rgb(51,240,140)]' : 'bg-[rgb(247,147,26)]'
+            <div className={`px-2 py-1 text-[11px] font-bold rounded ${
+              signal.entryStatus === 'entered' ? 'bg-[rgb(51,240,140)] text-black' : 'bg-foreground text-background'
             }`}>
               {signal.entryStatus === 'entered' ? '已入场' : '待入场'}
             </div>

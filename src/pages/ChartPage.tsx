@@ -676,10 +676,10 @@ const ChartPage = () => {
                         <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto lg:min-w-[260px] justify-start lg:justify-end">
                             <div className="hidden lg:flex items-center gap-2 text-xs text-muted-foreground">
                                 <button
-                                    className={`px-2 py-1 rounded border ${
+                                    className={`px-2 py-1 rounded border transition-colors ${
                                         layoutPreset.rows === 1 && layoutPreset.cols === 1
-                                            ? 'border-accent-orange text-foreground'
-                                            : 'border-border hover:text-foreground'
+                                            ? 'bg-foreground text-background border-foreground'
+                                            : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
                                     }`}
                                     onClick={() => applyLayoutPreset(1, 1)}
                                     aria-label="单窗"
@@ -688,10 +688,10 @@ const ChartPage = () => {
                                     <Square className="w-3.5 h-3.5" />
                                 </button>
                                 <button
-                                    className={`px-2 py-1 rounded border ${
+                                    className={`px-2 py-1 rounded border transition-colors ${
                                         layoutPreset.rows === 1 && layoutPreset.cols === 2
-                                            ? 'border-accent-orange text-foreground'
-                                            : 'border-border hover:text-foreground'
+                                            ? 'bg-foreground text-background border-foreground'
+                                            : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
                                     }`}
                                     onClick={() => applyLayoutPreset(1, 2)}
                                     aria-label="一行两列"
@@ -700,10 +700,10 @@ const ChartPage = () => {
                                     <Columns2 className="w-3.5 h-3.5" />
                                 </button>
                                 <button
-                                    className={`px-2 py-1 rounded border ${
+                                    className={`px-2 py-1 rounded border transition-colors ${
                                         layoutPreset.rows === 2 && layoutPreset.cols === 1
-                                            ? 'border-accent-orange text-foreground'
-                                            : 'border-border hover:text-foreground'
+                                            ? 'bg-foreground text-background border-foreground'
+                                            : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
                                     }`}
                                     onClick={() => applyLayoutPreset(2, 1)}
                                     aria-label="两行一列"
@@ -712,10 +712,10 @@ const ChartPage = () => {
                                     <Rows2 className="w-3.5 h-3.5" />
                                 </button>
                                 <button
-                                    className={`px-2 py-1 rounded border ${
+                                    className={`px-2 py-1 rounded border transition-colors ${
                                         layoutPreset.rows === 2 && layoutPreset.cols === 2
-                                            ? 'border-accent-orange text-foreground'
-                                            : 'border-border hover:text-foreground'
+                                            ? 'bg-foreground text-background border-foreground'
+                                            : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
                                     }`}
                                     onClick={() => applyLayoutPreset(2, 2)}
                                     aria-label="两行两列"

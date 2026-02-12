@@ -61,8 +61,18 @@ const getKolDisplay = (kol: KolData, index: number) => {
 };
 
 // Generate mock profit trend data
-const generateProfitTrendData = (traderId: string) => {
-  const days = 30;
+const generateProfitTrendData = (traderId: string, timeRange: string = '7days', customRange?: DateRange) => {
+  let days = 30;
+  if (timeRange === 'today') days = 1;
+  else if (timeRange === '7days') days = 7;
+  else if (timeRange === '1month') days = 30;
+  else if (timeRange === '6months') days = 180;
+  else if (timeRange === '1year') days = 365;
+  else if (timeRange === 'custom' && customRange?.from && customRange?.to) {
+    const diffTime = Math.abs(customRange.to.getTime() - customRange.from.getTime());
+    days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  }
+
   let cumulative = 10000;
   return Array.from({ length: days }, (_, i) => {
     const daily = (Math.random() - 0.45) * 500;
@@ -155,11 +165,13 @@ interface AdvancedAnalysisProps {
   traders: KolData[];
   t: (key: string) => string;
   selectedTrader: string;
+  timeRange: string;
+  customDateRange?: DateRange;
 }
 
-const AdvancedAnalysisContent = ({ traders, t, selectedTrader }: AdvancedAnalysisProps) => {
+const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, customDateRange }: AdvancedAnalysisProps) => {
   const currentTrader = traders.find(tr => tr.id === selectedTrader) || traders[0];
-  const profitTrendData = useMemo(() => generateProfitTrendData(selectedTrader), [selectedTrader]);
+  const profitTrendData = useMemo(() => generateProfitTrendData(selectedTrader, timeRange, customDateRange), [selectedTrader, timeRange, customDateRange]);
   const coinDistribution = useMemo(() => generateCoinDistribution(), [selectedTrader]);
 
   // Real signals from Supabase
@@ -395,15 +407,15 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader }: AdvancedAnalysi
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profit Trend Chart */}
-        <div className="lg:col-span-2 border border-border rounded-lg p-4 bg-card">
+        <div className="lg:col-span-2 border border-border rounded-lg p-4 bg-card text-foreground">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-accent-orange" />
+              <TrendingUp className="w-4 h-4" />
               {t('profitTrend')}
             </h3>
             <div className="flex items-center gap-4 text-xs">
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-full bg-accent-orange" />
+                <div className="w-3 h-3 rounded-full bg-foreground" />
                 <span className="text-muted-foreground">{t('cumulativeProfit')}</span>
               </div>
               <div className="flex items-center gap-1">
@@ -416,8 +428,8 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader }: AdvancedAnalysi
             <AreaChart data={profitTrendData}>
               <defs>
                 <linearGradient id="colorCumulative" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#F97316" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#F97316" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="currentColor" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="currentColor" stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -431,7 +443,7 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader }: AdvancedAnalysi
                   fontSize: '12px'
                 }} 
               />
-              <Area type="monotone" dataKey="cumulative" stroke="#F97316" fillOpacity={1} fill="url(#colorCumulative)" strokeWidth={2} />
+              <Area type="monotone" dataKey="cumulative" stroke="currentColor" fillOpacity={1} fill="url(#colorCumulative)" strokeWidth={2} />
               <Line type="monotone" dataKey="daily" stroke="#22C55E" strokeWidth={1.5} dot={false} />
             </AreaChart>
           </ResponsiveContainer>
@@ -801,9 +813,77 @@ const LeaderboardContent = () => {
           {/* Search & Actions - Show KOL selector when in advanced tab */}
           <div className="flex items-center gap-3">
             {activeTab === 'advanced' && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">{t('selectTrader')}:</span>
-                <Select value={selectedKol} onValueChange={setSelectedKol}>
+              <div className="flex items-center gap-4">
+                {/* Time Range Filter for Advanced Tab */}
+                <div className="flex items-center gap-2 mr-2">
+                  <span className="text-xs text-muted-foreground">{t('timeRange')}:</span>
+                  <div className="flex items-center gap-1">
+                    {(['today', '7days', '1month', '6months', '1year'] as const).map((range) => (
+                      <button
+                        key={range}
+                        onClick={() => setTimeRange(range)}
+                        className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                          timeRange === range
+                            ? 'bg-foreground text-background'
+                            : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
+                        }`}
+                      >
+                        {t(`timeRange_${range}`)}
+                      </button>
+                    ))}
+                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                      <PopoverTrigger asChild>
+                        <button
+                          className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-1.5 ${
+                            timeRange === 'custom'
+                              ? 'bg-foreground text-background'
+                              : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
+                          }`}
+                        >
+                          <CalendarIcon className="w-3 h-3" />
+                          {timeRange === 'custom' && customDateRange?.from && customDateRange?.to
+                            ? getTimeRangeLabel()
+                            : t('timeRange_custom')}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-4" align="end" sideOffset={8}>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-foreground">{t('selectDateRange')}</span>
+                          </div>
+                          <div className="flex border border-border rounded-lg overflow-hidden p-1 bg-card">
+                            <Calendar
+                              initialFocus
+                              mode="range"
+                              selected={customDateRange}
+                              onSelect={setCustomDateRange}
+                              numberOfMonths={2}
+                              locale={language === 'zh' ? zhCN : enUS}
+                              className="pointer-events-auto"
+                            />
+                          </div>
+                          <Button
+                            size="sm"
+                            className="w-full bg-foreground text-background hover:bg-foreground/90 font-bold"
+                            onClick={() => {
+                              if (customDateRange?.from && customDateRange?.to) {
+                                setTimeRange('custom');
+                                setIsCalendarOpen(false);
+                              }
+                            }}
+                            disabled={!customDateRange?.from || !customDateRange?.to}
+                          >
+                            {t('confirm')}
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">{t('selectTrader')}:</span>
+                  <Select value={selectedKol} onValueChange={setSelectedKol}>
                   <SelectTrigger className="w-[200px] h-9 bg-card border-border">
                     <SelectValue placeholder={kolsData[0]?.name}>
                       {(() => {
@@ -839,8 +919,9 @@ const LeaderboardContent = () => {
                   </SelectContent>
                 </Select>
               </div>
-            )}
-            {activeTab === 'overall' && (
+            </div>
+          )}
+          {activeTab === 'overall' && (
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -1128,7 +1209,13 @@ const LeaderboardContent = () => {
         ) : activeTab === 'comparison' ? (
           <ProfitComparisonPanel />
         ) : (
-          <AdvancedAnalysisContent traders={filteredData} t={t} selectedTrader={selectedKol} />
+          <AdvancedAnalysisContent 
+            traders={filteredData} 
+            t={t} 
+            selectedTrader={selectedKol} 
+            timeRange={timeRange}
+            customDateRange={customDateRange}
+          />
         )}
       </div>
     </div>

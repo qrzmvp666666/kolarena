@@ -18,7 +18,7 @@ const ChartHeader = ({ timeRange, onTimeRangeChange, displayMode, onDisplayModeC
             onClick={() => onDisplayModeChange('$')}
             className={`px-3 py-1 font-mono text-sm transition-colors ${
               displayMode === '$'
-                ? 'bg-accent-orange/10 text-accent-orange font-semibold'
+                ? 'bg-foreground text-background font-semibold'
                 : 'bg-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -28,7 +28,7 @@ const ChartHeader = ({ timeRange, onTimeRangeChange, displayMode, onDisplayModeC
             onClick={() => onDisplayModeChange('%')}
             className={`px-3 py-1 font-mono text-sm transition-colors ${
               displayMode === '%'
-                ? 'bg-accent-orange/10 text-accent-orange font-semibold'
+                ? 'bg-foreground text-background font-semibold'
                 : 'bg-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -47,7 +47,7 @@ const ChartHeader = ({ timeRange, onTimeRangeChange, displayMode, onDisplayModeC
             onClick={() => onTimeRangeChange('7D')}
             className={`px-3 py-1 font-mono text-sm transition-colors ${
               timeRange === '7D'
-                ? 'bg-accent-orange/10 text-accent-orange font-semibold'
+                ? 'bg-foreground text-background font-semibold'
                 : 'bg-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -57,7 +57,7 @@ const ChartHeader = ({ timeRange, onTimeRangeChange, displayMode, onDisplayModeC
             onClick={() => onTimeRangeChange('1M')}
             className={`px-3 py-1 font-mono text-sm transition-colors ${
               timeRange === '1M'
-                ? 'bg-accent-orange/10 text-accent-orange font-semibold'
+                ? 'bg-foreground text-background font-semibold'
                 : 'bg-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
