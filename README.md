@@ -71,3 +71,48 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## VPS signal engine (Binance aggTrade -> Supabase signals)
+
+This repo includes a lightweight long-running worker:
+
+- Script: `scripts/vps_signal_engine.mjs`
+- Command: `npm run engine:signals`
+- Purpose: listen 24x7 to Binance `aggTrade`, evaluate `signals` entry/exit, update `status/exit_type/exit_price/exit_time/pnl_*`.
+
+### 1) Local dry run
+
+```sh
+npm i
+set SUPABASE_URL=https://<your-project>.supabase.co
+set SUPABASE_SERVICE_ROLE_KEY=<service_role_key>
+npm run engine:signals
+```
+
+### 2) VPS deployment with pm2
+
+```sh
+npm i -g pm2
+npm i
+export SUPABASE_URL=https://<your-project>.supabase.co
+export SUPABASE_SERVICE_ROLE_KEY=<service_role_key>
+pm2 start npm --name signal-engine -- run engine:signals
+pm2 save
+pm2 startup
+```
+
+Or use ecosystem config (recommended):
+
+```sh
+pm2 start ecosystem.config.cjs
+pm2 save
+pm2 startup
+```
+
+Optional env:
+
+- `ENGINE_HEARTBEAT_MS` (default `30000`)
+- `ENGINE_RESYNC_MS` (default `300000`)
+- `ENGINE_RECONNECT_BASE_MS` (default `2000`)
+- `ENGINE_RECONNECT_MAX_MS` (default `30000`)
+

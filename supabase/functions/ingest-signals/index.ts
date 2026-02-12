@@ -303,7 +303,7 @@ Deno.serve(async (req: Request) => {
       stop_loss: stopLoss,
       leverage,
       entry_time: entryTime,
-      status: "active" as const,
+      status: "pending_entry" as const,
       margin_mode: "cross" as const,
     };
 
