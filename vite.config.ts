@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => ({
     },
     proxy: {
       '/api': {
-        target: 'https://api.binance.com',
+        target: 'https://data-api.binance.vision',
         changeOrigin: true,
         secure: true,
       },
