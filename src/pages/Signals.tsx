@@ -574,7 +574,7 @@ const SignalsContent = () => {
                       if (range.id !== 'custom') setCustomDateRange(undefined);
                     }}
                     className={`px-3 py-1.5 text-xs font-medium transition-colors ${timeRange === range.id
-                        ? 'bg-accent-orange text-white'
+                        ? 'bg-foreground text-background'
                         : 'bg-card text-muted-foreground hover:text-foreground'
                       }`}
                   >
