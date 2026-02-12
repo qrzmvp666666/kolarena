@@ -62,7 +62,7 @@ const About = () => {
         {/* Mission */}
         <div className="mb-12 p-6 rounded-lg border border-border bg-card">
           <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-            <Target className="w-5 h-5 text-accent-orange" />
+            <Target className="w-5 h-5 text-foreground" />
             {t('aboutMissionTitle')}
           </h2>
           <p className="text-muted-foreground leading-relaxed">
@@ -81,9 +81,9 @@ const About = () => {
               return (
                 <div
                   key={index}
-                  className="p-5 rounded-lg border border-border bg-card hover:border-accent-orange/50 transition-colors"
+                  className="p-5 rounded-lg border border-border bg-card hover:border-foreground/30 transition-colors"
                 >
-                  <IconComponent className="w-8 h-8 text-accent-orange mb-3" />
+                  <IconComponent className="w-8 h-8 text-foreground mb-3" />
                   <h3 className="font-semibold text-foreground mb-2">
                     {t(feature.titleKey)}
                   </h3>
