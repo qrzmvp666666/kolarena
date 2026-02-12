@@ -935,10 +935,12 @@ const LeaderboardContent = () => {
             )}
             {activeTab === 'overall' && (
               <>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Filter className="w-4 h-4" />
-                  {t('filter')}
-                </Button>
+                {false && (
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Filter className="w-4 h-4" />
+                    {t('filter')}
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" className="gap-2" onClick={handleRefresh}>
                   <RefreshCw className="w-4 h-4" />
                   {t('refresh')}
@@ -949,7 +951,7 @@ const LeaderboardContent = () => {
         </div>
 
         {/* Filter Options Row - Only show for overall tab */}
-        {activeTab === 'overall' && (
+        {activeTab === 'overall' && false && (
           <div className="flex items-center gap-4 mb-4 flex-wrap">
             {/* Return Rate Filter */}
             <div className="flex items-center gap-2">
