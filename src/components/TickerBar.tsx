@@ -11,8 +11,8 @@ interface KolRow {
   id: string;
   name: string;
   short_name: string;
-  icon: string;
-  color: string;
+  icon?: string;
+  color?: string;
   avatar_url: string | null;
   account_value: number;
   return_rate: number;
@@ -58,7 +58,10 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
 
   const fetchKols = useCallback(async () => {
     try {
-      const { data, error } = await supabase.rpc('get_kols');
+      const { data, error } = await supabase.rpc('get_leaderboard_by_range', {
+        p_from: null,
+        p_to: null,
+      });
       if (error) throw error;
       if (data) setKolData(data as KolRow[]);
     } catch (err) {
@@ -74,6 +77,11 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'kols' },
+        () => { fetchKols(); }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'signals' },
         () => { fetchKols(); }
       )
       .subscribe();
@@ -140,8 +148,8 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
       id: k.id,
       name: k.name,
       shortName: k.short_name || k.name,
-      color: k.color,
-      icon: k.icon,
+      color: k.color || 'hsl(0, 0%, 40%)',
+      icon: k.icon || '⚪',
       avatar: k.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${k.name}`,
       value: k.account_value,
       returnRate: k.return_rate,

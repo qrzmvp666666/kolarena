@@ -341,6 +341,7 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, custom
             <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('takeProfit')}</th>
             <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('stopLoss')}</th>
             <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t(isHistory ? 'tradePnL' : 'expectedPnlRatio')}</th>
+            {isHistory && <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('returnRate')}</th>}
             <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('orderTime')}</th>
             {isHistory && <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('signalDuration')}</th>}
             {isHistory && <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('closeTime')}</th>}
@@ -350,7 +351,7 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, custom
         <tbody>
           {trades.length === 0 ? (
             <tr>
-              <td colSpan={isHistory ? 11 : 8} className="text-center py-8 text-muted-foreground">{t('noData') || 'No Data'}</td>
+              <td colSpan={isHistory ? 12 : 8} className="text-center py-8 text-muted-foreground">{t('noData') || 'No Data'}</td>
             </tr>
           ) : (
             trades.map((trade) => (
@@ -378,12 +379,17 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, custom
                 <td className={`px-4 py-2 text-left font-medium ${(isHistory ? trade.pnl : Number(trade.expectedRoi)) === 0 ? 'text-muted-foreground' : (isHistory ? trade.pnl : Number(trade.expectedRoi)) > 0 ? 'text-accent-green' : 'text-accent-red'}`}>
                   <div className="flex flex-col items-start">
                     {isHistory ? (
-                      <span>{trade.pnl === 0 ? '-' : Number(trade.roi).toFixed(2)}</span>
+                      <span>{trade.pnl === 0 ? '-' : `${trade.pnl > 0 ? '+' : ''}${Number(trade.roi).toFixed(2)}`}</span>
                     ) : (
                       <span>{trade.expectedRoi && Number(trade.expectedRoi) !== 0 ? Number(trade.expectedRoi).toFixed(2) : '-'}</span>
                     )}
                   </div>
                 </td>
+                {isHistory && (
+                  <td className={`px-4 py-2 text-left font-medium ${trade.pnl === 0 ? 'text-muted-foreground' : trade.pnl > 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+                    {trade.pnl === 0 ? '-' : `${trade.pnl > 0 ? '+' : ''}${Number(trade.roi).toFixed(2)}%`}
+                  </td>
+                )}
                 <td className="px-4 py-2 text-left text-muted-foreground">{trade.time}</td>
                 {isHistory && <td className="px-4 py-2 text-left text-muted-foreground">{trade.duration}</td>}
                 {isHistory && <td className="px-4 py-2 text-left text-muted-foreground">{trade.closeTime}</td>}
@@ -590,7 +596,7 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, custom
 
 const KOLsPage = () => {
   const { t, language } = useLanguage();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [kolsData, setKolsData] = useState<KolData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -606,10 +612,20 @@ const KOLsPage = () => {
     return raw ? raw.trim() : '';
   }, [searchParams]);
 
+  const handleKolChange = useCallback((kolId: string) => {
+    setSelectedKol(kolId);
+    const next = new URLSearchParams(searchParams);
+    next.set('kol', kolId);
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   // Fetch leaderboard data via RPC
   const fetchLeaderboard = useCallback(async () => {
     try {
-      const { data, error } = await supabase.rpc('get_leaderboard');
+      const { data, error } = await supabase.rpc('get_leaderboard_by_range', {
+        p_from: null,
+        p_to: null,
+      });
       if (error) {
         console.error('Error fetching leaderboard:', error);
         return;
@@ -641,13 +657,17 @@ const KOLsPage = () => {
 
   useEffect(() => {
     if (kolsData.length === 0) return;
+
     if (requestedKolId) {
       const exists = kolsData.some(kol => kol.id === requestedKolId);
       if (exists) {
-        setSelectedKol(requestedKolId);
+        if (selectedKol !== requestedKolId) {
+          setSelectedKol(requestedKolId);
+        }
         return;
       }
     }
+
     if (!selectedKol) {
       setSelectedKol(kolsData[0].id);
     }
@@ -718,7 +738,7 @@ const KOLsPage = () => {
             {/* KOL Selector */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">{t('selectTrader')}:</span>
-              <Select value={selectedKol} onValueChange={setSelectedKol}>
+              <Select value={selectedKol} onValueChange={handleKolChange}>
                 <SelectTrigger className="w-[200px] h-9 bg-card border-border">
                   <SelectValue placeholder={kolsData[0]?.name}>
                     {(() => {
