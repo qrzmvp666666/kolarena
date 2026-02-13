@@ -10,13 +10,25 @@ import { supabase } from '@/lib/supabase';
 interface KolRow {
   id: string;
   name: string;
-  short_name: string;
+  short_name: string | null;
   icon?: string;
   color?: string;
   avatar_url: string | null;
   account_value: number;
   return_rate: number;
   total_pnl: number;
+}
+
+interface TickerKolItem {
+  id: string;
+  name: string;
+  shortName: string;
+  color: string;
+  icon: string;
+  avatar: string;
+  value: number;
+  returnRate: number;
+  totalPnl: number;
 }
 
 interface TickerBarProps {
@@ -53,17 +65,60 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
     }
   }, [signalStatus]);
 
-  // Fetch KOL data from Supabase for highest/lowest
-  const [kolData, setKolData] = useState<KolRow[]>([]);
+  const [overallData, setOverallData] = useState<KolRow[]>([]);
+  const [weeklyData, setWeeklyData] = useState<KolRow[]>([]);
+  const [monthlyData, setMonthlyData] = useState<KolRow[]>([]);
+  const [seasonData, setSeasonData] = useState<KolRow[]>([]);
+
+  const getRangeFromDays = (days: number) => {
+    const now = new Date();
+    const from = new Date(now);
+    from.setHours(0, 0, 0, 0);
+    from.setDate(from.getDate() - (days - 1));
+
+    const to = new Date(now);
+    to.setHours(23, 59, 59, 999);
+
+    return {
+      from: from.toISOString(),
+      to: to.toISOString(),
+    };
+  };
+
+  const mapKol = useCallback((k: KolRow): TickerKolItem => ({
+    id: k.id,
+    name: k.name,
+    shortName: k.short_name || k.name,
+    color: k.color || 'hsl(0, 0%, 40%)',
+    icon: k.icon || '⚪',
+    avatar: k.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${k.name}`,
+    value: k.account_value,
+    returnRate: k.return_rate,
+    totalPnl: k.total_pnl,
+  }), []);
 
   const fetchKols = useCallback(async () => {
     try {
-      const { data, error } = await supabase.rpc('get_leaderboard_by_range', {
-        p_from: null,
-        p_to: null,
-      });
-      if (error) throw error;
-      if (data) setKolData(data as KolRow[]);
+      const weekly = getRangeFromDays(7);
+      const monthly = getRangeFromDays(30);
+      const season = getRangeFromDays(90);
+
+      const [overallRes, weeklyRes, monthlyRes, seasonRes] = await Promise.all([
+        supabase.rpc('get_leaderboard_by_range', { p_from: null, p_to: null }),
+        supabase.rpc('get_leaderboard_by_range', { p_from: weekly.from, p_to: weekly.to }),
+        supabase.rpc('get_leaderboard_by_range', { p_from: monthly.from, p_to: monthly.to }),
+        supabase.rpc('get_leaderboard_by_range', { p_from: season.from, p_to: season.to }),
+      ]);
+
+      if (overallRes.error) throw overallRes.error;
+      if (weeklyRes.error) throw weeklyRes.error;
+      if (monthlyRes.error) throw monthlyRes.error;
+      if (seasonRes.error) throw seasonRes.error;
+
+      setOverallData((overallRes.data || []) as KolRow[]);
+      setWeeklyData((weeklyRes.data || []) as KolRow[]);
+      setMonthlyData((monthlyRes.data || []) as KolRow[]);
+      setSeasonData((seasonRes.data || []) as KolRow[]);
     } catch (err) {
       console.error('TickerBar: Error fetching KOLs:', err);
     }
@@ -91,79 +146,20 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
 
   // Calculate Top performers for Weekly/Monthly/Season lists
   const { weeklyTop, monthlyTop, seasonTop, highest, lowest } = useMemo(() => {
-    let sourceData = kolData;
-
-    // Use mock data if no real data is available
-    if (sourceData.length === 0) {
-      sourceData = [
-        {
-          id: 'mock-1',
-          name: 'CryptoKing',
-          short_name: 'CK',
-          icon: '',
-          color: '#FFD700',
-          avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=CryptoKing',
-          account_value: 1000000,
-          return_rate: 145.2,
-          total_pnl: 500000
-        },
-        {
-          id: 'mock-2',
-          name: 'AlphaHunter',
-          short_name: 'AH',
-          icon: '',
-          color: '#00FF7F',
-          avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AlphaHunter',
-          account_value: 800000,
-          return_rate: 89.5,
-          total_pnl: 300000
-        },
-         {
-          id: 'mock-3',
-          name: 'WhaleWatcher',
-          short_name: 'WW',
-          icon: '',
-          color: '#00BFFF',
-          avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=WhaleWatcher',
-          account_value: 1200000,
-          return_rate: 67.8,
-          total_pnl: 400000
-        }
-      ];
-    }
-
-    // Sort by return rate for ranking
-    const sorted = [...sourceData].sort((a, b) => b.return_rate - a.return_rate);
-    
-    // Simulate different lists: 1st->Season, 2nd->Monthly, 3rd->Weekly
-    const seasonItem = sorted[0];
-    const monthlyItem = sorted.length > 1 ? sorted[1] : sorted[0];
-    const weeklyItem = sorted.length > 2 ? sorted[2] : (sorted.length > 1 ? sorted[1] : sorted[0]);
-
-    // Highest/Lowest based on current data
-    const highestItem = sorted[0];
-    const lowestItem = sorted[sorted.length - 1];
-
-    const mapKol = (k: KolRow) => ({
-      id: k.id,
-      name: k.name,
-      shortName: k.short_name || k.name,
-      color: k.color || 'hsl(0, 0%, 40%)',
-      icon: k.icon || '⚪',
-      avatar: k.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${k.name}`,
-      value: k.account_value,
-      returnRate: k.return_rate,
-      totalPnl: k.total_pnl,
-    });
+    const weeklyItem = weeklyData[0];
+    const monthlyItem = monthlyData[0];
+    const seasonItem = seasonData[0];
+    const highestItem = overallData[0];
+    const lowestItem = overallData.length > 0 ? overallData[overallData.length - 1] : undefined;
 
     return {
-      seasonTop: mapKol(seasonItem),
-      monthlyTop: mapKol(monthlyItem),
-      weeklyTop: mapKol(weeklyItem),
-      highest: mapKol(highestItem),
-      lowest: mapKol(lowestItem),
+      seasonTop: seasonItem ? mapKol(seasonItem) : null,
+      monthlyTop: monthlyItem ? mapKol(monthlyItem) : null,
+      weeklyTop: weeklyItem ? mapKol(weeklyItem) : null,
+      highest: highestItem ? mapKol(highestItem) : null,
+      lowest: lowestItem ? mapKol(lowestItem) : null,
     };
-  }, [kolData]);
+  }, [overallData, weeklyData, monthlyData, seasonData, mapKol]);
 
   const formatPrice = (price: number) => {
     if (!price) return '$0.00';
