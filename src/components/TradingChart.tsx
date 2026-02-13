@@ -434,7 +434,7 @@ export const TradingChart = ({
                       ${marker.signal.status === 'closed' || marker.signal.status === 'cancelled' ? 'opacity-50 grayscale border-gray-400' : ''}
                     `}
                       style={(marker.signal.status === 'entered' || marker.signal.status === 'active') ? {
-                        boxShadow: `0 0 8px 3px ${marker.signal.type === 'long' ? 'rgba(51,240,140,0.5)' : 'rgba(240,80,80,0.5)'}`,
+                        boxShadow: `0 0 6px 2px ${marker.signal.type === 'long' ? 'rgba(51,240,140,0.5)' : 'rgba(240,80,80,0.5)'}`,
                         animation: 'kolGlow 2s ease-in-out infinite',
                       } : undefined}
                     >
@@ -443,7 +443,7 @@ export const TradingChart = ({
                         <span
                           style={{
                             position: 'absolute',
-                            inset: '-4px',
+                            inset: '-3px',
                             borderRadius: '9999px',
                             border: `2px solid ${marker.signal.type === 'long' ? 'rgba(51,240,140,0.6)' : 'rgba(240,80,80,0.6)'}`,
                             animation: 'kolPulseRing 2s cubic-bezier(0,0,0.2,1) infinite',
@@ -456,7 +456,7 @@ export const TradingChart = ({
                         <span
                           style={{
                             position: 'absolute',
-                            inset: '-4px',
+                            inset: '-3px',
                             borderRadius: '9999px',
                             border: `2px solid ${marker.signal.type === 'long' ? 'rgba(51,240,140,0.4)' : 'rgba(240,80,80,0.4)'}`,
                             animation: 'kolPulseRing 2s cubic-bezier(0,0,0.2,1) infinite 0.6s',
@@ -464,29 +464,11 @@ export const TradingChart = ({
                           }}
                         />
                       )}
-                      <Avatar className="w-8 h-8">
+                      <Avatar className="w-6 h-6">
                         <AvatarImage src={marker.signal.avatarUrl} />
-                        <AvatarFallback>{marker.signal.kolName?.substring(0,2)}</AvatarFallback>
+                        <AvatarFallback className="text-[9px]">{marker.signal.kolName?.substring(0,2)}</AvatarFallback>
                       </Avatar>
                     </div>
-                    {/* 已入场 Badge */}
-                    {(marker.signal.status === 'entered' || marker.signal.status === 'active') && (
-                      <div
-                        style={{
-                          marginTop: '2px',
-                          padding: '1px 6px',
-                          borderRadius: '4px',
-                          fontSize: '9px',
-                          fontWeight: 700,
-                          whiteSpace: 'nowrap' as const,
-                          backgroundColor: marker.signal.type === 'long' ? 'rgb(51,240,140)' : 'rgb(240,80,80)',
-                          color: marker.signal.type === 'long' ? '#000' : '#fff',
-                          boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
-                        }}
-                      >
-                        已入场
-                      </div>
-                    )}
                   </div>
 
                   {/* Price Line & Label */}
@@ -507,6 +489,27 @@ export const TradingChart = ({
                        `}>
                           入场价：{marker.price}
                        </div>
+                       {/* 已入场 Badge - below price pill */}
+                       {(marker.signal.status === 'entered' || marker.signal.status === 'active') && (
+                         <div
+                           style={{
+                             position: 'absolute',
+                             left: '8px',
+                             top: '4px',
+                             padding: '1px 6px',
+                             borderRadius: '4px',
+                             fontSize: '9px',
+                             fontWeight: 700,
+                             whiteSpace: 'nowrap' as const,
+                             backgroundColor: marker.signal.type === 'long' ? 'rgb(51,240,140)' : 'rgb(240,80,80)',
+                             color: marker.signal.type === 'long' ? '#000' : '#fff',
+                             boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+                             zIndex: 25,
+                           }}
+                         >
+                           已入场
+                         </div>
+                       )}
                    </div>
                 </>
               ) : (
@@ -523,19 +526,21 @@ export const TradingChart = ({
                     </Avatar>
                   </div>
 
-                  {/* TP/SL Label (offset to the right, not affecting centering) */}
+                  {/* TP/SL Label (offset to the right, z-index above line) */}
                   <div className={`
-                    absolute left-2 top-0 -translate-y-1/2 px-1.5 py-0.5 rounded text-[10px] font-bold shadow-sm whitespace-nowrap
+                    absolute left-2 top-0 -translate-y-1/2 px-1.5 py-0.5 rounded text-[10px] font-bold shadow-sm whitespace-nowrap z-20
                     ${marker.kind === 'takeProfit' ? 'bg-accent-green text-black' : 'bg-accent-red text-white'}
                   `}>
                     {marker.kind === 'takeProfit' ? '止盈价' : '止损价'}：{marker.price}
                   </div>
 
-                  {/* TP/SL Line */}
+                  {/* TP/SL Line - starts after label to avoid overlap */}
                   <div className={`
-                    absolute left-2 top-0 -translate-y-1/2 flex items-center pointer-events-none z-10
+                    absolute top-0 -translate-y-1/2 flex items-center pointer-events-none z-10
                     ${marker.signal.status === 'closed' || marker.signal.status === 'cancelled' ? 'opacity-30 grayscale' : 'opacity-80'}
-                  `}>
+                  `}
+                    style={{ left: '110px' }}
+                  >
                        <div 
                          className={`h-[1px] border-t-2 border-dashed opacity-80 ${marker.kind === 'takeProfit' ? 'border-accent-green' : 'border-accent-red'}`}
                           style={{ width: '2000px' }}
