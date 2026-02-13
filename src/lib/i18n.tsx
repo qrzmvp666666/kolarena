@@ -14,6 +14,7 @@ export const translations: Translations = {
   live: { zh: '实盘', en: 'LIVE' },
   chartPage: { zh: '聚合K线', en: 'Aggregated Chart' },
   leaderboard: { zh: '排行榜', en: 'LEADERBOARD' },
+  kols: { zh: 'KOLs', en: 'KOLs' },
   models: { zh: '信号', en: 'SIGNALS' },
   joinCommunity: { zh: '社区', en: 'COMMUNITY' },
   aboutUs: { zh: '关于我们', en: 'ABOUT US' },

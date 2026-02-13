@@ -8,6 +8,7 @@ import { LanguageProvider } from "@/lib/i18n";
 import { UserProvider } from "@/contexts/UserContext";
 import Signals from "./pages/Signals";
 import Leaderboard from "./pages/Leaderboard";
+import KOLsPage from "./pages/KOLs";
 import About from "./pages/About";
 import Account from "./pages/Account";
 import Community from "./pages/Community";
@@ -30,6 +31,7 @@ const App = () => (
                 <Route path="/signals" element={<Signals />} />
                 <Route path="/chart" element={<ChartPage />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/kols" element={<KOLsPage />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/account" element={<Account />} />
                 <Route path="/community" element={<Community />} />
