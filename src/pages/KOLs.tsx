@@ -180,13 +180,14 @@ const getTimeBounds = (
 interface AdvancedAnalysisProps {
   traders: KolData[];
   t: (key: string) => string;
+  language: 'zh' | 'en';
   selectedTrader: string;
   timeRange: 'today' | '7days' | '1month' | '6months' | '1year' | 'custom';
   customDateRange?: DateRange;
   refreshTick: number;
 }
 
-const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, customDateRange, refreshTick }: AdvancedAnalysisProps) => {
+const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRange, customDateRange, refreshTick }: AdvancedAnalysisProps) => {
   const currentTrader = traders.find(tr => tr.id === selectedTrader) || traders[0];
   const [metrics, setMetrics] = useState<KolMetricsRow | null>(null);
   const [profitTrendData, setProfitTrendData] = useState<ProfitTrendPoint[]>([]);
@@ -328,6 +329,67 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, custom
 
   const activeTrades = useMemo(() => activeSignals.map(mapSignalToTrade), [activeSignals]);
   const historyTrades = useMemo(() => historySignals.map(mapSignalToTrade), [historySignals]);
+  const returnRateTrendData = useMemo(
+    () => profitTrendData.map((point) => ({
+      date: point.date,
+      dailyReturnRate: (Number(point.daily) / DEFAULT_INITIAL_CAPITAL) * 100,
+      cumulativeReturnRate: ((Number(point.cumulative) / DEFAULT_INITIAL_CAPITAL) - 1) * 100,
+    })),
+    [profitTrendData]
+  );
+
+  const returnRateAxis = useMemo(() => {
+    const values = returnRateTrendData.flatMap((point) => [
+      Number(point.dailyReturnRate),
+      Number(point.cumulativeReturnRate),
+    ]).filter((value) => Number.isFinite(value));
+
+    const nonZeroValues = values.filter((value) => value !== 0);
+
+    if (nonZeroValues.length === 0) {
+      const maxAbs = 1;
+      const tickCount = 5;
+      const step = (maxAbs * 2) / (tickCount - 1);
+      const ticks = Array.from({ length: tickCount }, (_, idx) => Number((-maxAbs + step * idx).toFixed(2)));
+      return {
+        min: -maxAbs,
+        max: maxAbs,
+        ticks,
+      };
+    }
+
+    const rawMax = Math.max(...nonZeroValues);
+    const rawMin = Math.min(...nonZeroValues);
+    const scaledMax = rawMax > 0 ? rawMax * 1.2 : 0;
+    const scaledMin = rawMin < 0 ? rawMin * 1.2 : 0;
+
+    const niceUp = (value: number) => {
+      if (value <= 0) return 0;
+      const abs = Math.abs(value);
+      const magnitude = 10 ** Math.floor(Math.log10(abs));
+      return Number((Math.ceil(abs / magnitude) * magnitude).toFixed(2));
+    };
+
+    const niceDown = (value: number) => {
+      if (value >= 0) return 0;
+      const abs = Math.abs(value);
+      const magnitude = 10 ** Math.floor(Math.log10(abs));
+      return -Number((Math.ceil(abs / magnitude) * magnitude).toFixed(2));
+    };
+
+    const upperBound = niceUp(scaledMax);
+    const lowerBound = niceDown(scaledMin);
+    const maxAbs = Math.max(Math.abs(upperBound), Math.abs(lowerBound), 0.5);
+    const tickCount = 7;
+    const step = (maxAbs * 2) / (tickCount - 1);
+    const ticks = Array.from({ length: tickCount }, (_, idx) => Number((-maxAbs + step * idx).toFixed(2)));
+
+    return {
+      min: -maxAbs,
+      max: maxAbs,
+      ticks,
+    };
+  }, [returnRateTrendData]);
 
   const renderTradeTable = (trades: TradeRow[], isHistory = false) => (
     <ScrollArea className="max-h-[300px]">
@@ -432,7 +494,7 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, custom
     Number(displayMetrics.max_profit) !== 0 ||
     Number(displayMetrics.max_loss) !== 0;
 
-  const hasTrendData = profitTrendData.some(point => Number(point.daily) !== 0);
+  const hasTrendData = returnRateTrendData.length > 0;
   const hasCoinData = coinDistribution.some(item => Number(item.value) > 0);
 
   return (
@@ -495,17 +557,17 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, custom
             <div className="flex items-center gap-4 text-xs">
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded-full bg-foreground" />
-                <span className="text-muted-foreground">{t('cumulativeProfit')}</span>
+                <span className="text-muted-foreground">{language === 'zh' ? '累计收益率' : 'Cumulative Return Rate'}</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded-full bg-accent-green" />
-                <span className="text-muted-foreground">{t('dailyProfit')}</span>
+                <span className="text-muted-foreground">{language === 'zh' ? '日收益率' : 'Daily Return Rate'}</span>
               </div>
             </div>
           </div>
           {hasTrendData ? (
             <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={profitTrendData}>
+              <AreaChart data={returnRateTrendData}>
                 <defs>
                   <linearGradient id="colorCumulative" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="currentColor" stopOpacity={0.3}/>
@@ -514,17 +576,28 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, custom
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                <YAxis
+                  domain={[returnRateAxis.min, returnRateAxis.max]}
+                  ticks={returnRateAxis.ticks}
+                  tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                  tickFormatter={(value) => `${Number(value).toFixed(2)}%`}
+                />
                 <RechartsTooltip 
                   contentStyle={{ 
                     backgroundColor: 'hsl(var(--card))', 
                     border: '1px solid hsl(var(--border))',
                     borderRadius: '8px',
                     fontSize: '12px'
-                  }} 
+                  }}
+                  formatter={(value: number, name: string) => [
+                    `${Number(value).toFixed(2)}%`,
+                    name === 'dailyReturnRate'
+                      ? (language === 'zh' ? '日收益率' : 'Daily Return Rate')
+                      : (language === 'zh' ? '累计收益率' : 'Cumulative Return Rate')
+                  ]}
                 />
-                <Area type="monotone" dataKey="cumulative" stroke="currentColor" fillOpacity={1} fill="url(#colorCumulative)" strokeWidth={2} />
-                <Line type="monotone" dataKey="daily" stroke="#22C55E" strokeWidth={1.5} dot={false} />
+                <Area type="monotone" dataKey="cumulativeReturnRate" stroke="currentColor" fillOpacity={1} fill="url(#colorCumulative)" strokeWidth={2} />
+                <Line type="monotone" dataKey="dailyReturnRate" stroke="#22C55E" strokeWidth={1.5} dot={false} />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
@@ -860,6 +933,7 @@ const KOLsPage = () => {
           <AdvancedAnalysisContent
             traders={kolsData}
             t={t}
+            language={language}
             selectedTrader={selectedKol}
             timeRange={timeRange}
             customDateRange={customDateRange}
