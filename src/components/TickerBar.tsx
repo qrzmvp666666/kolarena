@@ -176,7 +176,7 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
   const handleKolNavigate = useCallback(
     (kolId?: string) => {
       if (!kolId) return;
-      navigate(`/leaderboard?tab=advanced&kol=${encodeURIComponent(kolId)}`);
+      navigate(`/kols?kol=${encodeURIComponent(kolId)}`);
     },
     [navigate]
   );

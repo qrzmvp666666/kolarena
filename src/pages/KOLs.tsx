@@ -418,12 +418,28 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, custom
     trading_days: 0,
   };
 
+  const hasClosedAnalytics =
+    Number(displayMetrics.trading_days) > 0 ||
+    Number(displayMetrics.total_pnl) !== 0 ||
+    Number(displayMetrics.return_rate) !== 0 ||
+    Number(displayMetrics.win_rate) !== 0 ||
+    Number(displayMetrics.max_profit) !== 0 ||
+    Number(displayMetrics.max_loss) !== 0;
+
+  const hasTrendData = profitTrendData.some(point => Number(point.daily) !== 0);
+  const hasCoinData = coinDistribution.some(item => Number(item.value) > 0);
+
   return (
     <div className="space-y-6">
       {analyticsLoading && (
         <div className="flex items-center justify-end text-xs text-muted-foreground gap-2">
           <RefreshCw className="w-3 h-3 animate-spin" />
           {t('loading') || 'Loading...'}
+        </div>
+      )}
+      {!analyticsLoading && !hasClosedAnalytics && (
+        <div className="border border-dashed border-border rounded-lg px-3 py-2 text-xs text-muted-foreground bg-card/50">
+          暂无历史平仓数据，当前展示为默认值；当该 KOL 出现止盈/止损/平价记录后会自动更新。
         </div>
       )}
       {/* Stats Cards Row */}
@@ -481,59 +497,71 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, custom
               </div>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={profitTrendData}>
-              <defs>
-                <linearGradient id="colorCumulative" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="currentColor" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="currentColor" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-              <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-              <RechartsTooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))', 
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px',
-                  fontSize: '12px'
-                }} 
-              />
-              <Area type="monotone" dataKey="cumulative" stroke="currentColor" fillOpacity={1} fill="url(#colorCumulative)" strokeWidth={2} />
-              <Line type="monotone" dataKey="daily" stroke="#22C55E" strokeWidth={1.5} dot={false} />
-            </AreaChart>
-          </ResponsiveContainer>
+          {hasTrendData ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <AreaChart data={profitTrendData}>
+                <defs>
+                  <linearGradient id="colorCumulative" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="currentColor" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="currentColor" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                <RechartsTooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                    fontSize: '12px'
+                  }} 
+                />
+                <Area type="monotone" dataKey="cumulative" stroke="currentColor" fillOpacity={1} fill="url(#colorCumulative)" strokeWidth={2} />
+                <Line type="monotone" dataKey="daily" stroke="#22C55E" strokeWidth={1.5} dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[220px] flex items-center justify-center text-xs text-muted-foreground border border-dashed border-border rounded-md">
+              暂无收益趋势数据
+            </div>
+          )}
         </div>
 
         <div className="border border-border rounded-lg p-4 bg-card">
           <h3 className="text-sm font-medium text-foreground mb-4">{t('coinDistribution')}</h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <PieChart>
-              <Pie data={coinDistribution} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={2} dataKey="value">
-                {coinDistribution.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <RechartsTooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))', 
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px',
-                  fontSize: '12px'
-                }}
-                formatter={(value, name, props) => [`${props.payload.percent}%`, name]}
-              />
-              <Legend 
-                layout="vertical" 
-                align="right" 
-                verticalAlign="middle"
-                formatter={(value, entry: any) => (
-                  <span className="text-xs text-foreground">{value} ({entry.payload.percent}%)</span>
-                )}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          {hasCoinData ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie data={coinDistribution} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={2} dataKey="value">
+                  {coinDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <RechartsTooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                    fontSize: '12px'
+                  }}
+                  formatter={(value, name, props) => [`${props.payload.percent}%`, name]}
+                />
+                <Legend 
+                  layout="vertical" 
+                  align="right" 
+                  verticalAlign="middle"
+                  formatter={(value, entry: any) => (
+                    <span className="text-xs text-foreground">{value} ({entry.payload.percent}%)</span>
+                  )}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[220px] flex items-center justify-center text-xs text-muted-foreground border border-dashed border-border rounded-md">
+              暂无币种收益占比数据
+            </div>
+          )}
         </div>
       </div>
 
