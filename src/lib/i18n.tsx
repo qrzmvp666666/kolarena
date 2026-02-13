@@ -48,7 +48,7 @@ export const translations: Translations = {
   register: { zh: '登录即注册', en: 'Register' },
   
   // ChartHeader
-  totalAccountValue: { zh: '总账户价值', en: 'TOTAL ACCOUNT VALUE' },
+  totalAccountValue: { zh: '总账户金额', en: 'TOTAL ACCOUNT VALUE' },
   all: { zh: '全部', en: 'ALL' },
   markets: { zh: '市场', en: 'Markets' },
 
@@ -149,7 +149,7 @@ export const translations: Translations = {
   advancedAnalysis: { zh: '高级分析', en: 'Advanced Analysis' },
   model: { zh: '模型', en: 'MODEL' },
   trader: { zh: 'KOL', en: 'TRADER' },
-  accountValue: { zh: '账户价值', en: 'ACCOUNT VALUE' },
+  accountValue: { zh: '账户金额', en: 'ACCOUNT VALUE' },
   returnRate: { zh: '收益率', en: 'RETURN RATE' },
   totalPnL: { zh: '总盈亏', en: 'TOTAL P&L' },
   winRate: { zh: '胜率', en: 'WIN RATE' },
