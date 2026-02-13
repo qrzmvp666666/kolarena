@@ -164,7 +164,8 @@ export const TradingChart = ({
         borderVisible: true,
         ticksVisible: true,
         visible: true,
-          minimumHeight: 32,
+        minimumHeight: 32,
+        rightOffset: Math.floor((chartContainerRef.current.clientWidth / 6) / 2), // Center the latest candle
       },
       crosshair: {
         mode: 1, // CrosshairMode.Normal
