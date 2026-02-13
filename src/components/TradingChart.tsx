@@ -432,12 +432,61 @@ export const TradingChart = ({
                       relative p-0.5 rounded-full border-2 z-20 bg-background
                       ${marker.signal.type === 'long' ? 'border-green-500' : 'border-red-500'}
                       ${marker.signal.status === 'closed' || marker.signal.status === 'cancelled' ? 'opacity-50 grayscale border-gray-400' : ''}
-                    `}>
+                    `}
+                      style={(marker.signal.status === 'entered' || marker.signal.status === 'active') ? {
+                        boxShadow: `0 0 8px 3px ${marker.signal.type === 'long' ? 'rgba(51,240,140,0.5)' : 'rgba(240,80,80,0.5)'}`,
+                        animation: 'kolGlow 2s ease-in-out infinite',
+                      } : undefined}
+                    >
+                      {/* Pulse Ring 1 */}
+                      {(marker.signal.status === 'entered' || marker.signal.status === 'active') && (
+                        <span
+                          style={{
+                            position: 'absolute',
+                            inset: '-4px',
+                            borderRadius: '9999px',
+                            border: `2px solid ${marker.signal.type === 'long' ? 'rgba(51,240,140,0.6)' : 'rgba(240,80,80,0.6)'}`,
+                            animation: 'kolPulseRing 2s cubic-bezier(0,0,0.2,1) infinite',
+                            pointerEvents: 'none' as const,
+                          }}
+                        />
+                      )}
+                      {/* Pulse Ring 2 (delayed) */}
+                      {(marker.signal.status === 'entered' || marker.signal.status === 'active') && (
+                        <span
+                          style={{
+                            position: 'absolute',
+                            inset: '-4px',
+                            borderRadius: '9999px',
+                            border: `2px solid ${marker.signal.type === 'long' ? 'rgba(51,240,140,0.4)' : 'rgba(240,80,80,0.4)'}`,
+                            animation: 'kolPulseRing 2s cubic-bezier(0,0,0.2,1) infinite 0.6s',
+                            pointerEvents: 'none' as const,
+                          }}
+                        />
+                      )}
                       <Avatar className="w-8 h-8">
                         <AvatarImage src={marker.signal.avatarUrl} />
                         <AvatarFallback>{marker.signal.kolName?.substring(0,2)}</AvatarFallback>
                       </Avatar>
                     </div>
+                    {/* 已入场 Badge */}
+                    {(marker.signal.status === 'entered' || marker.signal.status === 'active') && (
+                      <div
+                        style={{
+                          marginTop: '2px',
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          fontSize: '9px',
+                          fontWeight: 700,
+                          whiteSpace: 'nowrap' as const,
+                          backgroundColor: marker.signal.type === 'long' ? 'rgb(51,240,140)' : 'rgb(240,80,80)',
+                          color: marker.signal.type === 'long' ? '#000' : '#fff',
+                          boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+                        }}
+                      >
+                        已入场
+                      </div>
+                    )}
                   </div>
 
                   {/* Price Line & Label */}
