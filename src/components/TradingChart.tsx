@@ -56,6 +56,7 @@ export const TradingChart = ({
   const hoverProfitRef = useRef<HTMLDivElement>(null);
   const hoverLossRef = useRef<HTMLDivElement>(null);
   const hoverRatioRef = useRef<HTMLDivElement>(null);
+  const resizeFreezeUntilRef = useRef<number>(0);
 
   type SignalMarkerKind = 'entry' | 'takeProfit' | 'stopLoss';
   type SignalMarker = {
@@ -215,6 +216,12 @@ export const TradingChart = ({
 
     const updateSignalPositions = () => {
       if (!chartRef.current || !candleSeriesRef.current || !overlayRef.current) return;
+
+      // Skip rendering during resize freeze period to prevent ghost artifacts
+      if (Date.now() < resizeFreezeUntilRef.current) {
+        animationFrameId = requestAnimationFrame(updateSignalPositions);
+        return;
+      }
       
       const series = candleSeriesRef.current;
       // const timeScale = chart.timeScale(); // Already defined in closure
@@ -340,11 +347,22 @@ export const TradingChart = ({
     };
   }, [backgroundColor, textColor, upColor, downColor, wickUpColor, wickDownColor]);
 
-  // Update chart size when container resizes (e.g. sidebar toggle)
+  // Update chart size when container resizes (e.g. sidebar toggle, layout switch)
   useEffect(() => {
     if (!chartRef.current || !chartContainerRef.current) return;
     const resizeObserver = new ResizeObserver(() => {
         if (chartRef.current && chartContainerRef.current) {
+            // Freeze signal rendering for 150ms to let chart stabilize after resize
+            resizeFreezeUntilRef.current = Date.now() + 150;
+
+            // Hide all signal overlays immediately
+            signalElementsRef.current.forEach(el => {
+              el.style.display = 'none';
+            });
+            if (hoverProfitRef.current) hoverProfitRef.current.style.display = 'none';
+            if (hoverLossRef.current) hoverLossRef.current.style.display = 'none';
+            if (hoverRatioRef.current) hoverRatioRef.current.style.display = 'none';
+
             chartRef.current.applyOptions({ 
                 width: chartContainerRef.current.clientWidth,
                 height: chartContainerRef.current.clientHeight 
