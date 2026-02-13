@@ -253,7 +253,7 @@ export const TradingChart = ({
           // Assuming marker is 32x32 roughly
           // Anchor container at the exact price Y so the line aligns to the price.
           // We offset X by 16px to center the marker on the candle.
-          el.style.transform = `translate(${x}px, ${y}px)`;
+          el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
         }
       });
 
@@ -336,13 +336,31 @@ export const TradingChart = ({
     // Start loop
     animationFrameId = requestAnimationFrame(updateSignalPositions);
     
-    // Subscribe to time scale changes (optional, RAF covers it mostly but this can help with edge cases if we stop RAF)
-    timeScale.subscribeVisibleTimeRangeChange(() => {
-        // We rely on RAF for position updates
-    });
+    const hideOverlay = () => {
+      if (overlayRef.current) overlayRef.current.style.opacity = '0';
+    };
+    const showOverlay = () => {
+      if (overlayRef.current) overlayRef.current.style.opacity = '1';
+    };
+    let overlayIdleTimer: number | null = null;
+
+    const handleRangeChange = () => {
+      hideOverlay();
+      if (overlayIdleTimer) window.clearTimeout(overlayIdleTimer);
+      overlayIdleTimer = window.setTimeout(() => {
+        showOverlay();
+      }, 120);
+    };
+
+    // Hide overlays during drag/scroll to prevent ghosting artifacts
+    timeScale.subscribeVisibleTimeRangeChange(handleRangeChange);
+    timeScale.subscribeVisibleLogicalRangeChange(handleRangeChange);
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      timeScale.unsubscribeVisibleTimeRangeChange(handleRangeChange);
+      timeScale.unsubscribeVisibleLogicalRangeChange(handleRangeChange);
+      if (overlayIdleTimer) window.clearTimeout(overlayIdleTimer);
       cancelAnimationFrame(animationFrameId);
       chart.remove();
     };
@@ -430,7 +448,7 @@ export const TradingChart = ({
                 if (el) signalElementsRef.current.set(marker.key, el);
                 else signalElementsRef.current.delete(marker.key);
              }}
-             className="absolute h-0 w-0 group pointer-events-auto cursor-pointer transition-transform will-change-transform"
+             className="absolute h-0 w-0 group pointer-events-auto cursor-pointer will-change-transform"
              style={{ display: 'none' }} // Hidden initially until positioned
            >
               {marker.kind === 'entry' ? (
