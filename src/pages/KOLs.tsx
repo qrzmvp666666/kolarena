@@ -30,6 +30,9 @@ const defaultColors = [
   'hsl(25, 100%, 50%)', 'hsl(0, 0%, 40%)', 'hsl(0, 0%, 20%)', 'hsl(45, 100%, 50%)',
 ];
 
+const DEFAULT_INITIAL_CAPITAL = 10000;
+const coinPalette = ['#F7931A', '#627EEA', '#00FFA3', '#23292F', '#C3A634', '#F3BA2F', '#8B5CF6', '#06B6D4'];
+
 interface KolData {
   id: string;
   name: string;
@@ -97,6 +100,29 @@ interface TradeRow {
   status: string;
 }
 
+interface KolMetricsRow {
+  account_value: number;
+  return_rate: number;
+  total_pnl: number;
+  win_rate: number;
+  max_profit: number;
+  max_loss: number;
+  trading_days: number;
+}
+
+interface ProfitTrendPoint {
+  date: string;
+  daily: number;
+  cumulative: number;
+}
+
+interface CoinDistributionPoint {
+  name: string;
+  value: number;
+  percent: number;
+  color: string;
+}
+
 const mapSignalToTrade = (signal: SignalRow): TradeRow => {
   return {
     id: signal.id,
@@ -117,42 +143,36 @@ const mapSignalToTrade = (signal: SignalRow): TradeRow => {
   };
 };
 
-// Generate mock profit trend data
-const generateProfitTrendData = (traderId: string, timeRange: string = '7days', customRange?: DateRange) => {
-  let days = 30;
-  if (timeRange === 'today') days = 1;
-  else if (timeRange === '7days') days = 7;
-  else if (timeRange === '1month') days = 30;
-  else if (timeRange === '6months') days = 180;
-  else if (timeRange === '1year') days = 365;
-  else if (timeRange === 'custom' && customRange?.from && customRange?.to) {
-    const diffTime = Math.abs(customRange.to.getTime() - customRange.from.getTime());
-    days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+const getTimeBounds = (
+  timeRange: 'today' | '7days' | '1month' | '6months' | '1year' | 'custom',
+  customRange?: DateRange
+) => {
+  const now = new Date();
+  const end = new Date(now);
+  end.setHours(23, 59, 59, 999);
+
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+
+  if (timeRange === 'today') {
+    // already start/end of today
+  } else if (timeRange === '7days') {
+    start.setDate(start.getDate() - 6);
+  } else if (timeRange === '1month') {
+    start.setDate(start.getDate() - 29);
+  } else if (timeRange === '6months') {
+    start.setDate(start.getDate() - 179);
+  } else if (timeRange === '1year') {
+    start.setDate(start.getDate() - 364);
+  } else if (timeRange === 'custom' && customRange?.from && customRange?.to) {
+    const customStart = new Date(customRange.from);
+    customStart.setHours(0, 0, 0, 0);
+    const customEnd = new Date(customRange.to);
+    customEnd.setHours(23, 59, 59, 999);
+    return { from: customStart.toISOString(), to: customEnd.toISOString() };
   }
 
-  let cumulative = 10000;
-  return Array.from({ length: days }, (_, i) => {
-    const daily = (Math.random() - 0.45) * 500;
-    cumulative += daily;
-    return {
-      date: format(new Date(Date.now() - (days - i) * 24 * 60 * 60 * 1000), 'MM/dd'),
-      daily: Math.round(daily),
-      cumulative: Math.round(cumulative),
-    };
-  });
-};
-
-const generateCoinDistribution = () => {
-  const coins = [
-    { name: 'BTC', value: Math.floor(Math.random() * 40) + 20, color: '#F7931A' },
-    { name: 'ETH', value: Math.floor(Math.random() * 25) + 15, color: '#627EEA' },
-    { name: 'SOL', value: Math.floor(Math.random() * 15) + 10, color: '#00FFA3' },
-    { name: 'XRP', value: Math.floor(Math.random() * 10) + 5, color: '#23292F' },
-    { name: 'DOGE', value: Math.floor(Math.random() * 10) + 5, color: '#C3A634' },
-    { name: 'BNB', value: Math.floor(Math.random() * 10) + 5, color: '#F3BA2F' },
-  ];
-  const total = coins.reduce((sum, c) => sum + c.value, 0);
-  return coins.map(c => ({ ...c, percent: ((c.value / total) * 100).toFixed(1) }));
+  return { from: start.toISOString(), to: end.toISOString() };
 };
 
 // ---- Advanced Analysis Content ----
@@ -161,18 +181,68 @@ interface AdvancedAnalysisProps {
   traders: KolData[];
   t: (key: string) => string;
   selectedTrader: string;
-  timeRange: string;
+  timeRange: 'today' | '7days' | '1month' | '6months' | '1year' | 'custom';
   customDateRange?: DateRange;
+  refreshTick: number;
 }
 
-const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, customDateRange }: AdvancedAnalysisProps) => {
+const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, customDateRange, refreshTick }: AdvancedAnalysisProps) => {
   const currentTrader = traders.find(tr => tr.id === selectedTrader) || traders[0];
-  const profitTrendData = useMemo(() => generateProfitTrendData(selectedTrader, timeRange, customDateRange), [selectedTrader, timeRange, customDateRange]);
-  const coinDistribution = useMemo(() => generateCoinDistribution(), [selectedTrader]);
+  const [metrics, setMetrics] = useState<KolMetricsRow | null>(null);
+  const [profitTrendData, setProfitTrendData] = useState<ProfitTrendPoint[]>([]);
+  const [coinDistribution, setCoinDistribution] = useState<CoinDistributionPoint[]>([]);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   const [activeSignals, setActiveSignals] = useState<SignalRow[]>([]);
   const [historySignals, setHistorySignals] = useState<SignalRow[]>([]);
   const [signalsLoading, setSignalsLoading] = useState(false);
+
+  const fetchAnalytics = useCallback(async (kolId: string) => {
+    if (!kolId) return;
+    setAnalyticsLoading(true);
+    try {
+      const { from, to } = getTimeBounds(timeRange, customDateRange);
+      const [metricsRes, trendRes, distributionRes] = await Promise.all([
+        supabase.rpc('get_kol_metrics', {
+          p_kol_id: kolId,
+          p_from: from,
+          p_to: to,
+          p_initial_capital: DEFAULT_INITIAL_CAPITAL,
+        }),
+        supabase.rpc('get_kol_profit_trend', {
+          p_kol_id: kolId,
+          p_from: from,
+          p_to: to,
+          p_initial_capital: DEFAULT_INITIAL_CAPITAL,
+        }),
+        supabase.rpc('get_kol_coin_distribution', {
+          p_kol_id: kolId,
+          p_from: from,
+          p_to: to,
+          p_initial_capital: DEFAULT_INITIAL_CAPITAL,
+        }),
+      ]);
+
+      if (metricsRes.error) console.error('Error fetching KOL metrics:', metricsRes.error);
+      else setMetrics(((metricsRes.data || [])[0] || null) as KolMetricsRow | null);
+
+      if (trendRes.error) console.error('Error fetching profit trend:', trendRes.error);
+      else setProfitTrendData((trendRes.data || []) as ProfitTrendPoint[]);
+
+      if (distributionRes.error) console.error('Error fetching coin distribution:', distributionRes.error);
+      else {
+        const rows = (distributionRes.data || []) as Array<{ name: string; value: number; percent: number }>;
+        setCoinDistribution(rows.map((row, idx) => ({
+          ...row,
+          color: coinPalette[idx % coinPalette.length],
+        })));
+      }
+    } catch (err) {
+      console.error('Error fetching analytics:', err);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  }, [timeRange, customDateRange]);
 
   const fetchSignals = useCallback(async (kolId: string) => {
     if (!kolId) return;
@@ -198,6 +268,12 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, custom
       fetchSignals(selectedTrader);
     }
   }, [selectedTrader, fetchSignals]);
+
+  useEffect(() => {
+    if (selectedTrader) {
+      fetchAnalytics(selectedTrader);
+    }
+  }, [selectedTrader, fetchAnalytics, refreshTick]);
 
   useEffect(() => {
     if (!selectedTrader) return;
@@ -243,11 +319,12 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, custom
             setActiveSignals(prev => prev.filter(s => s.id !== oldRow.id));
             setHistorySignals(prev => prev.filter(s => s.id !== oldRow.id));
           }
+          fetchAnalytics(selectedTrader);
         }
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [selectedTrader]);
+  }, [selectedTrader, fetchAnalytics]);
 
   const activeTrades = useMemo(() => activeSignals.map(mapSignalToTrade), [activeSignals]);
   const historyTrades = useMemo(() => historySignals.map(mapSignalToTrade), [historySignals]);
@@ -331,41 +408,57 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, custom
     );
   }
 
+  const displayMetrics: KolMetricsRow = metrics || {
+    account_value: DEFAULT_INITIAL_CAPITAL,
+    return_rate: 0,
+    total_pnl: 0,
+    win_rate: 0,
+    max_profit: 0,
+    max_loss: 0,
+    trading_days: 0,
+  };
+
   return (
     <div className="space-y-6">
+      {analyticsLoading && (
+        <div className="flex items-center justify-end text-xs text-muted-foreground gap-2">
+          <RefreshCw className="w-3 h-3 animate-spin" />
+          {t('loading') || 'Loading...'}
+        </div>
+      )}
       {/* Stats Cards Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         <div className="border border-border rounded-lg p-4 bg-card">
           <div className="text-xs text-muted-foreground mb-1">{t('accountValue')}</div>
-          <div className="text-xl font-bold text-foreground">${Number(currentTrader.account_value).toLocaleString()}</div>
+          <div className="text-xl font-bold text-foreground">${Number(displayMetrics.account_value).toLocaleString()}</div>
         </div>
         <div className="border border-border rounded-lg p-4 bg-card">
           <div className="text-xs text-muted-foreground mb-1">{t('returnRate')}</div>
-          <div className={`text-xl font-bold ${currentTrader.return_rate >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
-            {currentTrader.return_rate >= 0 ? '+' : ''}{Number(currentTrader.return_rate).toFixed(2)}%
+          <div className={`text-xl font-bold ${displayMetrics.return_rate >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+            {displayMetrics.return_rate >= 0 ? '+' : ''}{Number(displayMetrics.return_rate).toFixed(2)}%
           </div>
         </div>
         <div className="border border-border rounded-lg p-4 bg-card">
           <div className="text-xs text-muted-foreground mb-1">{t('totalPnL')}</div>
-          <div className={`text-xl font-bold ${currentTrader.total_pnl >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
-            {currentTrader.total_pnl >= 0 ? '+' : ''}${Number(currentTrader.total_pnl).toLocaleString()}
+          <div className={`text-xl font-bold ${displayMetrics.total_pnl >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+            {displayMetrics.total_pnl >= 0 ? '+' : ''}${Number(displayMetrics.total_pnl).toLocaleString()}
           </div>
         </div>
         <div className="border border-border rounded-lg p-4 bg-card">
           <div className="text-xs text-muted-foreground mb-1">{t('winRate')}</div>
-          <div className="text-xl font-bold text-foreground">{currentTrader.win_rate}%</div>
+          <div className="text-xl font-bold text-foreground">{Number(displayMetrics.win_rate).toFixed(2)}%</div>
         </div>
         <div className="border border-border rounded-lg p-4 bg-card">
           <div className="text-xs text-muted-foreground mb-1">{t('maxProfit')}</div>
-          <div className="text-xl font-bold text-accent-green">${Number(currentTrader.max_profit).toLocaleString()}</div>
+          <div className="text-xl font-bold text-accent-green">${Number(displayMetrics.max_profit).toLocaleString()}</div>
         </div>
         <div className="border border-border rounded-lg p-4 bg-card">
           <div className="text-xs text-muted-foreground mb-1">{t('maxLoss')}</div>
-          <div className="text-xl font-bold text-accent-red">-${Math.abs(Number(currentTrader.max_loss)).toLocaleString()}</div>
+          <div className="text-xl font-bold text-accent-red">-${Math.abs(Number(displayMetrics.max_loss)).toLocaleString()}</div>
         </div>
         <div className="border border-border rounded-lg p-4 bg-card">
           <div className="text-xs text-muted-foreground mb-1">{t('tradingDays')}</div>
-          <div className="text-xl font-bold text-foreground">{currentTrader.trading_days}</div>
+          <div className="text-xl font-bold text-foreground">{displayMetrics.trading_days}</div>
         </div>
       </div>
 
@@ -478,6 +571,7 @@ const KOLsPage = () => {
   const [timeRange, setTimeRange] = useState<'today' | '7days' | '1month' | '6months' | '1year' | 'custom'>('7days');
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   const requestedKolId = useMemo(() => {
     const raw = searchParams.get('kol');
@@ -538,6 +632,11 @@ const KOLsPage = () => {
     }
     return t(`timeRange_${timeRange}`);
   };
+
+  const handleRefresh = useCallback(() => {
+    fetchLeaderboard();
+    setRefreshTick(prev => prev + 1);
+  }, [fetchLeaderboard]);
 
   return (
     <div className="min-h-screen bg-background text-foreground font-mono relative">
@@ -696,7 +795,7 @@ const KOLsPage = () => {
             </div>
 
             {/* Refresh */}
-            <Button variant="outline" size="sm" className="gap-2" onClick={fetchLeaderboard}>
+            <Button variant="outline" size="sm" className="gap-2" onClick={handleRefresh}>
               <RefreshCw className="w-4 h-4" />
               {t('refresh')}
             </Button>
@@ -716,6 +815,7 @@ const KOLsPage = () => {
             selectedTrader={selectedKol}
             timeRange={timeRange}
             customDateRange={customDateRange}
+            refreshTick={refreshTick}
           />
         )}
       </div>

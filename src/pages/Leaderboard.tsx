@@ -31,6 +31,8 @@ const defaultColors = [
   'hsl(25, 100%, 50%)', 'hsl(0, 0%, 40%)', 'hsl(0, 0%, 20%)', 'hsl(45, 100%, 50%)',
 ];
 
+const DEFAULT_INITIAL_CAPITAL = 10000;
+
 export interface KolData {
   id: string;
   name: string;
@@ -55,6 +57,38 @@ const getKolDisplay = (kol: KolData, index: number) => {
     color: mapped?.color || defaultColors[index % defaultColors.length],
     icon: mapped?.icon || '⚪',
   };
+};
+
+const getTimeBounds = (
+  timeRange: 'today' | '7days' | '1month' | '6months' | '1year' | 'custom',
+  customRange?: DateRange
+) => {
+  const now = new Date();
+  const end = new Date(now);
+  end.setHours(23, 59, 59, 999);
+
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+
+  if (timeRange === 'today') {
+    // today window
+  } else if (timeRange === '7days') {
+    start.setDate(start.getDate() - 6);
+  } else if (timeRange === '1month') {
+    start.setDate(start.getDate() - 29);
+  } else if (timeRange === '6months') {
+    start.setDate(start.getDate() - 179);
+  } else if (timeRange === '1year') {
+    start.setDate(start.getDate() - 364);
+  } else if (timeRange === 'custom' && customRange?.from && customRange?.to) {
+    const customStart = new Date(customRange.from);
+    customStart.setHours(0, 0, 0, 0);
+    const customEnd = new Date(customRange.to);
+    customEnd.setHours(23, 59, 59, 999);
+    return { from: customStart.toISOString(), to: customEnd.toISOString() };
+  }
+
+  return { from: start.toISOString(), to: end.toISOString() };
 };
 
 const ProfitComparisonPanel = () => {
@@ -163,10 +197,16 @@ const LeaderboardContent = () => {
   const [kolsData, setKolsData] = useState<KolData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch leaderboard data via RPC
+  // Fetch leaderboard data via ranged pre-aggregated RPC
   const fetchLeaderboard = useCallback(async () => {
     try {
-      const { data, error } = await supabase.rpc('get_leaderboard');
+      setLoading(true);
+      const { from, to } = getTimeBounds(timeRange, customDateRange);
+      const { data, error } = await supabase.rpc('get_leaderboard_by_range', {
+        p_from: from,
+        p_to: to,
+        p_initial_capital: DEFAULT_INITIAL_CAPITAL,
+      });
       if (error) {
         console.error('Error fetching leaderboard:', error);
         return;
@@ -179,13 +219,13 @@ const LeaderboardContent = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [timeRange, customDateRange]);
 
   // Initial fetch + Realtime subscription
   useEffect(() => {
     fetchLeaderboard();
 
-    // Subscribe to Realtime changes on kols table
+    // Subscribe to Realtime changes on kols/signals
     const channel = supabase
       .channel('kols-realtime')
       .on(
@@ -193,6 +233,13 @@ const LeaderboardContent = () => {
         { event: '*', schema: 'public', table: 'kols' },
         (_payload) => {
           // Re-fetch the full leaderboard on any change (INSERT, UPDATE, DELETE)
+          fetchLeaderboard();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'signals' },
+        (_payload) => {
           fetchLeaderboard();
         }
       )
@@ -230,7 +277,6 @@ const LeaderboardContent = () => {
     setWinRateFilter('all');
     setTimeRange('7days');
     setCustomDateRange(undefined);
-    fetchLeaderboard();
   };
 
   const getTimeRangeLabel = () => {
@@ -320,6 +366,70 @@ const LeaderboardContent = () => {
 
           {/* Search & Actions */}
           <div className="flex items-center gap-3">
+          {activeTab === 'overall' && (
+              <div className="flex items-center gap-1">
+                {(['today', '7days', '1month', '6months', '1year'] as const).map((range) => (
+                  <button
+                    key={range}
+                    onClick={() => setTimeRange(range)}
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                      timeRange === range
+                        ? 'bg-foreground text-background'
+                        : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
+                    }`}
+                  >
+                    {t(`timeRange_${range}`)}
+                  </button>
+                ))}
+                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-1.5 ${
+                        timeRange === 'custom'
+                          ? 'bg-foreground text-background'
+                          : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
+                      }`}
+                    >
+                      <CalendarIcon className="w-3 h-3" />
+                      {timeRange === 'custom' && customDateRange?.from && customDateRange?.to
+                        ? getTimeRangeLabel()
+                        : t('timeRange_custom')}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-4" align="end" sideOffset={8}>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-foreground">{t('selectDateRange')}</span>
+                      </div>
+                      <div className="flex border border-border rounded-lg overflow-hidden p-1 bg-card">
+                        <Calendar
+                          initialFocus
+                          mode="range"
+                          selected={customDateRange}
+                          onSelect={setCustomDateRange}
+                          numberOfMonths={2}
+                          locale={language === 'zh' ? zhCN : enUS}
+                          className="pointer-events-auto"
+                        />
+                      </div>
+                      <Button
+                        size="sm"
+                        className="w-full bg-foreground text-background hover:bg-foreground/90 font-bold"
+                        onClick={() => {
+                          if (customDateRange?.from && customDateRange?.to) {
+                            setTimeRange('custom');
+                            setIsCalendarOpen(false);
+                          }
+                        }}
+                        disabled={!customDateRange?.from || !customDateRange?.to}
+                      >
+                        {t('confirm')}
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
           {activeTab === 'overall' && (
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
