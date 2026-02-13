@@ -6,6 +6,7 @@ import { useLanguage } from '@/lib/i18n';
 import { models } from '@/lib/chartData';
 import { supabase } from '@/lib/supabase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -470,6 +471,7 @@ const KOLsPage = () => {
   const [kolsData, setKolsData] = useState<KolData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedKol, setSelectedKol] = useState('');
+  const [marketType, setMarketType] = useState<'futures' | 'spot'>('futures');
   const [timeRange, setTimeRange] = useState<'today' | '7days' | '1month' | '6months' | '1year' | 'custom'>('7days');
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -542,11 +544,87 @@ const KOLsPage = () => {
       <div className="px-6 py-3">
         {/* Filter Bar */}
         <div className="flex items-center justify-between mb-6">
+          {/* Left: Market Type Toggle + Tab */}
           <div className="flex items-center gap-4">
-            <h1 className="text-lg font-bold text-foreground">{t('advancedAnalysis')}</h1>
+            {/* Market Type Toggle */}
+            <div className="flex items-center rounded-lg border border-border overflow-hidden">
+              <button
+                onClick={() => setMarketType('futures')}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  marketType === 'futures'
+                    ? 'bg-foreground text-background'
+                    : 'bg-card text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {t('futures')}
+              </button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      disabled
+                      className="px-4 py-2 text-sm font-medium bg-muted/50 text-muted-foreground cursor-not-allowed opacity-50"
+                    >
+                      {t('spot')}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('comingSoon')}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            {/* Data Overview Tab */}
+            <button
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all bg-foreground text-background border-foreground shadow-sm"
+            >
+              <span className="text-sm">{t('dataOverview')}</span>
+            </button>
           </div>
 
+          {/* Right: Filters */}
           <div className="flex items-center gap-4">
+            {/* KOL Selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">{t('selectTrader')}:</span>
+              <Select value={selectedKol} onValueChange={setSelectedKol}>
+                <SelectTrigger className="w-[200px] h-9 bg-card border-border">
+                  <SelectValue placeholder={kolsData[0]?.name}>
+                    {(() => {
+                      const found = kolsData.find(t => t.id === selectedKol);
+                      const idx = kolsData.findIndex(t => t.id === selectedKol);
+                      const display = found ? getKolDisplay(found, idx) : null;
+                      return found ? (
+                        <div className="flex items-center gap-2">
+                          {found.avatar_url ? (
+                            <img src={found.avatar_url} alt={found.name} className="w-5 h-5 rounded-full object-cover" />
+                          ) : (
+                            <span>{display?.icon}</span>
+                          )}
+                          <span>{found.name}</span>
+                        </div>
+                      ) : '';
+                    })()}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="bg-popover border border-border z-50">
+                  {kolsData.map((trader, idx) => (
+                    <SelectItem key={trader.id} value={trader.id}>
+                      <div className="flex items-center gap-2">
+                        {trader.avatar_url ? (
+                          <img src={trader.avatar_url} alt={trader.name} className="w-5 h-5 rounded-full object-cover" />
+                        ) : (
+                          <span>{getKolDisplay(trader, idx).icon}</span>
+                        )}
+                        <span>{trader.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Time Range Filter */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">{t('timeRange')}:</span>
@@ -612,46 +690,6 @@ const KOLsPage = () => {
                   </PopoverContent>
                 </Popover>
               </div>
-            </div>
-
-            {/* KOL Selector */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">{t('selectTrader')}:</span>
-              <Select value={selectedKol} onValueChange={setSelectedKol}>
-                <SelectTrigger className="w-[200px] h-9 bg-card border-border">
-                  <SelectValue placeholder={kolsData[0]?.name}>
-                    {(() => {
-                      const found = kolsData.find(t => t.id === selectedKol);
-                      const idx = kolsData.findIndex(t => t.id === selectedKol);
-                      const display = found ? getKolDisplay(found, idx) : null;
-                      return found ? (
-                        <div className="flex items-center gap-2">
-                          {found.avatar_url ? (
-                            <img src={found.avatar_url} alt={found.name} className="w-5 h-5 rounded-full object-cover" />
-                          ) : (
-                            <span>{display?.icon}</span>
-                          )}
-                          <span>{found.name}</span>
-                        </div>
-                      ) : '';
-                    })()}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="bg-popover border border-border z-50">
-                  {kolsData.map((trader, idx) => (
-                    <SelectItem key={trader.id} value={trader.id}>
-                      <div className="flex items-center gap-2">
-                        {trader.avatar_url ? (
-                          <img src={trader.avatar_url} alt={trader.name} className="w-5 h-5 rounded-full object-cover" />
-                        ) : (
-                          <span>{getKolDisplay(trader, idx).icon}</span>
-                        )}
-                        <span>{trader.name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
 
             {/* Refresh */}

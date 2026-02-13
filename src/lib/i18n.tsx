@@ -144,6 +144,7 @@ export const translations: Translations = {
   comprehensiveIndex: { zh: '综合指数', en: 'Comprehensive' },
   average: { zh: '平均', en: 'Average' },
   overallData: { zh: '总体数据', en: 'Overall Data' },
+  dataOverview: { zh: '数据概览', en: 'Data Overview' },
   advancedAnalysis: { zh: '高级分析', en: 'Advanced Analysis' },
   model: { zh: '模型', en: 'MODEL' },
   trader: { zh: 'KOL', en: 'TRADER' },
