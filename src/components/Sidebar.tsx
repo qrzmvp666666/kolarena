@@ -135,6 +135,7 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover }: SidebarProps) => {
                 }),
                 takeProfit: s.take_profit ? String(s.take_profit) : null,
                 stopLoss: s.stop_loss ? String(s.stop_loss) : null,
+            profitRatio: s.expected_pnl_ratio ? Number(s.expected_pnl_ratio).toFixed(2) : '-',
             entryStatus: s.status === 'pending_entry' ? 'pending' : (s.status === 'entered' || s.status === 'active' ? 'entered' : undefined),
             _sortTime: new Date(s.entry_time || s.created_at || 0).getTime(),
           }));
@@ -168,7 +169,7 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover }: SidebarProps) => {
                 isProfit: (s.pnl_percentage || 0) >= 0,
                 signalDuration: s.signal_duration || '-',
                 returnRate: s.pnl_percentage ? `${s.pnl_percentage}%` : '0%', // slightly redundant with profit
-                profitRatio: s.pnl_ratio || '0:0',
+                profitRatio: s.pnl_ratio ? Number(s.pnl_ratio).toFixed(2) : '-',
                 outcome: s.exit_type === 'take_profit' ? 'takeProfit' : s.exit_type === 'stop_loss' ? 'stopLoss' : 'draw'
             }));
             setHistorySignals(mappedHistory);
@@ -383,7 +384,7 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover }: SidebarProps) => {
                     </div>
                     <div>
                       <div className="text-[10px] text-muted-foreground">{t('profitRatio')}</div>
-                      <div className="text-xs font-semibold text-foreground">
+                      <div className={`text-xs font-semibold ${trade.profitRatio === '-' ? 'text-muted-foreground' : Number(trade.profitRatio) > 0 ? 'text-[rgb(51,240,140)]' : Number(trade.profitRatio) < 0 ? 'text-[rgb(240,80,80)]' : 'text-foreground'}`}>
                         {trade.profitRatio}
                       </div>
                     </div>
@@ -496,8 +497,8 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover }: SidebarProps) => {
                       </div>
                     </div>
                     <div>
-                      <div className="text-[10px] text-muted-foreground">{t('profitRatio')}</div>
-                      <div className="text-xs font-semibold text-foreground">0:0</div>
+                      <div className="text-[10px] text-muted-foreground">{t('expectedPnlRatio')}</div>
+                      <div className={`text-xs font-semibold ${order.profitRatio === '-' ? 'text-muted-foreground' : Number(order.profitRatio) > 0 ? 'text-[rgb(51,240,140)]' : Number(order.profitRatio) < 0 ? 'text-[rgb(240,80,80)]' : 'text-foreground'}`}>{order.profitRatio}</div>
                     </div>
                   </div>
                   </div>

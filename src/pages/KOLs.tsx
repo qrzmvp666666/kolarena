@@ -70,6 +70,7 @@ interface SignalRow {
   exit_type: 'take_profit' | 'stop_loss' | 'manual' | 'draw' | null;
   pnl_percentage: number | null;
   pnl_ratio: string | null;
+  expected_pnl_ratio: string | null;
   status: 'active' | 'closed' | 'cancelled';
   signal_duration: string | null;
   entry_time: string | null;
@@ -90,6 +91,7 @@ interface TradeRow {
   time: string;
   pnl: number;
   roi: string;
+  expectedRoi: string;
   duration: string;
   closeTime: string;
   status: string;
@@ -108,6 +110,7 @@ const mapSignalToTrade = (signal: SignalRow): TradeRow => {
     time: signal.entry_time ? format(new Date(signal.entry_time), 'MM/dd HH:mm') : '-',
     pnl: signal.pnl_percentage ? Number(signal.pnl_percentage) : 0,
     roi: signal.pnl_ratio || (signal.pnl_percentage ? Number(signal.pnl_percentage).toFixed(2) : '0'),
+    expectedRoi: signal.expected_pnl_ratio || '0',
     duration: signal.signal_duration || '-',
     closeTime: signal.exit_time ? format(new Date(signal.exit_time), 'MM/dd HH:mm') : '-',
     status: signal.exit_type === 'take_profit' ? 'tp' : signal.exit_type === 'stop_loss' ? 'sl' : signal.exit_type === 'draw' ? 'draw' : signal.exit_type === 'manual' ? 'manual' : '-',
@@ -260,11 +263,11 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, custom
             <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('entryPrice')}</th>
             <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('takeProfit')}</th>
             <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('stopLoss')}</th>
+            <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t(isHistory ? 'tradePnL' : 'expectedPnlRatio')}</th>
             <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('orderTime')}</th>
             {isHistory && <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('signalDuration')}</th>}
             {isHistory && <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('closeTime')}</th>}
             {isHistory && <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('signalStatus')}</th>}
-            <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t(isHistory ? 'tradePnL' : 'profitRatio')}</th>
           </tr>
         </thead>
         <tbody>
@@ -295,6 +298,15 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, custom
                 <td className="px-4 py-2 text-left text-foreground">${trade.entryPrice}</td>
                 <td className="px-4 py-2 text-left text-accent-green">{trade.tp}</td>
                 <td className="px-4 py-2 text-left text-accent-red">{trade.sl}</td>
+                <td className={`px-4 py-2 text-left font-medium ${(isHistory ? trade.pnl : Number(trade.expectedRoi)) === 0 ? 'text-muted-foreground' : (isHistory ? trade.pnl : Number(trade.expectedRoi)) > 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+                  <div className="flex flex-col items-start">
+                    {isHistory ? (
+                      <span>{trade.pnl === 0 ? '-' : Number(trade.roi).toFixed(2)}</span>
+                    ) : (
+                      <span>{trade.expectedRoi && Number(trade.expectedRoi) !== 0 ? Number(trade.expectedRoi).toFixed(2) : '-'}</span>
+                    )}
+                  </div>
+                </td>
                 <td className="px-4 py-2 text-left text-muted-foreground">{trade.time}</td>
                 {isHistory && <td className="px-4 py-2 text-left text-muted-foreground">{trade.duration}</td>}
                 {isHistory && <td className="px-4 py-2 text-left text-muted-foreground">{trade.closeTime}</td>}
@@ -303,15 +315,6 @@ const AdvancedAnalysisContent = ({ traders, t, selectedTrader, timeRange, custom
                     {trade.status === 'tp' ? t('tpHit') : trade.status === 'sl' ? t('slHit') : trade.status === 'draw' ? t('drawHit') : trade.status === 'manual' ? t('manualClose') : '-'}
                   </td>
                 )}
-                <td className={`px-4 py-2 text-left font-medium ${(isHistory ? trade.pnl : Number(trade.roi)) === 0 ? 'text-muted-foreground' : (isHistory ? trade.pnl : Number(trade.roi)) > 0 ? 'text-accent-green' : 'text-accent-red'}`}>
-                  <div className="flex flex-col items-start">
-                    {isHistory ? (
-                      <span>{trade.pnl === 0 ? '-' : `${trade.pnl > 0 ? '+' : ''}${trade.pnl.toFixed(2)}%`}</span>
-                    ) : (
-                      <span>{trade.roi && Number(trade.roi) !== 0 ? `${Number(trade.roi) > 0 ? '+' : ''}${trade.roi}%` : '-'}</span>
-                    )}
-                  </div>
-                </td>
               </tr>
             ))
           )}

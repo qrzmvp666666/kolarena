@@ -15,6 +15,7 @@ interface SignalListItem {
   takeProfit: string | null;
   stopLoss: string | null;
   profitRatio: string;
+  isHistorySignal?: boolean;
   returnRate?: string;
   isProfit?: boolean;
   signalDuration?: string;
@@ -180,8 +181,8 @@ const SignalListCard = ({ signal, isHistory = false, isFollowed = false, isSubsc
           </div>
         </div>
         <div>
-          <div className="text-xs text-muted-foreground mb-1">{t('profitRatio')}</div>
-          <div className="text-sm font-semibold text-foreground">{signal.profitRatio}</div>
+          <div className="text-xs text-muted-foreground mb-1">{t(signal.isHistorySignal ? 'profitRatio' : 'expectedPnlRatio')}</div>
+          <div className={`text-sm font-semibold ${signal.profitRatio === '-' ? 'text-muted-foreground' : Number(signal.profitRatio) > 0 ? 'text-[rgb(51,240,140)]' : Number(signal.profitRatio) < 0 ? 'text-[rgb(240,80,80)]' : 'text-foreground'}`}>{signal.profitRatio}</div>
         </div>
       </div>
 

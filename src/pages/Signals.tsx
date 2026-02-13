@@ -36,6 +36,7 @@ interface SignalRow {
   exit_type: 'take_profit' | 'stop_loss' | 'manual' | 'draw' | null;
   pnl_percentage: number | null;
   pnl_ratio: string | null;
+  expected_pnl_ratio: string | null;
   status: 'pending_entry' | 'entered' | 'active' | 'closed' | 'cancelled';
   signal_duration: string | null;
   entry_time: string | null;
@@ -87,7 +88,10 @@ const transformSignal = (row: SignalRow, isHistory: boolean) => {
     orderTime: entryTimeStr,
     takeProfit: row.take_profit !== null ? String(row.take_profit) : null,
     stopLoss: row.stop_loss !== null ? String(row.stop_loss) : null,
-    profitRatio: row.pnl_ratio || '0:0',
+    profitRatio: isHistory
+      ? (row.pnl_ratio ? Number(row.pnl_ratio).toFixed(2) : '-')
+      : (row.expected_pnl_ratio ? Number(row.expected_pnl_ratio).toFixed(2) : '-'),
+    isHistorySignal: isHistory,
     entryStatus,
     ...(isHistory ? {
       returnRate,

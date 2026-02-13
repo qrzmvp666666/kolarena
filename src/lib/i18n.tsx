@@ -120,6 +120,7 @@ export const translations: Translations = {
   orderTime: { zh: '委托时间', en: 'Order Time' },
   duration: { zh: '持续时间', en: 'Duration' },
   profitRatio: { zh: '盈亏比', en: 'P&L Ratio' },
+  expectedPnlRatio: { zh: '预计盈亏比', en: 'Expected P&L' },
   closePrice: { zh: '平仓价', en: 'Close' },
   openTime: { zh: '开仓', en: 'Open' },
   closeTime: { zh: '平仓', en: 'Close' },
