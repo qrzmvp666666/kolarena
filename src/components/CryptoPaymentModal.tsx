@@ -47,12 +47,6 @@ const CryptoPaymentModal = ({ open, onOpenChange, planName, price, currency = 'U
           )}
         </div>
 
-        <div className="p-3 border-t border-border bg-muted/30">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Shield className="w-3.5 h-3.5 text-green-500" />
-            {t('securePaymentNote')}
-          </div>
-        </div>
       </DialogContent>
     </Dialog>
   );
