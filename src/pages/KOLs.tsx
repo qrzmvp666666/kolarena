@@ -527,6 +527,10 @@ const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRan
 
   const hasTrendData = returnRateTrendData.length > 0;
   const hasCoinData = coinDistribution.some(item => Number(item.value) > 0);
+  const latestCumulativeReturnRate = hasTrendData
+    ? Number(returnRateTrendData[returnRateTrendData.length - 1].cumulativeReturnRate)
+    : 0;
+  const cumulativeTrendColor = latestCumulativeReturnRate >= 0 ? '#22C55E' : '#EF4444';
 
   return (
     <div className="space-y-6">
@@ -585,24 +589,14 @@ const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRan
               <TrendingUp className="w-4 h-4" />
               {t('profitTrend')}
             </h3>
-            <div className="flex items-center gap-4 text-xs">
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-full bg-foreground" />
-                <span className="text-muted-foreground">{language === 'zh' ? '累计收益率' : 'Cumulative Return Rate'}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-full bg-accent-green" />
-                <span className="text-muted-foreground">{language === 'zh' ? '日收益率' : 'Daily Return Rate'}</span>
-              </div>
-            </div>
           </div>
           {hasTrendData ? (
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={returnRateTrendData}>
                 <defs>
                   <linearGradient id="colorCumulative" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="currentColor" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="currentColor" stopOpacity={0}/>
+                    <stop offset="5%" stopColor={cumulativeTrendColor} stopOpacity={0.32}/>
+                    <stop offset="95%" stopColor={cumulativeTrendColor} stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -627,7 +621,7 @@ const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRan
                       : (language === 'zh' ? '累计收益率' : 'Cumulative Return Rate')
                   ]}
                 />
-                <Area type="monotone" dataKey="cumulativeReturnRate" stroke="currentColor" fillOpacity={1} fill="url(#colorCumulative)" strokeWidth={2} />
+                <Area type="monotone" dataKey="cumulativeReturnRate" stroke={cumulativeTrendColor} fillOpacity={1} fill="url(#colorCumulative)" strokeWidth={2} />
                 <Line type="monotone" dataKey="dailyReturnRate" stroke="#22C55E" strokeWidth={1.5} dot={false} />
               </AreaChart>
             </ResponsiveContainer>
