@@ -219,6 +219,7 @@ const ChartPage = () => {
     const chartIdCounter = useRef(2);
     const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
     const [rightSidebarTab, setRightSidebarTab] = useState<'comments' | 'pending' | 'history'>('comments');
+    const [resetKey, setResetKey] = useState(0);
 
     const [availableKolsByChart, setAvailableKolsByChart] = useState<
         Record<string, KolOption[]>
@@ -490,10 +491,31 @@ const ChartPage = () => {
     };
 
     const handleResetLayout = () => {
+        // Reset to initial single BTCUSDT chart
+        const initialChart: ChartWindowState = { id: 'chart-1', symbol: 'BTCUSDT', interval: '1d' };
+        const nextCharts = [initialChart];
         const nextSymbols = ['BTCUSDT'];
+
         setSelectedSymbols(nextSymbols);
         setLayoutPreset({ rows: 1, cols: 1 });
-        syncChartsWithSymbols(nextSymbols);
+        setCharts(nextCharts);
+        setActiveChartId('chart-1');
+        chartIdCounter.current = 2;
+
+        // Reset KOL selection & available KOLs (will be re-fetched by chart)
+        setAvailableKolsByChart({});
+        setGlobalSelectedKols(new Set());
+        manualKolsSelectionRef.current = {};
+
+        // Reset sidebar & signal states
+        setHoveredSignalId(null);
+        setRightSidebarTab('pending');
+
+        // Rebuild layouts
+        setLayouts(buildLayoutsForCharts(nextCharts, { rows: 1, cols: 1 }));
+
+        // Increment resetKey to force ChartWindow remount (resets hasInitializedSelection ref)
+        setResetKey(prev => prev + 1);
     };
 
     const effectiveColsForHeight = Math.max(
@@ -834,6 +856,7 @@ const ChartPage = () => {
                                             </div>
                                               <div className="h-[calc(100%-36px)] chart-interact">
                                                 <ChartWindow
+                                                    key={`${chart.id}-${resetKey}`}
                                                     chartId={chart.id}
                                                     symbol={chart.symbol}
                                                     interval={chart.interval}
