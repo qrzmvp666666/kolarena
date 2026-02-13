@@ -207,6 +207,7 @@ const ChartWindow = ({
 };
 
 const ChartPage = () => {
+    const { t, language } = useLanguage();
     const [danmakuEnabled, setDanmakuEnabled] = useState(true);
     const [hoveredSignalId, setHoveredSignalId] = useState<string | null>(null);
 
@@ -350,7 +351,7 @@ const ChartPage = () => {
     
     const symbolDisplay = selectedSymbols.length === 1
         ? selectedSymbols[0].replace('USDT', '') + '/USDT'
-        : `已选 ${selectedSymbols.length} 个`;
+        : (language === 'zh' ? `已选 ${selectedSymbols.length} 个` : `${selectedSymbols.length} selected`);
 
     useEffect(() => {
         if (!gridContainerRef.current) return;
@@ -582,7 +583,7 @@ const ChartPage = () => {
                                                     syncChartsWithSymbols([first]);
                                                 }}
                                             >
-                                                仅保留一个
+                                                {t('chartKeepOne')}
                                             </button>
                                         </div>
                                         <div className="space-y-1 max-h-[260px] overflow-y-auto">
@@ -615,7 +616,7 @@ const ChartPage = () => {
                                             })}
                                             {binanceSymbols.length === 0 && (
                                                 <div className="text-[10px] text-muted-foreground p-2 text-center">
-                                                    暂无交易对
+                                                    {t('chartNoPairs')}
                                                 </div>
                                             )}
                                         </div>
@@ -629,14 +630,14 @@ const ChartPage = () => {
                                         className="h-7 gap-2 text-[11px] font-medium border border-border bg-card text-foreground hover:bg-muted transition-colors"
                                     >
                                         <Users className="w-3.5 h-3.5" />
-                                        KOL 筛选
+                                        {t('chartKolFilter')}
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-56 p-2" align="start">
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between px-2 pt-1 pb-2 border-b">
                                             <Label className="text-xs font-medium text-muted-foreground">
-                                                Select KOL
+                                                {t('chartSelectKol')}
                                             </Label>
                                             <div className="flex gap-2">
                                                 <button
@@ -653,7 +654,7 @@ const ChartPage = () => {
                                                         });
                                                     }}
                                                 >
-                                                    Select All
+                                                    {t('chartSelectAll')}
                                                 </button>
                                                 <button
                                                     className="text-[10px] text-muted-foreground hover:underline"
@@ -663,7 +664,7 @@ const ChartPage = () => {
                                                         setGlobalSelectedKols(new Set());
                                                     }}
                                                 >
-                                                    Clear
+                                                    {t('chartClear')}
                                                 </button>
                                             </div>
                                         </div>
@@ -703,7 +704,7 @@ const ChartPage = () => {
                                             ))}
                                             {activeAvailableKols.length === 0 && (
                                                 <div className="text-[10px] text-muted-foreground p-2 text-center">
-                                                    暂无 KOL 信号
+                                                    {t('chartNoKolSignals')}
                                                 </div>
                                             )}
                                         </div>
@@ -717,15 +718,15 @@ const ChartPage = () => {
                                     onClick={handleAddChart}
                                 >
                                     <Plus className="w-3.5 h-3.5" />
-                                    新增窗口
+                                    {t('chartAddWindow')}
                                 </Button>
                                 <Button
                                     size="sm"
                                     variant="ghost"
                                     className="h-7 w-7 p-0 border border-border bg-card text-foreground hover:bg-muted transition-colors"
                                     onClick={handleResetLayout}
-                                    aria-label="重置布局"
-                                    title="重置布局"
+                                    aria-label={t('chartResetLayout')}
+                                    title={t('chartResetLayout')}
                                 >
                                     <RefreshCw className="w-3.5 h-3.5" />
                                 </Button>
@@ -741,8 +742,8 @@ const ChartPage = () => {
                                             : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
                                     }`}
                                     onClick={() => applyLayoutPreset(1, 1)}
-                                    aria-label="单窗"
-                                    title="单窗"
+                                    aria-label={t('chartLayoutSingle')}
+                                    title={t('chartLayoutSingle')}
                                 >
                                     <Square className="w-3.5 h-3.5" />
                                 </button>
@@ -753,8 +754,8 @@ const ChartPage = () => {
                                             : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
                                     }`}
                                     onClick={() => applyLayoutPreset(1, 2)}
-                                    aria-label="一行两列"
-                                    title="一行两列"
+                                    aria-label={t('chartLayout1x2')}
+                                    title={t('chartLayout1x2')}
                                 >
                                     <Columns2 className="w-3.5 h-3.5" />
                                 </button>
@@ -765,8 +766,8 @@ const ChartPage = () => {
                                             : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
                                     }`}
                                     onClick={() => applyLayoutPreset(2, 1)}
-                                    aria-label="两行一列"
-                                    title="两行一列"
+                                    aria-label={t('chartLayout2x1')}
+                                    title={t('chartLayout2x1')}
                                 >
                                     <Rows2 className="w-3.5 h-3.5" />
                                 </button>
@@ -777,8 +778,8 @@ const ChartPage = () => {
                                             : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
                                     }`}
                                     onClick={() => applyLayoutPreset(2, 2)}
-                                    aria-label="两行两列"
-                                    title="两行两列"
+                                    aria-label={t('chartLayout2x2')}
+                                    title={t('chartLayout2x2')}
                                 >
                                     <LayoutGrid className="w-3.5 h-3.5" />
                                 </button>
@@ -848,7 +849,7 @@ const ChartPage = () => {
                                                             e.stopPropagation();
                                                             handleRemoveChart(chart.id);
                                                         }}
-                                                        title="关闭窗口"
+                                                        title={t('chartCloseWindow')}
                                                     >
                                                         <X className="w-3.5 h-3.5" />
                                                     </button>
@@ -884,32 +885,32 @@ const ChartPage = () => {
                             <button
                                 className="h-9 w-9 inline-flex items-center justify-center rounded border border-border bg-card text-foreground hover:bg-muted transition-colors"
                                 onClick={() => handleExpandSidebar()}
-                                aria-label="展开侧边栏"
-                                title="展开"
+                                aria-label={t('chartExpandSidebar')}
+                                title={t('chartExpand')}
                             >
                                 <ChevronLeft className="w-4 h-4" />
                             </button>
                             <button
                                 className="h-9 w-9 inline-flex items-center justify-center rounded border border-border bg-card text-foreground hover:bg-muted transition-colors"
                                 onClick={() => handleExpandSidebar('comments')}
-                                aria-label="评论"
-                                title="评论"
+                                aria-label={t('chartCommentsShort')}
+                                title={t('chartCommentsShort')}
                             >
                                 <MessageSquare className="w-4 h-4" />
                             </button>
                             <button
                                 className="h-9 w-9 inline-flex items-center justify-center rounded border border-border bg-card text-foreground hover:bg-muted transition-colors"
                                 onClick={() => handleExpandSidebar('pending')}
-                                aria-label="有效信号"
-                                title="有效信号"
+                                aria-label={t('chartActiveSignalsShort')}
+                                title={t('chartActiveSignalsShort')}
                             >
                                 <Activity className="w-4 h-4" />
                             </button>
                             <button
                                 className="h-9 w-9 inline-flex items-center justify-center rounded border border-border bg-card text-foreground hover:bg-muted transition-colors"
                                 onClick={() => handleExpandSidebar('history')}
-                                aria-label="历史信号"
-                                title="历史信号"
+                                aria-label={t('chartHistorySignalsShort')}
+                                title={t('chartHistorySignalsShort')}
                             >
                                 <History className="w-4 h-4" />
                             </button>
@@ -919,8 +920,8 @@ const ChartPage = () => {
                             <button
                                 className="absolute top-2 left-0 z-10 h-8 w-8 inline-flex items-center justify-center rounded-r border border-border bg-card text-foreground hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity"
                                 onClick={() => setRightSidebarCollapsed(true)}
-                                aria-label="收起侧边栏"
-                                title="收起"
+                                aria-label={t('chartCollapseSidebar')}
+                                title={t('chartCollapse')}
                             >
                                 <ChevronRight className="w-4 h-4" />
                             </button>
