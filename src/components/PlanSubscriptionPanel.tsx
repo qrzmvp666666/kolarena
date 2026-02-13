@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CreditCard, Bitcoin, Check, Zap, TrendingUp, Shield, Clock, Users, MessageSquare, BarChart3, Crown, CircleDot } from 'lucide-react';
+import { CreditCard, Bitcoin, Check, CircleDot } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { useUser } from '@/contexts/UserContext';
 
 type PlanType = 'monthly' | 'quarterly' | 'yearly' | 'lifetime';
+type BillingCycle = 'monthly' | 'yearly';
 
 interface PlanRecord {
   id: number;
@@ -27,6 +28,23 @@ interface PlanFeature {
   highlight?: boolean;
 }
 
+interface DisplayPlanCard {
+  key: 'free' | 'pro' | 'lifetime';
+  type: PlanType | 'free';
+  name: string;
+  price: number;
+  currency: string;
+  priceLabel: string;
+  period: string;
+  description: string;
+  features: PlanFeature[];
+  featuresTitle: string;
+  isPopular: boolean;
+  stripeUrl?: string | null;
+  nowpaymentUrl?: string | null;
+  isFree: boolean;
+}
+
 const PlanSubscriptionPanel = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
@@ -36,6 +54,7 @@ const PlanSubscriptionPanel = () => {
   const [selectedPlan, setSelectedPlan] = useState<{ name: string; price: number; currency: string; nowpaymentUrl?: string | null } | null>(null);
   const [plans, setPlans] = useState<PlanRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
 
   const handleStripePayment = (planName: string, stripeUrl?: string | null) => {
     if (!user) {
@@ -154,49 +173,186 @@ const PlanSubscriptionPanel = () => {
     { text: t('featureExclusive'), highlight: true },
   ];
 
-  const planCards = useMemo(() => {
-    return plans.map((plan) => {
-      const baseFeatures = plan.duration === 'yearly' || plan.duration === 'lifetime'
-        ? yearlyFeatures
-        : plan.duration === 'quarterly'
-          ? quarterlyFeatures
-          : monthlyFeatures;
-
-      const benefits = Array.isArray(plan.benefits) ? plan.benefits : [];
-
-      return {
-        type: plan.duration,
-        name: planTitle(plan.duration) || plan.name,
-        price: plan.price,
-        currency: plan.currency,
-        priceLabel: formatPrice(plan.price, plan.currency),
-        period: periodLabel(plan.duration),
-        description: plan.description || '',
-        features: benefits.length
-          ? benefits.map((text) => ({ text }))
-          : baseFeatures,
-        featuresTitle: plan.duration === 'yearly' || plan.duration === 'lifetime'
-          ? t('featuresTitlePremium')
-          : plan.duration === 'quarterly'
-            ? t('featuresTitlePlus')
-            : t('featuresTitle'),
-        isPopular: plan.duration === 'lifetime',
-        stripeUrl: plan.stripe_invoice_url,
-        nowpaymentUrl: plan.nowpayment_invoice_url,
-      };
+  const plansByDuration = useMemo(() => {
+    const map: Partial<Record<PlanType, PlanRecord>> = {};
+    plans.forEach((plan) => {
+      map[plan.duration] = plan;
     });
-  }, [plans, t]);
+    return map;
+  }, [plans]);
+
+  const proPlanDuration: PlanType = billingCycle === 'yearly' ? 'yearly' : 'monthly';
+  const proPlan = plansByDuration[proPlanDuration];
+  const lifetimePlan = plansByDuration.lifetime;
+
+  const defaultMonthlyPrice = 10;
+  const defaultYearlyPrice = 99;
+  const defaultLifetimePrice = 299;
+
+  const proPrice = proPlan?.price ?? (billingCycle === 'yearly' ? defaultYearlyPrice : defaultMonthlyPrice);
+  const proCurrency = proPlan?.currency ?? 'USDT';
+  const lifetimePrice = lifetimePlan?.price ?? defaultLifetimePrice;
+  const lifetimeCurrency = lifetimePlan?.currency ?? 'USDT';
+
+  const freeFeatures: PlanFeature[] = [
+    { text: t('featureLive') },
+    { text: t('featureLeaderboard') },
+    { text: t('featureSignals') },
+  ];
+
+  const proFeatures = billingCycle === 'yearly' ? yearlyFeatures : monthlyFeatures;
+
+  const lifetimeFeatures: PlanFeature[] = [
+    ...yearlyFeatures,
+    { text: t('featureVipGroup'), highlight: true },
+    { text: t('featureExclusive'), highlight: true },
+  ];
+
+  const planCards: DisplayPlanCard[] = useMemo(() => {
+    return [
+      {
+        key: 'free',
+        type: 'free',
+        name: t('planFree'),
+        price: 0,
+        currency: 'USDT',
+        priceLabel: t('planPriceFree'),
+        period: '',
+        description: t('planFreeDesc'),
+        features: freeFeatures,
+        featuresTitle: t('featuresTitle'),
+        isPopular: false,
+        isFree: true,
+      },
+      {
+        key: 'pro',
+        type: proPlanDuration,
+        name: t('planPro'),
+        price: proPrice,
+        currency: proCurrency,
+        priceLabel: formatPrice(proPrice, proCurrency),
+        period: periodLabel(proPlanDuration),
+        description: proPlan?.description || t('planProDesc'),
+        features: Array.isArray(proPlan?.benefits) && proPlan.benefits.length
+          ? proPlan.benefits.map((text) => ({ text }))
+          : proFeatures,
+        featuresTitle: billingCycle === 'yearly' ? t('featuresTitlePremium') : t('featuresTitlePlus'),
+        isPopular: true,
+        stripeUrl: proPlan?.stripe_invoice_url,
+        nowpaymentUrl: proPlan?.nowpayment_invoice_url,
+        isFree: false,
+      },
+      {
+        key: 'lifetime',
+        type: 'lifetime',
+        name: t('planLifetime'),
+        price: lifetimePrice,
+        currency: lifetimeCurrency,
+        priceLabel: formatPrice(lifetimePrice, lifetimeCurrency),
+        period: '',
+        description: lifetimePlan?.description || t('planLifetimeDesc'),
+        features: Array.isArray(lifetimePlan?.benefits) && lifetimePlan.benefits.length
+          ? lifetimePlan.benefits.map((text) => ({ text }))
+          : lifetimeFeatures,
+        featuresTitle: t('featuresTitlePremium'),
+        isPopular: false,
+        stripeUrl: lifetimePlan?.stripe_invoice_url,
+        nowpaymentUrl: lifetimePlan?.nowpayment_invoice_url,
+        isFree: false,
+      },
+    ];
+  }, [
+    billingCycle,
+    freeFeatures,
+    lifetimeCurrency,
+    lifetimeFeatures,
+    lifetimePlan?.benefits,
+    lifetimePlan?.description,
+    lifetimePlan?.nowpayment_invoice_url,
+    lifetimePlan?.stripe_invoice_url,
+    lifetimePrice,
+    proCurrency,
+    proFeatures,
+    proPlan?.benefits,
+    proPlan?.description,
+    proPlan?.nowpayment_invoice_url,
+    proPlan?.stripe_invoice_url,
+    proPlanDuration,
+    proPrice,
+    t,
+  ]);
+
+  const coreFeatureLines: Record<DisplayPlanCard['key'], Array<{ text: string; type?: 'heading' }>> = {
+    free: [
+      { text: t('planFreeFeatureAds') },
+      { text: t('planFreeFeatureDelayedChart') },
+      { text: t('planFreeFeatureLimitedSignals') },
+    ],
+    pro: [
+      { text: t('planProSectionExclusive'), type: 'heading' },
+      { text: t('planProFeatureNoAds') },
+      { text: t('planProFeatureMarketQuotes') },
+      { text: t('planProFeatureChartTracking') },
+      { text: t('planProFeatureSignalPush') },
+      { text: t('planProFeatureSignalAlert') },
+      { text: t('planProFeatureHistoryRank') },
+      { text: t('planProFeatureHistoryAnalysis') },
+      { text: t('planProFeatureTrendCompare') },
+      { text: t('planProFeatureLiveBacktest') },
+      { text: t('planProSectionMore'), type: 'heading' },
+      { text: t('planProFeatureSupport') },
+      { text: t('planProFeatureCommunityNotice') },
+    ],
+    lifetime: [
+      { text: t('planProSectionExclusive'), type: 'heading' },
+      { text: t('planProFeatureNoAds') },
+      { text: t('planProFeatureMarketQuotes') },
+      { text: t('planProFeatureChartTracking') },
+      { text: t('planProFeatureSignalPush') },
+      { text: t('planProFeatureSignalAlert') },
+      { text: t('planProFeatureHistoryRank') },
+      { text: t('planProFeatureHistoryAnalysis') },
+      { text: t('planProFeatureTrendCompare') },
+      { text: t('planProFeatureLiveBacktest') },
+      { text: t('planProSectionMore'), type: 'heading' },
+      { text: t('planProFeatureSupport') },
+      { text: t('planProFeatureCommunityNotice') },
+    ],
+  };
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center">
         <h1 className="font-mono text-2xl font-bold mb-2">{t('subscriptionPlans')}</h1>
-        <p className="text-muted-foreground">{t('subscriptionDesc')}</p>
+        <p className="text-muted-foreground">
+          {billingCycle === 'yearly' ? t('subscriptionDescYearly') : t('subscriptionDescMonthly')}
+        </p>
+      </div>
+
+      <div className="flex items-center justify-center">
+        <div className="inline-flex rounded-lg border border-border bg-muted/40 p-1">
+          <Button
+            variant={billingCycle === 'monthly' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setBillingCycle('monthly')}
+            className="min-w-[84px]"
+          >
+            {t('billingMonthly')}
+          </Button>
+          <Button
+            variant={billingCycle === 'yearly' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setBillingCycle('yearly')}
+            className="min-w-[84px]"
+          >
+            {t('billingYearly')}
+          </Button>
+        </div>
       </div>
 
       {/* Plans Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4">
         {isLoading ? (
           <div className="col-span-full text-center text-sm text-muted-foreground">
             {t('loading')}
@@ -204,8 +360,8 @@ const PlanSubscriptionPanel = () => {
         ) : (
           planCards.map((plan) => (
             <div
-              key={plan.type}
-              className={`relative rounded-xl p-6 flex flex-col transition-all ${
+              key={plan.key}
+              className={`relative rounded-xl p-5 flex flex-col transition-all ${
                 plan.isPopular
                   ? 'border-2 border-primary bg-card shadow-lg shadow-primary/10 animate-border-pulse'
                   : 'border border-border bg-card/50'
@@ -213,70 +369,62 @@ const PlanSubscriptionPanel = () => {
             >
             {plan.isPopular && (
               <div className="absolute -top-4 right-4 bg-primary text-primary-foreground text-sm px-3 py-1 rounded-full font-bold animate-badge-pulse shadow-lg z-10">
-                最多人选
+                {t('mostPopular')}
               </div>
             )}
             {/* Plan Name */}
-            <div className="mb-4">
-              <h3 className="font-mono text-lg font-medium text-foreground">{plan.name}</h3>
+            <div className="mb-3">
+              <h3 className="font-mono text-base font-medium text-foreground">{plan.name}</h3>
             </div>
             
             {/* Price */}
             <div className="mb-2">
-              <span className="text-3xl font-bold font-mono text-foreground">{plan.priceLabel}</span>
+              <span className="text-2xl font-bold font-mono text-foreground">{plan.priceLabel}</span>
+              {plan.period && <span className="text-sm text-muted-foreground ml-1">{plan.period}</span>}
             </div>
             
-            {/* Specs with dots */}
-            <div className="space-y-2 mb-6 pb-6 border-b border-border">
-              <div className="flex items-center gap-2 text-sm">
-                <CircleDot className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-muted-foreground">{t('featureLive')}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <CircleDot className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-muted-foreground">{t('featureLeaderboard')}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <CircleDot className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-muted-foreground">{t('featureSignals')}</span>
-              </div>
-            </div>
-            
-            {/* Features Title */}
-            <h4 className="text-sm font-medium text-foreground mb-3">{plan.featuresTitle}</h4>
-            
-            {/* Features with checks */}
-            <div className="space-y-2 flex-1">
-              {plan.features.slice(3).map((feature, index) => (
-                <div key={index} className="flex items-center gap-2 text-sm">
-                  <Check className={`w-4 h-4 flex-shrink-0 ${feature.highlight ? 'text-primary' : 'text-muted-foreground'}`} />
-                  <span className={feature.highlight ? 'text-foreground' : 'text-muted-foreground'}>
-                    {feature.text}
-                  </span>
-                </div>
+            {/* Core Features */}
+            <div className="space-y-1.5 mb-4">
+              {coreFeatureLines[plan.key].map((item, index) => (
+                item.type === 'heading' ? (
+                  <div key={index}>
+                    {item.text === t('planProSectionMore') && <div className="h-6" />}
+                    <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/70 mt-2">
+                      {item.text}
+                    </div>
+                  </div>
+                ) : (
+                  <div key={index} className="flex items-center gap-2 text-sm">
+                    <Check className="w-5 h-5 text-muted-foreground" />
+                    <span className="text-muted-foreground">{item.text}</span>
+                  </div>
+                )
               ))}
-              {plan.features.slice(3).length === 0 && (
-                <p className="text-xs text-muted-foreground italic">{t('basicFeatures')}</p>
-              )}
             </div>
+            
+            <div className="flex-1" />
             
             {/* Payment Buttons - Together at bottom */}
-            <div className="space-y-2 mt-6 pt-6 border-t border-border">
-              <Button 
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                onClick={() => handleCryptoPayment(plan.name, plan.price, plan.currency, plan.nowpaymentUrl)}
-              >
-                <Bitcoin className="w-4 h-4 mr-2" />
-                {t('payWithCrypto')}
-              </Button>
-              <Button 
-                variant="outline"
-                className="w-full border-primary/20 hover:bg-primary/5 hover:border-primary/50 text-foreground"
-                onClick={() => handleStripePayment(plan.name, plan.stripeUrl)}
-              >
-                <CreditCard className="w-4 h-4 mr-2" />
-                {t('payWithStripe')}
-              </Button>
+            <div className="space-y-2 mt-4">
+              {!plan.isFree && (
+                <>
+                  <Button 
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                    onClick={() => handleCryptoPayment(plan.name, plan.price, plan.currency, plan.nowpaymentUrl)}
+                  >
+                    <Bitcoin className="w-4 h-4 mr-2" />
+                    {t('payWithCrypto')}
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="w-full border-primary/20 hover:bg-primary/5 hover:border-primary/50 text-foreground"
+                    onClick={() => handleStripePayment(plan.name, plan.stripeUrl)}
+                  >
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    {t('payWithStripe')}
+                  </Button>
+                </>
+              )}
             </div>
             </div>
           ))
