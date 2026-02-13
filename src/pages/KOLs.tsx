@@ -7,7 +7,6 @@ import { models } from '@/lib/chartData';
 import { supabase } from '@/lib/supabase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -32,6 +31,7 @@ const defaultColors = [
 
 const DEFAULT_INITIAL_CAPITAL = 10000;
 const coinPalette = ['#F7931A', '#627EEA', '#00FFA3', '#23292F', '#C3A634', '#F3BA2F', '#8B5CF6', '#06B6D4'];
+const SIGNALS_PAGE_SIZE = 10;
 
 interface KolData {
   id: string;
@@ -112,8 +112,8 @@ interface KolMetricsRow {
 
 interface ProfitTrendPoint {
   date: string;
-  daily: number;
-  cumulative: number;
+  daily_return_rate: number;
+  cumulative_return_rate: number;
 }
 
 interface CoinDistributionPoint {
@@ -197,6 +197,9 @@ const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRan
   const [activeSignals, setActiveSignals] = useState<SignalRow[]>([]);
   const [historySignals, setHistorySignals] = useState<SignalRow[]>([]);
   const [signalsLoading, setSignalsLoading] = useState(false);
+  const [tradeTab, setTradeTab] = useState<'active' | 'history'>('active');
+  const [activePage, setActivePage] = useState(1);
+  const [historyPage, setHistoryPage] = useState(1);
 
   const fetchAnalytics = useCallback(async (kolId: string) => {
     if (!kolId) return;
@@ -214,7 +217,6 @@ const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRan
           p_kol_id: kolId,
           p_from: from,
           p_to: to,
-          p_initial_capital: DEFAULT_INITIAL_CAPITAL,
         }),
         supabase.rpc('get_kol_coin_distribution', {
           p_kol_id: kolId,
@@ -329,11 +331,35 @@ const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRan
 
   const activeTrades = useMemo(() => activeSignals.map(mapSignalToTrade), [activeSignals]);
   const historyTrades = useMemo(() => historySignals.map(mapSignalToTrade), [historySignals]);
+
+  useEffect(() => {
+    setActivePage(1);
+  }, [activeTrades.length, selectedTrader, timeRange, customDateRange, refreshTick]);
+
+  useEffect(() => {
+    setHistoryPage(1);
+  }, [historyTrades.length, selectedTrader, timeRange, customDateRange, refreshTick]);
+
+  const activeTotalPages = Math.max(1, Math.ceil(activeTrades.length / SIGNALS_PAGE_SIZE));
+  const historyTotalPages = Math.max(1, Math.ceil(historyTrades.length / SIGNALS_PAGE_SIZE));
+  const currentPage = tradeTab === 'active' ? activePage : historyPage;
+  const currentTotalPages = tradeTab === 'active' ? activeTotalPages : historyTotalPages;
+  const currentTotalRows = tradeTab === 'active' ? activeTrades.length : historyTrades.length;
+
+  const pagedActiveTrades = useMemo(() => {
+    const start = (activePage - 1) * SIGNALS_PAGE_SIZE;
+    return activeTrades.slice(start, start + SIGNALS_PAGE_SIZE);
+  }, [activeTrades, activePage]);
+
+  const pagedHistoryTrades = useMemo(() => {
+    const start = (historyPage - 1) * SIGNALS_PAGE_SIZE;
+    return historyTrades.slice(start, start + SIGNALS_PAGE_SIZE);
+  }, [historyTrades, historyPage]);
   const returnRateTrendData = useMemo(
     () => profitTrendData.map((point) => ({
       date: point.date,
-      dailyReturnRate: (Number(point.daily) / DEFAULT_INITIAL_CAPITAL) * 100,
-      cumulativeReturnRate: ((Number(point.cumulative) / DEFAULT_INITIAL_CAPITAL) - 1) * 100,
+      dailyReturnRate: Number(point.daily_return_rate),
+      cumulativeReturnRate: Number(point.cumulative_return_rate),
     })),
     [profitTrendData]
   );
@@ -391,9 +417,13 @@ const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRan
     };
   }, [returnRateTrendData]);
 
-  const renderTradeTable = (trades: TradeRow[], isHistory = false) => (
-    <ScrollArea className="max-h-[300px]">
-      <table className="w-full text-xs">
+  const renderTradeTable = (
+    trades: TradeRow[],
+    isHistory = false,
+  ) => (
+    <div>
+      <div className="max-h-[340px] overflow-y-auto overflow-x-auto">
+        <table className="w-full text-xs">
         <thead className="sticky top-0 bg-muted/50">
           <tr className="border-b border-border">
             <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('tradePair')}</th>
@@ -410,13 +440,13 @@ const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRan
             {isHistory && <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t('signalStatus')}</th>}
           </tr>
         </thead>
-        <tbody>
-          {trades.length === 0 ? (
-            <tr>
-              <td colSpan={isHistory ? 12 : 8} className="text-center py-8 text-muted-foreground">{t('noData') || 'No Data'}</td>
-            </tr>
-          ) : (
-            trades.map((trade) => (
+          <tbody>
+            {trades.length === 0 ? (
+              <tr>
+                <td colSpan={isHistory ? 12 : 8} className="text-center py-8 text-muted-foreground">{t('noData') || 'No Data'}</td>
+              </tr>
+            ) : (
+              trades.map((trade) => (
               <tr key={trade.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-2 text-foreground font-medium">
                   <div className="flex flex-col">
@@ -461,11 +491,12 @@ const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRan
                   </td>
                 )}
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </ScrollArea>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 
   if (!currentTrader) {
@@ -646,18 +677,51 @@ const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRan
 
       {/* Trade History Tabs */}
       <div className="border border-border rounded-lg overflow-hidden bg-card">
-        <Tabs defaultValue="active" className="w-full">
-          <div className="px-4 py-3 border-b border-border flex items-center gap-4">
+        <Tabs value={tradeTab} onValueChange={(value) => setTradeTab(value as 'active' | 'history')} className="w-full">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-4">
             <TabsList className="bg-muted p-1 rounded-md">
               <TabsTrigger value="active" className="text-xs h-7 px-3 data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-sm transition-all">{t('activeSignals')}</TabsTrigger>
               <TabsTrigger value="history" className="text-xs h-7 px-3 data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-sm transition-all">{t('historySignals')}</TabsTrigger>
             </TabsList>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-muted-foreground">{currentPage} / {currentTotalPages} · {currentTotalRows}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2"
+                onClick={() => {
+                  if (tradeTab === 'active') {
+                    setActivePage(prev => Math.max(1, prev - 1));
+                    return;
+                  }
+                  setHistoryPage(prev => Math.max(1, prev - 1));
+                }}
+                disabled={currentPage <= 1}
+              >
+                {t('previousPage')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2"
+                onClick={() => {
+                  if (tradeTab === 'active') {
+                    setActivePage(prev => Math.min(activeTotalPages, prev + 1));
+                    return;
+                  }
+                  setHistoryPage(prev => Math.min(historyTotalPages, prev + 1));
+                }}
+                disabled={currentPage >= currentTotalPages}
+              >
+                {t('nextPage')}
+              </Button>
+            </div>
           </div>
           <TabsContent value="active" className="m-0">
-            {renderTradeTable(activeTrades)}
+            {renderTradeTable(pagedActiveTrades, false)}
           </TabsContent>
           <TabsContent value="history" className="m-0">
-            {renderTradeTable(historyTrades, true)}
+            {renderTradeTable(pagedHistoryTrades, true)}
           </TabsContent>
         </Tabs>
       </div>

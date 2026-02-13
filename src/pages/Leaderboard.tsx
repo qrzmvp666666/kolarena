@@ -100,8 +100,8 @@ interface ProfitComparisonPanelProps {
 
 interface KolProfitTrendPoint {
   date: string;
-  daily: number;
-  cumulative: number;
+  daily_return_rate: number;
+  cumulative_return_rate: number;
 }
 
 const COMPARISON_COLOR_PALETTE = [
@@ -192,7 +192,6 @@ const ProfitComparisonPanel = ({ kols, followedKolIds }: ProfitComparisonPanelPr
             p_kol_id: kol.id,
             p_from: from,
             p_to: to,
-            p_initial_capital: DEFAULT_INITIAL_CAPITAL,
           });
 
           if (error) {
@@ -221,7 +220,7 @@ const ProfitComparisonPanel = ({ kols, followedKolIds }: ProfitComparisonPanelPr
           }
 
           const row = rowMap.get(dateKey)!;
-          row[kolId] = ((Number(point.cumulative) / DEFAULT_INITIAL_CAPITAL) - 1) * 100;
+          row[kolId] = Number(point.cumulative_return_rate);
         });
       });
 
