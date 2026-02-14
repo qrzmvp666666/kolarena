@@ -3,9 +3,24 @@ import TickerBar from '@/components/TickerBar';
 import { useLanguage } from '@/lib/i18n';
 import { Send, MessageCircle, QrCode, Users, Landmark, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const Community = () => {
   const { t } = useLanguage();
+  const location = useLocation();
+
+  // Auto-scroll to exchanges section if hash is present
+  useEffect(() => {
+    if (location.hash === '#exchanges') {
+      setTimeout(() => {
+        const element = document.getElementById('exchanges');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300);
+    }
+  }, [location]);
   const communities = [
     {
       id: 'telegram',
@@ -142,7 +157,7 @@ const Community = () => {
         </div>
 
         {/* Exchange Registration Cards */}
-        <div className="mb-10">
+        <div id="exchanges" className="mb-10 scroll-mt-20">
           <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
               交易所注册链接

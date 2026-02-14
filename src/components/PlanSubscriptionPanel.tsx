@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CreditCard, Bitcoin, Check, CircleDot } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import CryptoPaymentModal from './CryptoPaymentModal';
@@ -49,6 +50,7 @@ const PlanSubscriptionPanel = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const { user } = useUser();
+  const navigate = useNavigate();
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [cryptoModalOpen, setCryptoModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<{ name: string; price: number; currency: string; nowpaymentUrl?: string | null } | null>(null);
@@ -385,7 +387,10 @@ const PlanSubscriptionPanel = () => {
             
             {/* Exchange Registration Callout - Only for paid plans */}
             {!plan.isFree && (
-              <div className="mb-4 p-4 rounded-lg border-2 border-primary bg-gradient-to-br from-primary/15 via-primary/8 to-transparent shadow-lg animate-pulse-glow">
+              <div 
+                className="mb-4 p-4 rounded-lg border-2 border-primary bg-gradient-to-br from-primary/15 via-primary/8 to-transparent shadow-lg animate-pulse-glow cursor-pointer hover:scale-[1.02] transition-transform"
+                onClick={() => navigate('/community#exchanges')}
+              >
                 <div className="flex items-center gap-2.5 mb-2">
                   <div className="relative">
                     <CircleDot className="w-4 h-4 text-primary animate-ping-slow relative z-10" />
