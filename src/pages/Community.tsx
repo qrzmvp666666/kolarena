@@ -1,7 +1,7 @@
 import TopNav from '@/components/TopNav';
 import TickerBar from '@/components/TickerBar';
 import { useLanguage } from '@/lib/i18n';
-import { Send, MessageCircle, QrCode } from 'lucide-react';
+import { Send, MessageCircle, QrCode, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Community = () => {
@@ -23,6 +23,15 @@ const Community = () => {
       icon: MessageCircle,
       color: '#5865F2',
       qrText: '扫码加入 Discord',
+      url: '#'
+    },
+    {
+      id: 'qq',
+      name: 'QQ',
+      handle: 'KolArena QQ群',
+      icon: Users,
+      color: '#12B7F5',
+      qrText: '扫码加入 QQ 群',
       url: '#'
     },
   ];
@@ -50,7 +59,7 @@ const Community = () => {
         </div>
 
         {/* Community Platforms - Refined Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 mb-20">
           {communities.map((comm) => (
             <div key={comm.id} className="group p-6 rounded-3xl border border-border bg-card/40 hover:border-foreground/20 hover:shadow-xl hover:shadow-foreground/[0.02] transition-all duration-500 flex flex-col items-center">
               {/* Platform Info */}
