@@ -1,47 +1,11 @@
 import TopNav from '@/components/TopNav';
 import TickerBar from '@/components/TickerBar';
 import { useLanguage } from '@/lib/i18n';
-import { Send, MessageCircle, QrCode, Copy, CheckCircle2, Zap, Trophy, Users, Star } from 'lucide-react';
+import { Send, MessageCircle, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
-import { toast } from 'sonner';
 
 const Community = () => {
   const { t } = useLanguage();
-  const [copied, setCopied] = useState(false);
-
-  const invitationCode = "KOL888";
-
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(invitationCode);
-    setCopied(true);
-    toast.success("邀请码已复制");
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const advantages = [
-    {
-      icon: Zap,
-      title: "实时预警",
-      desc: "毫秒级信号推送，绝不错过任何入场机会"
-    },
-    {
-      icon: Trophy,
-      title: "大咖领航",
-      desc: "汇聚顶级交易员，实时分享私藏策略"
-    },
-    {
-      icon: Users,
-      title: "深度研报",
-      desc: "每日市场趋势剖析，助力科学决策"
-    },
-    {
-      icon: Star,
-      title: "资源共享",
-      desc: "独家工具、内测名额及社区专属激励"
-    }
-  ];
-
   const communities = [
     {
       id: 'telegram',
@@ -141,43 +105,6 @@ const Community = () => {
           ))}
         </div>
 
-        {/* Advantage & Invite Section - Refined */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-            {advantages.map((adv, i) => (
-              <div key={i} className="p-5 rounded-2xl border border-border/60 bg-card/30 hover:bg-card hover:border-border transition-all flex flex-col gap-3 group">
-                <div className="w-9 h-9 rounded-lg bg-foreground/[0.05] flex items-center justify-center group-hover:scale-110 group-hover:bg-foreground/10 transition-all duration-300">
-                  <adv.icon className="w-4 h-4 text-foreground/70 group-hover:text-foreground" />
-                </div>
-                <h3 className="text-base font-bold text-foreground tracking-tight">{adv.title}</h3>
-                <p className="text-[13px] text-muted-foreground/80 leading-relaxed font-normal">{adv.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="p-8 rounded-3xl border border-foreground/10 bg-foreground/[0.02] flex flex-col items-center justify-center text-center relative overflow-hidden group backdrop-blur-sm">
-            <div className="absolute -top-4 -right-4 p-4 transform rotate-12 opacity-5">
-              <Star className="w-20 h-20 text-foreground" />
-            </div>
-            
-            <h3 className="text-sm font-bold mb-6 text-muted-foreground/60 tracking-widest uppercase">
-              Exclusive Referral
-            </h3>
-            <div className="w-full bg-background/50 border border-dashed border-foreground/20 px-6 py-5 rounded-2xl text-2xl font-bold tracking-[0.3em] mb-8 text-foreground shadow-inner">
-              {invitationCode}
-            </div>
-            <Button 
-              className="w-full gap-2 bg-foreground hover:bg-foreground/90 text-background font-bold py-5 rounded-xl transition-transform active:scale-[0.98]"
-              onClick={handleCopyCode}
-            >
-              {copied ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              {copied ? "已复制" : "复制邀请码"}
-            </Button>
-            <p className="text-[10px] text-muted-foreground/50 mt-6 font-medium tracking-wide uppercase">
-              UNLOCK PREMIUM BENEFITS
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );
