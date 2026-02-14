@@ -385,12 +385,15 @@ const PlanSubscriptionPanel = () => {
             
             {/* Exchange Registration Callout - Only for paid plans */}
             {!plan.isFree && (
-              <div className="mb-4 p-3.5 rounded-lg border-2 border-primary bg-gradient-to-br from-primary/10 via-primary/5 to-transparent shadow-lg shadow-primary/20 animate-pulse-glow">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <CircleDot className="w-4 h-4 text-primary animate-ping-slow" />
+              <div className="mb-4 p-4 rounded-lg border-2 border-primary bg-gradient-to-br from-primary/15 via-primary/8 to-transparent shadow-lg animate-pulse-glow">
+                <div className="flex items-center gap-2.5 mb-2">
+                  <div className="relative">
+                    <CircleDot className="w-4 h-4 text-primary animate-ping-slow relative z-10" />
+                    <CircleDot className="w-4 h-4 text-primary absolute top-0 left-0 opacity-50" />
+                  </div>
                   <span className="text-sm font-bold text-primary tracking-tight">注册交易所免费获取</span>
                 </div>
-                <p className="text-xs text-foreground/90 leading-relaxed font-medium">
+                <p className="text-xs text-foreground/90 leading-relaxed font-medium pl-6">
                   通过专属交易所链接注册，当月合约交易量达 <span className="text-primary font-bold">5000U</span> 即可解锁当月会员
                 </p>
               </div>
