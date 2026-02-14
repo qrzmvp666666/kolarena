@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import TopNav from '@/components/TopNav';
 import TickerBar from '@/components/TickerBar';
 import { useLanguage } from '@/lib/i18n';
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Calendar as CalendarIcon, TrendingUp, ArrowUpRight, ArrowDownRight, RefreshCw } from 'lucide-react';
+import { Calendar as CalendarIcon, TrendingUp, ArrowUpRight, ArrowDownRight, RefreshCw, FlaskConical } from 'lucide-react';
 import { format } from 'date-fns';
 import { zhCN, enUS } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
@@ -727,6 +727,7 @@ const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRan
 
 const KOLsPage = () => {
   const { t, language } = useLanguage();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [kolsData, setKolsData] = useState<KolData[]>([]);
@@ -861,6 +862,15 @@ const KOLsPage = () => {
               className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all bg-foreground text-background border-foreground shadow-sm"
             >
               <span className="text-sm">{t('dataOverview')}</span>
+            </button>
+
+            {/* Strategy Backtest Button */}
+            <button
+              onClick={() => navigate(`/backtest${selectedKol ? `?kol=${selectedKol}` : ''}`)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all border-border text-foreground hover:border-foreground/50 hover:bg-foreground/5"
+            >
+              <FlaskConical className="w-4 h-4" />
+              <span className="text-sm">{t('strategyBacktest')}</span>
             </button>
           </div>
 
