@@ -357,7 +357,7 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover, selectedKols, selected
                 {filteredHistorySignals.map((trade) => (
                   <div
                     key={trade.id}
-                    className="relative p-3 rounded-lg bg-card border border-border hover:border-foreground/20 transition-all cursor-pointer group overflow-hidden"
+                    className="relative p-3 rounded-lg bg-card hover:bg-muted/80 hover:backdrop-blur-xl hover:shadow-xl hover:shadow-primary/10 border border-border hover:border-primary/50 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group overflow-hidden"
                   >
                   {/* Header */}
                   <div className="flex items-center justify-between gap-2 mb-3">
@@ -468,7 +468,7 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover, selectedKols, selected
                 {filteredActiveSignals.map((order) => (
                   <div
                     key={order.id}
-                    className="relative p-3 rounded-lg bg-card border border-border hover:border-foreground/20 transition-all cursor-pointer group"
+                    className="relative p-3 rounded-lg bg-card hover:bg-muted/80 hover:backdrop-blur-xl hover:shadow-xl hover:shadow-primary/10 border border-border hover:border-primary/50 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group"
                     onMouseEnter={() => {
                       if (order.entryStatus === 'pending' || order.entryStatus === 'entered') {
                         onSignalHover?.(order.id);
