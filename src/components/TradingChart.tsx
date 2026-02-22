@@ -71,7 +71,13 @@ export const TradingChart = ({
   };
 
   const buildSignalMarkers = (items: ChartSignal[], hoveredId: string | null): SignalMarker[] => {
-    return items.flatMap((signal) => {
+    const uniqueItemsMap = new Map<string, ChartSignal>();
+    items.forEach(item => {
+      if (item && item.id) uniqueItemsMap.set(item.id, item);
+    });
+    const uniqueItems = Array.from(uniqueItemsMap.values());
+
+    return uniqueItems.flatMap((signal) => {
       const markers: SignalMarker[] = [
         {
           key: `${signal.id}-entry`,

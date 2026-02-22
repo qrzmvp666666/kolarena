@@ -96,12 +96,18 @@ const ChartWindow = ({
                     supabase.rpc('get_signals', { p_status: 'closed', p_limit: 500 }),
                 ]);
 
-                const allData = [
+                const allDataRaw = [
                     ...(pendingRes.data || []),
                     ...(enteredRes.data || []),
                     ...(activeRes.data || []),
                     ...(closedRes.data || []),
                 ] as SignalRow[];
+
+                const uniqueDataMap = new Map<string, SignalRow>();
+                allDataRaw.forEach(s => {
+                    if (s && s.id) uniqueDataMap.set(s.id, s);
+                });
+                const allData = Array.from(uniqueDataMap.values());
 
                 const relevantSignals = allData.filter(
                     s => s.symbol.replace('/', '').toUpperCase() === symbol.toUpperCase()
