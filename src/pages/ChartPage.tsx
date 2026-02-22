@@ -252,7 +252,7 @@ const ChartPage = () => {
     
     // Global filters for direction and time range
     const [globalSelectedDirection, setGlobalSelectedDirection] = useState<'all' | 'long' | 'short'>('all');
-    const [globalSelectedTimeRange, setGlobalSelectedTimeRange] = useState<'all' | '24h' | '7d' | '30d'>('all');
+    const [globalSelectedTimeRange, setGlobalSelectedTimeRange] = useState<'all' | '24h' | '3d' | '7d' | '30d'>('3d');
     
     // We still track manual selection flag per chart to avoid auto-select clashing with user intent
     // (though with global selection, we might just need one global flag, but per-chart is safer for loading states)
