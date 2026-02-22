@@ -77,8 +77,6 @@ export const translations: Translations = {
   signalNone: { zh: '没信号', en: 'No Signal' },
   
   // TickerBar
-    highest: { zh: '最高', en: 'HIGHEST' },
-    lowest: { zh: '最低', en: 'LOWEST' },
   // Signals Page
   tradingSignals: { zh: '交易信号', en: 'Trading Signals' },
   signalSummary: { zh: '所有频道的交易信号汇总', en: 'Summary of trading signals from all channels' },
@@ -95,10 +93,6 @@ export const translations: Translations = {
   signalLong: { zh: '做多', en: 'Long' },
   signalShort: { zh: '做空', en: 'Short' },
   signal7dCount: { zh: '7日信号 {count}条', en: '{count} signals in 7d' },
-  entryPrice: { zh: '入场价', en: 'Entry' },
-  takeProfit: { zh: '止盈价', en: 'TP' },
-  stopLoss: { zh: '止损价', en: 'SL' },
-  leverage: { zh: '杠杆', en: 'Lev' },
   notProvided: { zh: '未提供', en: 'N/A' },
   signalCount: { zh: '条信号', en: ' signals' },
   subscribe: { zh: '订阅', en: 'Subscribe' },

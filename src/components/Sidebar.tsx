@@ -39,6 +39,7 @@ interface PendingOrder {
   author: string;
   avatar: string;
   pair: string;
+  symbol: string;
   signalType: 'long' | 'short';
   leverage: string;
   entryPrice: string;
@@ -54,6 +55,7 @@ interface CompletedTrade {
   author: string;
   avatar: string;
   pair: string;
+  symbol: string;
   signalType: 'long' | 'short';
   leverage: string;
   entryPrice: string;
@@ -88,9 +90,11 @@ interface SidebarProps {
   activeTab?: SidebarTab;
   onTabChange?: (tab: SidebarTab) => void;
   onSignalHover?: (signalId: string | null) => void;
+  selectedKols?: Set<string>;
+  selectedSymbols?: Set<string>;
 }
 
-const Sidebar = ({ activeTab, onTabChange, onSignalHover }: SidebarProps) => {
+const Sidebar = ({ activeTab, onTabChange, onSignalHover, selectedKols, selectedSymbols }: SidebarProps) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentInput, setCommentInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -128,6 +132,7 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover }: SidebarProps) => {
                 author: s.kol_name,
                 avatar: s.kol_avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.kol_name}`,
                 pair: `${s.symbol} 永续`, // Assuming symbol like BTC/USDT or BTCUSDT
+                symbol: s.symbol,
                 signalType: s.direction,
                 leverage: s.leverage ? `${s.leverage}x` : '未提供',
                 entryPrice: String(s.entry_price),
@@ -154,6 +159,7 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover }: SidebarProps) => {
                 author: s.kol_name,
                 avatar: s.kol_avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.kol_name}`,
                 pair: `${s.symbol} 永续`,
+                symbol: s.symbol,
                 signalType: s.direction,
                 leverage: s.leverage ? `${s.leverage}x` : '未提供',
                 entryPrice: String(s.entry_price),
@@ -275,6 +281,18 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover }: SidebarProps) => {
 
   const currentTab = activeTab ?? 'comments';
 
+  const filteredActiveSignals = activeSignals.filter(s => {
+    const matchKol = selectedKols ? selectedKols.has(s.author) : true;
+    const matchSymbol = selectedSymbols ? selectedSymbols.has(s.symbol) : true;
+    return matchKol && matchSymbol;
+  });
+
+  const filteredHistorySignals = historySignals.filter(s => {
+    const matchKol = selectedKols ? selectedKols.has(s.author) : true;
+    const matchSymbol = selectedSymbols ? selectedSymbols.has(s.symbol) : true;
+    return matchKol && matchSymbol;
+  });
+
   return (
     <div className="w-full bg-card flex flex-col h-full overflow-hidden">
       <Tabs
@@ -306,13 +324,13 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover }: SidebarProps) => {
         {/* Completed Trades Tab */}
         <TabsContent value="history" className="flex-1 mt-0 overflow-hidden flex flex-col">
           <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent p-3">
-            {historySignals.length === 0 ? (
+            {filteredHistorySignals.length === 0 ? (
               <div className="flex items-center justify-center py-10 text-muted-foreground text-sm">
-                {t('noCompletedTrades')}
+                {t('noHistoryOrders')}
               </div>
             ) : (
               <div className="space-y-3">
-                {historySignals.map((trade) => (
+                {filteredHistorySignals.map((trade) => (
                   <div
                     key={trade.id}
                     className="relative p-3 rounded-lg bg-card border border-border hover:border-foreground/20 transition-all cursor-pointer group overflow-hidden"
@@ -417,13 +435,13 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover }: SidebarProps) => {
         {/* Pending Orders Tab */}
         <TabsContent value="pending" className="flex-1 mt-0 overflow-hidden flex flex-col">
           <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent p-3">
-            {activeSignals.length === 0 ? (
+            {filteredActiveSignals.length === 0 ? (
               <div className="flex items-center justify-center py-10 text-muted-foreground text-sm">
                 {t('noPendingOrders')}
               </div>
             ) : (
               <div className="space-y-3">
-                {activeSignals.map((order) => (
+                {filteredActiveSignals.map((order) => (
                   <div
                     key={order.id}
                     className="relative p-3 rounded-lg bg-card border border-border hover:border-foreground/20 transition-all cursor-pointer group"

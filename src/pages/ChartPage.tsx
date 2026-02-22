@@ -933,6 +933,8 @@ const ChartPage = () => {
                                 activeTab={rightSidebarTab}
                                 onTabChange={setRightSidebarTab}
                                 onSignalHover={setHoveredSignalId}
+                                selectedKols={globalSelectedKols}
+                                selectedSymbols={new Set(selectedSymbols)}
                             />
                         </>
                     )}
