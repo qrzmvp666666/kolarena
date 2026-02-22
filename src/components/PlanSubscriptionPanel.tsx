@@ -380,11 +380,11 @@ const PlanSubscriptionPanel = () => {
             </div>
             
             {/* Price */}
-            <div className="mb-2">
+            <div className="mb-4">
               <span className="text-2xl font-bold font-mono text-foreground">{plan.priceLabel}</span>
               {plan.period && <span className="text-sm text-muted-foreground ml-1">{plan.period}</span>}
             </div>
-            
+
             {/* Exchange Registration Callout - Only for paid plans */}
             {!plan.isFree && (
               <div 
@@ -401,6 +401,27 @@ const PlanSubscriptionPanel = () => {
                 <p className="text-xs text-foreground/90 leading-relaxed font-medium pl-6">
                   通过专属交易所链接注册，当月合约交易量达 <span className="text-primary font-bold">5000U</span> 即可解锁当月会员
                 </p>
+              </div>
+            )}
+
+            {/* Payment Buttons */}
+            {!plan.isFree && (
+              <div className="space-y-2 mb-4">
+                <Button 
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                  onClick={() => handleCryptoPayment(plan.name, plan.price, plan.currency, plan.nowpaymentUrl)}
+                >
+                  <Bitcoin className="w-4 h-4 mr-2" />
+                  {t('payWithCrypto')}
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="w-full border-primary/20 hover:bg-primary/5 hover:border-primary/50 text-foreground"
+                  onClick={() => handleStripePayment(plan.name, plan.stripeUrl)}
+                >
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  {t('payWithStripe')}
+                </Button>
               </div>
             )}
             
@@ -424,29 +445,6 @@ const PlanSubscriptionPanel = () => {
             </div>
             
             <div className="flex-1" />
-            
-            {/* Payment Buttons - Together at bottom */}
-            <div className="space-y-2 mt-4">
-              {!plan.isFree && (
-                <>
-                  <Button 
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                    onClick={() => handleCryptoPayment(plan.name, plan.price, plan.currency, plan.nowpaymentUrl)}
-                  >
-                    <Bitcoin className="w-4 h-4 mr-2" />
-                    {t('payWithCrypto')}
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    className="w-full border-primary/20 hover:bg-primary/5 hover:border-primary/50 text-foreground"
-                    onClick={() => handleStripePayment(plan.name, plan.stripeUrl)}
-                  >
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    {t('payWithStripe')}
-                  </Button>
-                </>
-              )}
-            </div>
             </div>
           ))
         )}
