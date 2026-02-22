@@ -11,6 +11,7 @@ import Sidebar from '@/components/Sidebar';
 import TickerBar from '@/components/TickerBar';
 import { supabase } from '@/lib/supabase';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -63,6 +64,8 @@ interface ChartWindowProps {
     onAutoSelectAll: (chartId: string, kolNames: string[]) => void;
     hoveredSignalId?: string | null;
     onSignalHover?: (id: string | null) => void;
+    selectedDirection?: 'all' | 'long' | 'short';
+    selectedTimeRange?: 'all' | '24h' | '3d' | '7d' | '30d';
 }
 
 const ChartWindow = ({
@@ -74,6 +77,8 @@ const ChartWindow = ({
     onAutoSelectAll,
     hoveredSignalId,
     onSignalHover,
+    selectedDirection = 'all',
+    selectedTimeRange = 'all',
 }: ChartWindowProps) => {
     const { candles, loading } = useBinanceCandles(symbol, interval);
     const [rawSignals, setRawSignals] = useState<SignalRow[]>([]);
@@ -157,6 +162,19 @@ const ChartWindow = ({
         filtered = filtered.filter(s => selectedKols.has(s.kol_name));
         filtered = filtered.filter(s => s.status !== 'closed' && s.status !== 'cancelled');
 
+        if (selectedDirection !== 'all') {
+            filtered = filtered.filter(s => s.direction === selectedDirection);
+        }
+
+        if (selectedTimeRange !== 'all') {
+            const now = Date.now();
+            const timeLimit = selectedTimeRange === '24h' ? 24 * 60 * 60 * 1000 :
+                              selectedTimeRange === '3d' ? 3 * 24 * 60 * 60 * 1000 :
+                              selectedTimeRange === '7d' ? 7 * 24 * 60 * 60 * 1000 :
+                              30 * 24 * 60 * 60 * 1000;
+            filtered = filtered.filter(s => (now - new Date(s.entry_time).getTime()) <= timeLimit);
+        }
+
         const intervalSeconds = getIntervalSeconds(interval);
         const mapped: ChartSignal[] = filtered.map(s => {
             const rawTime = Math.floor(new Date(s.entry_time).getTime() / 1000);
@@ -184,7 +202,7 @@ const ChartWindow = ({
         } else {
             return mapped;
         }
-    }, [rawSignals, selectedKols, interval, candles]);
+    }, [rawSignals, selectedKols, interval, candles, selectedDirection, selectedTimeRange]);
 
     return (
         <Card className="w-full h-full border-none rounded-none bg-transparent shadow-none">
@@ -231,6 +249,10 @@ const ChartPage = () => {
     
     // Global Set of Selected KOLs (used by ALL charts equally)
     const [globalSelectedKols, setGlobalSelectedKols] = useState<Set<string>>(new Set());
+    
+    // Global filters for direction and time range
+    const [globalSelectedDirection, setGlobalSelectedDirection] = useState<'all' | 'long' | 'short'>('all');
+    const [globalSelectedTimeRange, setGlobalSelectedTimeRange] = useState<'all' | '24h' | '7d' | '30d'>('all');
     
     // We still track manual selection flag per chart to avoid auto-select clashing with user intent
     // (though with global selection, we might just need one global flag, but per-chart is safer for loading states)
@@ -715,14 +737,30 @@ const ChartPage = () => {
                                 </PopoverContent>
                             </Popover>
                             <div className="flex items-center gap-2">
-                                <Button
-                                    size="sm"
-                                    className="h-7 gap-1 text-[11px] border border-border bg-card text-foreground hover:bg-muted transition-colors"
-                                    onClick={handleAddChart}
-                                >
-                                    <Plus className="w-3.5 h-3.5" />
-                                    {t('chartAddWindow')}
-                                </Button>
+                                <Select value={globalSelectedDirection} onValueChange={(v: any) => setGlobalSelectedDirection(v)}>
+                                    <SelectTrigger className="h-7 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[90px]">
+                                        <SelectValue placeholder={t('filterDirection')} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">{t('allTypes')}</SelectItem>
+                                        <SelectItem value="long">{t('signalLong')}</SelectItem>
+                                        <SelectItem value="short">{t('signalShort')}</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
+                                <Select value={globalSelectedTimeRange} onValueChange={(v: any) => setGlobalSelectedTimeRange(v)}>
+                                    <SelectTrigger className="h-7 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[100px]">
+                                        <SelectValue placeholder={t('filterTime')} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">{t('allTypes')}</SelectItem>
+                                        <SelectItem value="24h">24{t('hours')}</SelectItem>
+                                        <SelectItem value="3d">3{t('days')}</SelectItem>
+                                        <SelectItem value="7d">7{t('days')}</SelectItem>
+                                        <SelectItem value="30d">30{t('days')}</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
                                 <Button
                                     size="sm"
                                     variant="ghost"
@@ -869,6 +907,8 @@ const ChartPage = () => {
                                                     onAutoSelectAll={handleAutoSelectAll}
                                                     hoveredSignalId={hoveredSignalId}
                                                     onSignalHover={setHoveredSignalId}
+                                                    selectedDirection={globalSelectedDirection}
+                                                    selectedTimeRange={globalSelectedTimeRange}
                                                 />
                                             </div>
                                         </div>
@@ -935,6 +975,8 @@ const ChartPage = () => {
                                 onSignalHover={setHoveredSignalId}
                                 selectedKols={globalSelectedKols}
                                 selectedSymbols={new Set(selectedSymbols)}
+                                selectedDirection={globalSelectedDirection}
+                                selectedTimeRange={globalSelectedTimeRange}
                             />
                         </>
                     )}

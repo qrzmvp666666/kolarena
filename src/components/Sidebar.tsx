@@ -48,6 +48,7 @@ interface PendingOrder {
   takeProfit: string | null;
   stopLoss: string | null;
   entryStatus?: 'pending' | 'entered';
+  rawTime: number;
 }
 
 interface CompletedTrade {
@@ -71,6 +72,7 @@ interface CompletedTrade {
   returnRate: string;
   profitRatio: string;
   outcome: 'takeProfit' | 'stopLoss' | 'draw';
+  rawTime: number;
 }
 
 // Remove mock data generation
@@ -92,9 +94,11 @@ interface SidebarProps {
   onSignalHover?: (signalId: string | null) => void;
   selectedKols?: Set<string>;
   selectedSymbols?: Set<string>;
+  selectedDirection?: 'all' | 'long' | 'short';
+  selectedTimeRange?: 'all' | '24h' | '3d' | '7d' | '30d';
 }
 
-const Sidebar = ({ activeTab, onTabChange, onSignalHover, selectedKols, selectedSymbols }: SidebarProps) => {
+const Sidebar = ({ activeTab, onTabChange, onSignalHover, selectedKols, selectedSymbols, selectedDirection = 'all', selectedTimeRange = 'all' }: SidebarProps) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentInput, setCommentInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -144,6 +148,7 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover, selectedKols, selected
                 stopLoss: s.stop_loss ? String(s.stop_loss) : null,
             profitRatio: s.expected_pnl_ratio ? Number(s.expected_pnl_ratio).toFixed(2) : '-',
             entryStatus: s.status === 'pending_entry' ? 'pending' : (s.status === 'entered' || s.status === 'active' ? 'entered' : undefined),
+            rawTime: new Date(s.entry_time || s.created_at || 0).getTime(),
             _sortTime: new Date(s.entry_time || s.created_at || 0).getTime(),
           }));
           mappedActive.sort((a, b) => (b._sortTime || 0) - (a._sortTime || 0));
@@ -178,7 +183,8 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover, selectedKols, selected
                 signalDuration: s.signal_duration || '-',
                 returnRate: s.pnl_percentage ? `${s.pnl_percentage}%` : '0%', // slightly redundant with profit
                 profitRatio: s.pnl_ratio ? Number(s.pnl_ratio).toFixed(2) : '-',
-                outcome: s.exit_type === 'take_profit' ? 'takeProfit' : s.exit_type === 'stop_loss' ? 'stopLoss' : 'draw'
+                outcome: s.exit_type === 'take_profit' ? 'takeProfit' : s.exit_type === 'stop_loss' ? 'stopLoss' : 'draw',
+                rawTime: new Date(s.entry_time || s.created_at || 0).getTime()
             }));
             setHistorySignals(mappedHistory);
         }
@@ -284,13 +290,31 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover, selectedKols, selected
   const filteredActiveSignals = activeSignals.filter(s => {
     const matchKol = selectedKols ? selectedKols.has(s.author) : true;
     const matchSymbol = selectedSymbols ? selectedSymbols.has(s.symbol) : true;
-    return matchKol && matchSymbol;
+    const matchDirection = selectedDirection !== 'all' ? s.signalType === selectedDirection : true;
+    const matchTime = selectedTimeRange !== 'all' ? (() => {
+      const now = Date.now();
+      const timeLimit = selectedTimeRange === '24h' ? 24 * 60 * 60 * 1000 :
+                        selectedTimeRange === '3d' ? 3 * 24 * 60 * 60 * 1000 :
+                        selectedTimeRange === '7d' ? 7 * 24 * 60 * 60 * 1000 :
+                        30 * 24 * 60 * 60 * 1000;
+      return (now - s.rawTime) <= timeLimit;
+    })() : true;
+    return matchKol && matchSymbol && matchDirection && matchTime;
   });
 
   const filteredHistorySignals = historySignals.filter(s => {
     const matchKol = selectedKols ? selectedKols.has(s.author) : true;
     const matchSymbol = selectedSymbols ? selectedSymbols.has(s.symbol) : true;
-    return matchKol && matchSymbol;
+    const matchDirection = selectedDirection !== 'all' ? s.signalType === selectedDirection : true;
+    const matchTime = selectedTimeRange !== 'all' ? (() => {
+      const now = Date.now();
+      const timeLimit = selectedTimeRange === '24h' ? 24 * 60 * 60 * 1000 :
+                        selectedTimeRange === '3d' ? 3 * 24 * 60 * 60 * 1000 :
+                        selectedTimeRange === '7d' ? 7 * 24 * 60 * 60 * 1000 :
+                        30 * 24 * 60 * 60 * 1000;
+      return (now - s.rawTime) <= timeLimit;
+    })() : true;
+    return matchKol && matchSymbol && matchDirection && matchTime;
   });
 
   return (
