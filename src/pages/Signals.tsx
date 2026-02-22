@@ -16,6 +16,7 @@ import LoginModal from '@/components/LoginModal';
 import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 import type { DateRange } from 'react-day-picker';
 import { enUS, zhCN } from 'date-fns/locale';
+import { formatDateTime, useTimeZone } from '@/lib/timezone';
 
 const coinTypes = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'BNB', 'XAU', 'PENDLE', 'ARB', 'OP'];
 
@@ -45,19 +46,19 @@ interface SignalRow {
 }
 
 // Transform DB row → card props
-const transformSignal = (row: SignalRow, isHistory: boolean) => {
+const transformSignal = (row: SignalRow, isHistory: boolean, timeZone: string) => {
   const entryTimeStr = row.entry_time
-    ? new Date(row.entry_time).toLocaleString('zh-CN', {
+    ? formatDateTime(row.entry_time, {
         year: 'numeric', month: '2-digit', day: '2-digit',
         hour: '2-digit', minute: '2-digit', second: '2-digit',
-      }).replace(/\//g, '/')
+      }, timeZone)
     : '-';
 
   const closeTimeStr = row.exit_time
-    ? new Date(row.exit_time).toLocaleString('zh-CN', {
+    ? formatDateTime(row.exit_time, {
         month: '2-digit', day: '2-digit',
         hour: '2-digit', minute: '2-digit',
-      }).replace(/\//g, '/')
+      }, timeZone)
     : undefined;
 
   const isProfit = row.pnl_percentage !== null ? row.pnl_percentage >= 0 : undefined;
@@ -105,6 +106,7 @@ const transformSignal = (row: SignalRow, isHistory: boolean) => {
 
 const SignalsContent = () => {
   const { t, language } = useLanguage();
+  const { timeZone } = useTimeZone();
   const { user } = useUser();
   const { toast } = useToast();
   const [loginModalOpen, setLoginModalOpen] = useState(false);
@@ -644,7 +646,7 @@ const SignalsContent = () => {
                 {filteredSignals.active.map(row => (
                   <SignalListCard
                     key={row.id}
-                    signal={transformSignal(row, false)}
+                    signal={transformSignal(row, false, timeZone)}
                     isHistory={false}
                     kolId={row.kol_id}
                     isFollowed={followedKolIds.has(row.kol_id)}
@@ -673,7 +675,7 @@ const SignalsContent = () => {
                 {filteredSignals.history.map(row => (
                   <SignalListCard
                     key={row.id}
-                    signal={transformSignal(row, true)}
+                    signal={transformSignal(row, true, timeZone)}
                     isHistory={true}
                     kolId={row.kol_id}
                     isFollowed={followedKolIds.has(row.kol_id)}

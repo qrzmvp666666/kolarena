@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { createChart, ColorType, IChartApi, ISeriesApi, Time, CandlestickSeries } from 'lightweight-charts';
 import { Candle } from '@/lib/binance';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useTimeZone } from '@/lib/timezone';
 
 export interface ChartSignal {
   id: string;
@@ -44,6 +45,7 @@ export const TradingChart = ({
   signals = [],
   hoveredSignalId = null,
 }: TradingChartProps) => {
+  const { timeZone } = useTimeZone();
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
@@ -147,6 +149,25 @@ export const TradingChart = ({
       }
     };
 
+    const formatChartTime = (time: Time) => {
+      if (typeof time === 'number') {
+        return new Intl.DateTimeFormat('zh-CN', {
+          timeZone,
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        }).format(new Date(time * 1000));
+      }
+      const { year, month, day } = time;
+      const d = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+      return new Intl.DateTimeFormat('zh-CN', {
+        timeZone,
+        month: '2-digit',
+        day: '2-digit',
+      }).format(d);
+    };
+
     const chart = createChart(chartContainerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: backgroundColor },
@@ -154,6 +175,10 @@ export const TradingChart = ({
       },
       width: chartContainerRef.current.clientWidth,
       height: 500,
+      localization: {
+        locale: 'zh-CN',
+        timeFormatter: formatChartTime,
+      },
       grid: {
         vertLines: { color: 'rgba(197, 203, 206, 0.1)' },
         horzLines: { color: 'rgba(197, 203, 206, 0.1)' },
@@ -364,7 +389,7 @@ export const TradingChart = ({
       cancelAnimationFrame(animationFrameId);
       chart.remove();
     };
-  }, [backgroundColor, textColor, upColor, downColor, wickUpColor, wickDownColor]);
+  }, [backgroundColor, textColor, upColor, downColor, wickUpColor, wickDownColor, timeZone]);
 
   // Update chart size when container resizes (e.g. sidebar toggle, layout switch)
   useEffect(() => {

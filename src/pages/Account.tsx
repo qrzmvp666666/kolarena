@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CreditCard, Wallet, Bitcoin, Clock, CheckCircle, XCircle, Gift, Ticket, Zap, Star, Crown, Info, ArrowRight, User, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
+import { formatDateTime, useTimeZone } from '@/lib/timezone';
 import { useUser } from '@/contexts/UserContext';
 import TopNav from '@/components/TopNav';
 import { Button } from '@/components/ui/button';
@@ -119,6 +120,7 @@ const mockAccounts: TradingAccount[] = [
 
 const Account = () => {
   const { t } = useLanguage();
+  const { timeZone } = useTimeZone();
   const { toast } = useToast();
   const { user: contextUser, updateAvatar: updateContextAvatar } = useUser();
   const location = useLocation();
@@ -777,8 +779,8 @@ const Account = () => {
                             </div>
                             <div className="text-sm text-muted-foreground">
                               {record.previous_tier || 'free'} → {record.new_tier}
-                              {record.new_expires_at && ` • ${t('expiresAt')}: ${new Date(record.new_expires_at).toLocaleDateString()}`}
-                              {' • '}{new Date(record.created_at).toLocaleString()}
+                              {record.new_expires_at && ` • ${t('expiresAt')}: ${formatDateTime(record.new_expires_at, { year: 'numeric', month: '2-digit', day: '2-digit' }, timeZone)}`}
+                              {' • '}{formatDateTime(record.created_at, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }, timeZone)}
                             </div>
                           </div>
                         </div>
@@ -906,7 +908,7 @@ const Account = () => {
                               : membershipTier === 'free'
                                 ? ''
                                 : membershipExpiresAt
-                                  ? `${t('membershipExpiresAt')}: ${new Date(membershipExpiresAt).toLocaleDateString()}`
+                                  ? `${t('membershipExpiresAt')}: ${formatDateTime(membershipExpiresAt, { year: 'numeric', month: '2-digit', day: '2-digit' }, timeZone)}`
                                   : ''
                             }
                           </div>

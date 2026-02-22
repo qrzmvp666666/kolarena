@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon, TrendingUp, ArrowUpRight, ArrowDownRight, RefreshCw, FlaskConical } from 'lucide-react';
 import { format } from 'date-fns';
+import { formatDateTime, useTimeZone } from '@/lib/timezone';
 import { zhCN, enUS } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip, Area, AreaChart } from 'recharts';
@@ -123,7 +124,7 @@ interface CoinDistributionPoint {
   color: string;
 }
 
-const mapSignalToTrade = (signal: SignalRow): TradeRow => {
+const mapSignalToTrade = (signal: SignalRow, timeZone: string): TradeRow => {
   return {
     id: signal.id,
     pair: signal.symbol,
@@ -133,12 +134,16 @@ const mapSignalToTrade = (signal: SignalRow): TradeRow => {
     entryPrice: Number(signal.entry_price).toFixed(2),
     tp: signal.take_profit ? Number(signal.take_profit).toFixed(2) : '-',
     sl: signal.stop_loss ? Number(signal.stop_loss).toFixed(2) : '-',
-    time: signal.entry_time ? format(new Date(signal.entry_time), 'MM/dd HH:mm') : '-',
+    time: signal.entry_time ? formatDateTime(signal.entry_time, {
+      month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+    }, timeZone) : '-',
     pnl: signal.pnl_percentage ? Number(signal.pnl_percentage) : 0,
     roi: signal.pnl_ratio || (signal.pnl_percentage ? Number(signal.pnl_percentage).toFixed(2) : '0'),
     expectedRoi: signal.expected_pnl_ratio || '0',
     duration: signal.signal_duration || '-',
-    closeTime: signal.exit_time ? format(new Date(signal.exit_time), 'MM/dd HH:mm') : '-',
+    closeTime: signal.exit_time ? formatDateTime(signal.exit_time, {
+      month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+    }, timeZone) : '-',
     status: signal.exit_type === 'take_profit' ? 'tp' : signal.exit_type === 'stop_loss' ? 'sl' : signal.exit_type === 'draw' ? 'draw' : signal.exit_type === 'manual' ? 'manual' : '-',
   };
 };
@@ -188,6 +193,7 @@ interface AdvancedAnalysisProps {
 }
 
 const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRange, customDateRange, refreshTick }: AdvancedAnalysisProps) => {
+  const { timeZone } = useTimeZone();
   const currentTrader = traders.find(tr => tr.id === selectedTrader) || traders[0];
   const [metrics, setMetrics] = useState<KolMetricsRow | null>(null);
   const [profitTrendData, setProfitTrendData] = useState<ProfitTrendPoint[]>([]);
@@ -329,8 +335,8 @@ const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRan
     return () => { supabase.removeChannel(channel); };
   }, [selectedTrader, fetchAnalytics]);
 
-  const activeTrades = useMemo(() => activeSignals.map(mapSignalToTrade), [activeSignals]);
-  const historyTrades = useMemo(() => historySignals.map(mapSignalToTrade), [historySignals]);
+  const activeTrades = useMemo(() => activeSignals.map((signal) => mapSignalToTrade(signal, timeZone)), [activeSignals, timeZone]);
+  const historyTrades = useMemo(() => historySignals.map((signal) => mapSignalToTrade(signal, timeZone)), [historySignals, timeZone]);
 
   useEffect(() => {
     setActivePage(1);

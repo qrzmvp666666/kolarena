@@ -7,6 +7,7 @@ import { Send, LogIn, ArrowRight } from 'lucide-react';
 import LoginModal from '@/components/LoginModal';
 import { useLanguage } from '@/lib/i18n';
 import { useUser } from '@/contexts/UserContext';
+import { formatDateTime, useTimeZone } from '@/lib/timezone';
 import { supabase } from '@/lib/supabase';
 
 // Mock user data for demo
@@ -100,6 +101,7 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover }: SidebarProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { t, language } = useLanguage();
   const { user } = useUser();
+  const { timeZone } = useTimeZone();
 
   // Fetch signals
   const fetchSignals = async () => {
@@ -130,9 +132,9 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover }: SidebarProps) => {
                 leverage: s.leverage ? `${s.leverage}x` : '未提供',
                 entryPrice: String(s.entry_price),
                 positionMode: s.margin_mode === 'cross' ? '全仓' : '逐仓',
-            orderTime: new Date(s.entry_time || s.created_at).toLocaleString('zh-CN', {
-                    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
-                }),
+            orderTime: formatDateTime(s.entry_time || s.created_at, {
+                month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+              }, timeZone),
                 takeProfit: s.take_profit ? String(s.take_profit) : null,
                 stopLoss: s.stop_loss ? String(s.stop_loss) : null,
             profitRatio: s.expected_pnl_ratio ? Number(s.expected_pnl_ratio).toFixed(2) : '-',
@@ -157,12 +159,12 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover }: SidebarProps) => {
                 entryPrice: String(s.entry_price),
                 closePrice: String(s.exit_price || s.entry_price), // Fallback if null
                 positionMode: s.margin_mode === 'cross' ? '全仓' : '逐仓',
-                openTime: new Date(s.entry_time).toLocaleString('zh-CN', {
-                    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
-                }),
-                closeTime: s.exit_time ? new Date(s.exit_time).toLocaleString('zh-CN', {
-                    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
-                }) : '-',
+                openTime: formatDateTime(s.entry_time, {
+                  month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+                }, timeZone),
+                closeTime: s.exit_time ? formatDateTime(s.exit_time, {
+                  month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+                }, timeZone) : '-',
                 takeProfit: s.take_profit ? String(s.take_profit) : null,
                 stopLoss: s.stop_loss ? String(s.stop_loss) : null,
                 profit: s.pnl_percentage ? `${s.pnl_percentage >= 0 ? '+' : ''}${s.pnl_percentage}%` : '0%',
@@ -194,11 +196,11 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover }: SidebarProps) => {
         const formattedComments: Comment[] = data.map((comment: any) => ({
           id: comment.id,
           text: comment.content,
-          timestamp: new Date(comment.created_at).toLocaleTimeString('zh-CN', {
+          timestamp: formatDateTime(comment.created_at, {
             hour: '2-digit',
             minute: '2-digit',
             second: '2-digit'
-          }),
+          }, timeZone),
           userName: comment.user_display_name || 'Anonymous',
           userAvatar: comment.user_avatar_url
         }));

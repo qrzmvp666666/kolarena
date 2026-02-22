@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Sun, Moon, MessageSquare, MessageSquareOff, Globe, User, LogOut, ChevronDown } from 'lucide-react';
+import { Sun, Moon, MessageSquare, MessageSquareOff, Globe, User, LogOut, ChevronDown, Clock } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { useLanguage } from '@/lib/i18n';
+import { useTimeZone } from '@/lib/timezone';
 import { useUser } from '@/contexts/UserContext';
 import {
   DropdownMenu,
@@ -21,6 +22,7 @@ interface TopNavProps {
 const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: TopNavProps) => {
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
+  const { timeZone, setTimeZone, timeZones } = useTimeZone();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useUser();
@@ -42,6 +44,8 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
   const toggleLanguage = () => {
     setLanguage(language === 'zh' ? 'en' : 'zh');
   };
+
+  const currentTimeZoneLabel = timeZones.find((tz) => tz.value === timeZone)?.label || timeZone;
 
   return (
     <nav className="flex items-center justify-between px-6 py-3 border-b border-border bg-card">
@@ -132,6 +136,25 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
           <Globe size={16} />
           <span>{language === 'zh' ? '中文' : 'EN'}</span>
         </button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-accent transition-colors font-mono text-xs">
+            <Clock size={16} />
+            <span className="max-w-[120px] truncate" title={currentTimeZoneLabel}>{currentTimeZoneLabel}</span>
+            <ChevronDown size={12} className="text-muted-foreground" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="font-mono text-xs">
+            {timeZones.map((tz) => (
+              <DropdownMenuItem
+                key={tz.value}
+                onClick={() => setTimeZone(tz.value)}
+                className="cursor-pointer"
+              >
+                {tz.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
         
         {!hideDanmakuToggle && (
           <button
