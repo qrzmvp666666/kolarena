@@ -7,8 +7,8 @@ export type TimeZoneOption = {
 };
 
 const TIME_ZONES: TimeZoneOption[] = [
-  { value: 'Asia/Shanghai', label: 'UTC+8 北京时间' },
-  { value: 'UTC', label: 'UTC+0 协调世界时' },
+  { value: 'Asia/Shanghai', label: 'UTC+8 北京' },
+  { value: 'UTC', label: 'UTC+0 世界' },
   { value: 'Asia/Tokyo', label: 'UTC+9 东京' },
   { value: 'Europe/London', label: 'UTC+0 伦敦' },
   { value: 'America/New_York', label: 'UTC-5 纽约' },
