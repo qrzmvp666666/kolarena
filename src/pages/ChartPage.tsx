@@ -62,6 +62,7 @@ interface ChartWindowProps {
     onAvailableKolsChange: (chartId: string, kols: KolOption[]) => void;
     onAutoSelectAll: (chartId: string, kolNames: string[]) => void;
     hoveredSignalId?: string | null;
+    onSignalHover?: (id: string | null) => void;
 }
 
 const ChartWindow = ({
@@ -72,6 +73,7 @@ const ChartWindow = ({
     onAvailableKolsChange,
     onAutoSelectAll,
     hoveredSignalId,
+    onSignalHover,
 }: ChartWindowProps) => {
     const { candles, loading } = useBinanceCandles(symbol, interval);
     const [rawSignals, setRawSignals] = useState<SignalRow[]>([]);
@@ -192,6 +194,7 @@ const ChartWindow = ({
                     isLoading={loading}
                     signals={chartSignals}
                     hoveredSignalId={hoveredSignalId}
+                    onSignalHover={onSignalHover}
                     colors={{
                         backgroundColor: 'transparent',
                         textColor: '#d1d4dc',
@@ -865,6 +868,7 @@ const ChartPage = () => {
                                                     onAvailableKolsChange={handleAvailableKolsChange}
                                                     onAutoSelectAll={handleAutoSelectAll}
                                                     hoveredSignalId={hoveredSignalId}
+                                                    onSignalHover={setHoveredSignalId}
                                                 />
                                             </div>
                                         </div>

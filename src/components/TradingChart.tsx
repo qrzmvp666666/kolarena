@@ -29,6 +29,7 @@ interface TradingChartProps {
   isLoading?: boolean;
   signals?: ChartSignal[];
   hoveredSignalId?: string | null;
+  onSignalHover?: (id: string | null) => void;
 }
 
 export const TradingChart = ({ 
@@ -44,6 +45,7 @@ export const TradingChart = ({
   isLoading = false,
   signals = [],
   hoveredSignalId = null,
+  onSignalHover,
 }: TradingChartProps) => {
   const { timeZone } = useTimeZone();
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -68,7 +70,7 @@ export const TradingChart = ({
     price: number;
   };
 
-  const buildSignalMarkers = (items: ChartSignal[]): SignalMarker[] => {
+  const buildSignalMarkers = (items: ChartSignal[], hoveredId: string | null): SignalMarker[] => {
     return items.flatMap((signal) => {
       const markers: SignalMarker[] = [
         {
@@ -79,7 +81,10 @@ export const TradingChart = ({
         },
       ];
 
-      const shouldShowTpSl = signal.status === 'entered';
+      // Only show TP/SL if the signal is hovered, and it's an entered/active/pending signal
+      // The user requested: "最好是当鼠标悬停在 已入场信号的时候才需要展示止盈止损点就行"
+      const shouldShowTpSl = (signal.status === 'entered' || signal.status === 'active' || signal.status === 'pending_entry') && signal.id === hoveredId;
+      
       if (shouldShowTpSl && signal.takeProfit !== null && signal.takeProfit !== undefined) {
         markers.push({
           key: `${signal.id}-tp`,
@@ -110,7 +115,7 @@ export const TradingChart = ({
     // Also, trigger an immediate manual update of positions to force cleanup right now
     // This handles the "react unmount" vs "RAF loop" race condition
     if (signalElementsRef.current && overlayRef.current) {
-        const markers = buildSignalMarkers(signals);
+        const markers = buildSignalMarkers(signals, hoveredSignalId);
         const activeKeys = new Set<string>();
         markers.forEach(m => activeKeys.add(m.key));
         
@@ -250,9 +255,9 @@ export const TradingChart = ({
       }
       
       const series = candleSeriesRef.current;
-      // const timeScale = chart.timeScale(); // Already defined in closure
+      const hoveredId = hoveredSignalIdRef.current;
 
-      const markers = buildSignalMarkers(signalsRef.current);
+      const markers = buildSignalMarkers(signalsRef.current, hoveredId);
 
       // Force hide elements that are no longer in the current signals list
       // This ensures immediate visual feedback even if React DOM reconciliation is pending
@@ -290,8 +295,6 @@ export const TradingChart = ({
         animationFrameId = requestAnimationFrame(updateSignalPositions);
         return;
       }
-
-      const hoveredId = hoveredSignalIdRef.current;
       const hoveredSignal = hoveredId
         ? signalsRef.current.find(s => s.id === hoveredId)
         : undefined;
@@ -465,7 +468,7 @@ export const TradingChart = ({
           className="absolute right-3 px-2 py-1 rounded bg-background/80 border border-border text-[11px] text-foreground pointer-events-none"
           style={{ display: 'none', transform: 'translateY(-50%)' }}
         />
-        {buildSignalMarkers(signals).map((marker) => (
+        {buildSignalMarkers(signals, hoveredSignalId).map((marker) => (
            <div
              key={marker.key}
              data-signal-key={marker.key}
@@ -475,6 +478,8 @@ export const TradingChart = ({
              }}
              className="absolute h-0 w-0 group pointer-events-auto cursor-pointer will-change-transform"
              style={{ display: 'none' }} // Hidden initially until positioned
+             onMouseEnter={() => onSignalHover?.(marker.signal.id)}
+             onMouseLeave={() => onSignalHover?.(null)}
            >
               {marker.kind === 'entry' ? (
                 <>

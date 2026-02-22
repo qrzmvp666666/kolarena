@@ -77,9 +77,8 @@ export const translations: Translations = {
   signalNone: { zh: '没信号', en: 'No Signal' },
   
   // TickerBar
-  highest: { zh: '最高', en: 'HIGHEST' },
-  lowest: { zh: '最低', en: 'LOWEST' },
-
+    highest: { zh: '最高', en: 'HIGHEST' },
+    lowest: { zh: '最低', en: 'LOWEST' },
   // Signals Page
   tradingSignals: { zh: '交易信号', en: 'Trading Signals' },
   signalSummary: { zh: '所有频道的交易信号汇总', en: 'Summary of trading signals from all channels' },
