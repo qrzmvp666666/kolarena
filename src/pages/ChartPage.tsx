@@ -215,7 +215,7 @@ const ChartPage = () => {
     const [hoveredSignalId, setHoveredSignalId] = useState<string | null>(null);
 
     const [charts, setCharts] = useState<ChartWindowState[]>([
-        { id: 'chart-1', symbol: 'BTCUSDT', interval: '1d' },
+        { id: 'chart-1', symbol: 'BTCUSDT', interval: '1h' },
     ]);
     const [activeChartId, setActiveChartId] = useState('chart-1');
     const [layoutPreset, setLayoutPreset] = useState({ rows: 1, cols: 1 });
@@ -279,7 +279,7 @@ const ChartPage = () => {
 
     const [layouts, setLayouts] = useState<ResponsiveLayouts>(() =>
         buildLayoutsForCharts(
-            [{ id: 'chart-1', symbol: 'BTCUSDT', interval: '1d' }],
+            [{ id: 'chart-1', symbol: 'BTCUSDT', interval: '1h' }],
             { rows: 1, cols: 1 }
         )
     );
@@ -390,7 +390,7 @@ const ChartPage = () => {
                     return {
                         id: `chart-${chartIdCounter.current++}`,
                         symbol,
-                        interval: activeChart?.interval || '1d',
+                        interval: activeChart?.interval || '1h',
                     } as ChartWindowState;
                 });
 
@@ -476,7 +476,7 @@ const ChartPage = () => {
                 nextCharts.push({
                     id: `chart-${chartIdCounter.current++}`,
                     symbol: baseSymbol,
-                    interval: '1d',
+                    interval: '1h',
                 });
             }
             setCharts(nextCharts);
@@ -496,7 +496,7 @@ const ChartPage = () => {
 
     const handleResetLayout = () => {
         // Reset to initial single BTCUSDT chart
-        const initialChart: ChartWindowState = { id: 'chart-1', symbol: 'BTCUSDT', interval: '1d' };
+        const initialChart: ChartWindowState = { id: 'chart-1', symbol: 'BTCUSDT', interval: '1h' };
         const nextCharts = [initialChart];
         const nextSymbols = ['BTCUSDT'];
 
