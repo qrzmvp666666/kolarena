@@ -285,7 +285,7 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover, selectedKols, selected
     }
   };
 
-  const currentTab = activeTab ?? 'comments';
+  const currentTab = activeTab ?? 'pending';
 
   const filteredActiveSignals = activeSignals.filter(s => {
     const matchKol = selectedKols ? selectedKols.has(s.author) : true;
@@ -326,12 +326,6 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover, selectedKols, selected
       >
         <TabsList className="w-full rounded-none border-b border-border bg-transparent p-0 h-auto flex-shrink-0 flex items-center">
           <TabsTrigger
-            value="comments"
-            className={`flex-1 rounded-none border-r border-border py-2 px-1 font-mono ${language === 'en' ? 'text-[10px]' : 'text-sm'} text-muted-foreground data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-b-foreground data-[state=active]:font-semibold truncate transition-all`}
-          >
-            {t('comments')}
-          </TabsTrigger>
-          <TabsTrigger
             value="pending"
             className={`flex-1 rounded-none border-r border-border py-2 px-1 font-mono ${language === 'en' ? 'text-[10px]' : 'text-sm'} text-muted-foreground data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-b-foreground data-[state=active]:font-semibold truncate transition-all`}
           >
@@ -339,9 +333,15 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover, selectedKols, selected
           </TabsTrigger>
           <TabsTrigger
             value="history"
-            className={`flex-1 rounded-none py-2 px-1 font-mono ${language === 'en' ? 'text-[10px]' : 'text-sm'} text-muted-foreground data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-b-foreground data-[state=active]:font-semibold truncate transition-all`}
+            className={`flex-1 rounded-none border-r border-border py-2 px-1 font-mono ${language === 'en' ? 'text-[10px]' : 'text-sm'} text-muted-foreground data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-b-foreground data-[state=active]:font-semibold truncate transition-all`}
           >
             {t('historySignals')}
+          </TabsTrigger>
+          <TabsTrigger
+            value="comments"
+            className={`flex-1 rounded-none py-2 px-1 font-mono ${language === 'en' ? 'text-[10px]' : 'text-sm'} text-muted-foreground data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-b-foreground data-[state=active]:font-semibold truncate transition-all`}
+          >
+            {t('comments')}
           </TabsTrigger>
         </TabsList>
 

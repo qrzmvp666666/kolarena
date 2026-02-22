@@ -240,7 +240,7 @@ const ChartPage = () => {
     const [selectedSymbols, setSelectedSymbols] = useState<string[]>(['BTCUSDT']);
     const chartIdCounter = useRef(2);
     const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
-    const [rightSidebarTab, setRightSidebarTab] = useState<'comments' | 'pending' | 'history'>('comments');
+    const [rightSidebarTab, setRightSidebarTab] = useState<'comments' | 'pending' | 'history'>('pending');
     const [resetKey, setResetKey] = useState(0);
 
     const [availableKolsByChart, setAvailableKolsByChart] = useState<
