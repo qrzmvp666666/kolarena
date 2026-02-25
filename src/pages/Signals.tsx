@@ -90,7 +90,7 @@ const transformSignal = (row: SignalRow, isHistory: boolean, timeZone: string) =
     takeProfit: row.take_profit !== null ? String(row.take_profit) : null,
     stopLoss: row.stop_loss !== null ? String(row.stop_loss) : null,
     profitRatio: isHistory
-      ? (row.pnl_ratio ? Number(row.pnl_ratio).toFixed(2) : '-')
+      ? (row.pnl_percentage !== null ? Number(row.pnl_percentage).toFixed(2) : '-')
       : (row.expected_pnl_ratio ? Number(row.expected_pnl_ratio).toFixed(2) : '-'),
     isHistorySignal: isHistory,
     entryStatus,

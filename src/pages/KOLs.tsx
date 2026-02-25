@@ -94,6 +94,7 @@ interface TradeRow {
   sl: string;
   time: string;
   pnl: number;
+  pnlDollar: number;
   roi: string;
   expectedRoi: string;
   duration: string;
@@ -138,7 +139,8 @@ const mapSignalToTrade = (signal: SignalRow, timeZone: string): TradeRow => {
       month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
     }, timeZone) : '-',
     pnl: signal.pnl_percentage ? Number(signal.pnl_percentage) : 0,
-    roi: signal.pnl_ratio || (signal.pnl_percentage ? Number(signal.pnl_percentage).toFixed(2) : '0'),
+    pnlDollar: signal.pnl_percentage ? Math.round(DEFAULT_INITIAL_CAPITAL * Number(signal.pnl_percentage) / 100) : 0,
+    roi: signal.pnl_percentage ? Number(signal.pnl_percentage).toFixed(2) : '0',
     expectedRoi: signal.expected_pnl_ratio || '0',
     duration: signal.signal_duration || '-',
     closeTime: signal.exit_time ? formatDateTime(signal.exit_time, {
@@ -477,7 +479,7 @@ const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRan
                 <td className={`px-4 py-2 text-left font-medium ${(isHistory ? trade.pnl : Number(trade.expectedRoi)) === 0 ? 'text-muted-foreground' : (isHistory ? trade.pnl : Number(trade.expectedRoi)) > 0 ? 'text-accent-green' : 'text-accent-red'}`}>
                   <div className="flex flex-col items-start">
                     {isHistory ? (
-                      <span>{trade.pnl === 0 ? '-' : `${trade.pnl > 0 ? '+' : ''}${Number(trade.roi).toFixed(2)}`}</span>
+                      <span>{trade.pnlDollar === 0 ? '-' : `${trade.pnlDollar >= 0 ? '+' : '-'}$${Math.abs(trade.pnlDollar).toLocaleString()}`}</span>
                     ) : (
                       <span>{trade.expectedRoi && Number(trade.expectedRoi) !== 0 ? Number(trade.expectedRoi).toFixed(2) : '-'}</span>
                     )}

@@ -182,7 +182,7 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover, selectedKols, selected
                 isProfit: (s.pnl_percentage || 0) >= 0,
                 signalDuration: s.signal_duration || '-',
                 returnRate: s.pnl_percentage ? `${s.pnl_percentage}%` : '0%', // slightly redundant with profit
-                profitRatio: s.pnl_ratio ? Number(s.pnl_ratio).toFixed(2) : '-',
+                profitRatio: s.pnl_percentage ? Number(s.pnl_percentage).toFixed(2) : '-',
                 outcome: s.exit_type === 'take_profit' ? 'takeProfit' : s.exit_type === 'stop_loss' ? 'stopLoss' : 'draw',
                 rawTime: new Date(s.entry_time || s.created_at || 0).getTime()
             }));
