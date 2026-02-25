@@ -104,6 +104,20 @@ function normalizeSymbol(raw: string): string {
   return s.toUpperCase();
 }
 
+// ── Helper: calculate expected PnL ratio (Risk-Reward Ratio) ──
+// Real ratio = |takeProfit - entryPrice| / |stopLoss - entryPrice|
+function calcExpectedPnlRatio(
+  entryPrice: number,
+  takeProfit: number | null,
+  stopLoss: number | null,
+): number | null {
+  if (takeProfit === null || stopLoss === null || entryPrice <= 0) return null;
+  const tpDistance = Math.abs(takeProfit - entryPrice);
+  const slDistance = Math.abs(stopLoss - entryPrice);
+  if (slDistance === 0) return null;
+  return Math.round((tpDistance / slDistance) * 100) / 100;
+}
+
 Deno.serve(async (req: Request) => {
   // Only accept POST
   if (req.method === "OPTIONS") {
@@ -294,6 +308,8 @@ Deno.serve(async (req: Request) => {
     await ensureSymbol(symbol);
 
     // ── Upsert (ON CONFLICT skip) ──
+    const expectedPnlRatio = calcExpectedPnlRatio(entryPrice, takeProfit, stopLoss);
+
     const record = {
       kol_id: kolId,
       symbol,
@@ -305,6 +321,7 @@ Deno.serve(async (req: Request) => {
       entry_time: entryTime,
       status: "pending_entry" as const,
       margin_mode: "cross" as const,
+      expected_pnl_ratio: expectedPnlRatio,
     };
 
     const { error: insertErr } = await supabase
