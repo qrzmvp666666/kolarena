@@ -56,7 +56,7 @@ const Community = () => {
       id: 'binance',
       name: 'Binance',
       tag: '合约返佣 40%',
-      desc: '专属渠道注册；合约手续费长期 40% 返佣。当月合约交易量达 5000U，解锁当月 Pro 会员。',
+      desc: '使用专属注册链接，享长期返佣权益。',
       url: '#',
       color: '#F3BA2F'
     },
@@ -64,15 +64,15 @@ const Community = () => {
       id: 'okx',
       name: 'OKX',
       tag: '高返佣专属通道',
-      desc: '合约手续费 40% 返佣，适用全品类合约。当月合约交易量达 5000U，赠送当月 Pro 会员。',
+      desc: '使用专属注册链接，享长期返佣权益。',
       url: '#',
       color: '#111111'
     },
     {
-      id: 'bybit',
-      name: 'Bybit',
+      id: 'bitget',
+      name: 'Bitget',
       tag: '合约返佣 40%',
-      desc: '使用专属注册链接，享长期返佣权益。当月合约交易量达 5000U，即可领取当月 Pro。',
+      desc: '使用专属注册链接，享长期返佣权益。',
       url: '#',
       color: '#F59E0B'
     },

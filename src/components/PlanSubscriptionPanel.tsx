@@ -58,6 +58,7 @@ const PlanSubscriptionPanel = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const showStripePayment = false;
+  const showExchangeRebateCallout = false;
 
   const handleStripePayment = (planName: string, stripeUrl?: string | null) => {
     if (!user) {
@@ -387,7 +388,7 @@ const PlanSubscriptionPanel = () => {
             </div>
 
             {/* Exchange Registration Callout - Only for paid plans */}
-            {!plan.isFree && (
+            {!plan.isFree && showExchangeRebateCallout && (
               <div 
                 className="mb-4 p-4 rounded-lg border-2 border-primary bg-gradient-to-br from-primary/15 via-primary/8 to-transparent shadow-lg animate-pulse-glow cursor-pointer hover:scale-[1.02] transition-transform"
                 onClick={() => navigate('/community#exchanges')}
