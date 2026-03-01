@@ -243,7 +243,7 @@ const PlanSubscriptionPanel = () => {
           ? proPlan.benefits.map((text) => ({ text }))
           : proFeatures,
         featuresTitle: billingCycle === 'yearly' ? t('featuresTitlePremium') : t('featuresTitlePlus'),
-        isPopular: true,
+        isPopular: false,
         stripeUrl: proPlan?.stripe_invoice_url,
         nowpaymentUrl: proPlan?.nowpayment_invoice_url,
         isFree: false,
@@ -261,7 +261,7 @@ const PlanSubscriptionPanel = () => {
           ? proPlan.benefits.map((text) => ({ text }))
           : proFeatures,
         featuresTitle: billingCycle === 'yearly' ? t('featuresTitlePremium') : t('featuresTitlePlus'),
-        isPopular: false,
+        isPopular: true,
         stripeUrl: proPlan?.stripe_invoice_url,
         nowpaymentUrl: proPlan?.nowpayment_invoice_url,
         isFree: false,
