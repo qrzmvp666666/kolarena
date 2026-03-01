@@ -11,6 +11,7 @@ import { useUser } from '@/contexts/UserContext';
 
 type PlanType = 'monthly' | 'quarterly' | 'yearly' | 'lifetime';
 type BillingCycle = 'monthly' | 'yearly';
+type PlanTab = 'monthly' | 'yearly' | 'lifetime';
 
 interface PlanRecord {
   id: number;
@@ -30,7 +31,7 @@ interface PlanFeature {
 }
 
 interface DisplayPlanCard {
-  key: 'free' | 'pro' | 'lifetime';
+  key: 'free' | 'pro' | 'max' | 'lifetime';
   type: PlanType | 'free';
   name: string;
   price: number;
@@ -57,6 +58,7 @@ const PlanSubscriptionPanel = () => {
   const [plans, setPlans] = useState<PlanRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
+  const [activePlanTab, setActivePlanTab] = useState<PlanTab>('monthly');
   const showStripePayment = false;
   const showExchangeRebateCallout = false;
 
@@ -220,7 +222,7 @@ const PlanSubscriptionPanel = () => {
         name: t('planFree'),
         price: 0,
         currency: 'USDT',
-        priceLabel: t('planPriceFree'),
+        priceLabel: '0 USD',
         period: '',
         description: t('planFreeDesc'),
         features: freeFeatures,
@@ -242,6 +244,24 @@ const PlanSubscriptionPanel = () => {
           : proFeatures,
         featuresTitle: billingCycle === 'yearly' ? t('featuresTitlePremium') : t('featuresTitlePlus'),
         isPopular: true,
+        stripeUrl: proPlan?.stripe_invoice_url,
+        nowpaymentUrl: proPlan?.nowpayment_invoice_url,
+        isFree: false,
+      },
+      {
+        key: 'max',
+        type: proPlanDuration,
+        name: t('planMax'),
+        price: proPrice,
+        currency: proCurrency,
+        priceLabel: formatPrice(proPrice, proCurrency),
+        period: periodLabel(proPlanDuration),
+        description: proPlan?.description || t('planProDesc'),
+        features: Array.isArray(proPlan?.benefits) && proPlan.benefits.length
+          ? proPlan.benefits.map((text) => ({ text }))
+          : proFeatures,
+        featuresTitle: billingCycle === 'yearly' ? t('featuresTitlePremium') : t('featuresTitlePlus'),
+        isPopular: false,
         stripeUrl: proPlan?.stripe_invoice_url,
         nowpaymentUrl: proPlan?.nowpayment_invoice_url,
         isFree: false,
@@ -286,8 +306,16 @@ const PlanSubscriptionPanel = () => {
     t,
   ]);
 
-  const coreFeatureLines: Record<DisplayPlanCard['key'], Array<{ text: string; type?: 'heading' }>> = {
+  const visiblePlanCards = useMemo(() => {
+    if (activePlanTab === 'lifetime') {
+      return planCards.filter((plan) => plan.key === 'lifetime');
+    }
+    return planCards.filter((plan) => plan.key !== 'lifetime');
+  }, [activePlanTab, planCards]);
+
+  const coreFeatureLines: Record<DisplayPlanCard['key'], Array<{ text: string; type?: 'heading' | 'limit' }>> = {
     free: [
+      { text: t('planFreeSectionBasic'), type: 'heading' },
       { text: t('planFreeFeatureAds') },
       { text: t('planFreeFeatureDelayedChart') },
       { text: t('planFreeFeatureLimitedSignals') },
@@ -298,11 +326,23 @@ const PlanSubscriptionPanel = () => {
       { text: t('planProFeatureMarketQuotes') },
       { text: t('planProFeatureChartTracking') },
       { text: t('planProFeatureSignalPush') },
-      { text: t('planProFeatureSignalAlert') },
+      { text: t('planProSectionMore'), type: 'heading' },
+      { text: t('planProFeatureSupport') },
+      { text: t('planProFeatureCommunityNotice') },
+    ],
+    max: [
+      { text: t('planProSectionExclusive'), type: 'heading' },
+      { text: t('planProFeatureNoAds') },
+      { text: t('planProFeatureMarketQuotes') },
+      { text: t('planProFeatureChartTracking') },
+      { text: t('planProFeatureSignalPush') },
       { text: t('planProFeatureHistoryRank') },
       { text: t('planProFeatureHistoryAnalysis') },
       { text: t('planProFeatureTrendCompare') },
       { text: t('planProFeatureLiveBacktest') },
+      { text: t('planProSectionFuture'), type: 'heading' },
+      { text: t('planProFeatureCustomSignalUpdate') },
+      { text: t('planProFeatureOneClickCopySignal') },
       { text: t('planProSectionMore'), type: 'heading' },
       { text: t('planProFeatureSupport') },
       { text: t('planProFeatureCommunityNotice') },
@@ -313,11 +353,13 @@ const PlanSubscriptionPanel = () => {
       { text: t('planProFeatureMarketQuotes') },
       { text: t('planProFeatureChartTracking') },
       { text: t('planProFeatureSignalPush') },
-      { text: t('planProFeatureSignalAlert') },
       { text: t('planProFeatureHistoryRank') },
       { text: t('planProFeatureHistoryAnalysis') },
       { text: t('planProFeatureTrendCompare') },
       { text: t('planProFeatureLiveBacktest') },
+      { text: t('planProSectionFuture'), type: 'heading' },
+      { text: t('planProFeatureCustomSignalUpdate') },
+      { text: t('planProFeatureOneClickCopySignal') },
       { text: t('planProSectionMore'), type: 'heading' },
       { text: t('planProFeatureSupport') },
       { text: t('planProFeatureCommunityNotice') },
@@ -337,32 +379,50 @@ const PlanSubscriptionPanel = () => {
       <div className="flex items-center justify-center">
         <div className="inline-flex rounded-lg border border-border bg-muted/40 p-1">
           <Button
-            variant={billingCycle === 'monthly' ? 'default' : 'ghost'}
+            variant={activePlanTab === 'monthly' ? 'default' : 'ghost'}
             size="sm"
-            onClick={() => setBillingCycle('monthly')}
+            onClick={() => {
+              setBillingCycle('monthly');
+              setActivePlanTab('monthly');
+            }}
             className="min-w-[84px]"
           >
             {t('billingMonthly')}
           </Button>
           <Button
-            variant={billingCycle === 'yearly' ? 'default' : 'ghost'}
+            variant={activePlanTab === 'yearly' ? 'default' : 'ghost'}
             size="sm"
-            onClick={() => setBillingCycle('yearly')}
+            onClick={() => {
+              setBillingCycle('yearly');
+              setActivePlanTab('yearly');
+            }}
             className="min-w-[84px]"
           >
             {t('billingYearly')}
+          </Button>
+          <Button
+            variant={activePlanTab === 'lifetime' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActivePlanTab('lifetime')}
+            className="min-w-[84px]"
+          >
+            {t('planLifetime')}
           </Button>
         </div>
       </div>
 
       {/* Plans Grid */}
-      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div
+        className={`mx-auto grid grid-cols-1 gap-4 ${
+          activePlanTab === 'lifetime' ? 'max-w-xl md:grid-cols-1' : 'max-w-5xl md:grid-cols-3'
+        }`}
+      >
         {isLoading ? (
           <div className="col-span-full text-center text-sm text-muted-foreground">
             {t('loading')}
           </div>
         ) : (
-          planCards.map((plan) => (
+          visiblePlanCards.map((plan) => (
             <div
               key={plan.key}
               className={`relative rounded-xl p-5 flex flex-col transition-all ${
@@ -435,14 +495,18 @@ const PlanSubscriptionPanel = () => {
                 item.type === 'heading' ? (
                   <div key={index}>
                     {item.text === t('planProSectionMore') && <div className="h-6" />}
-                    <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/70 mt-2">
+                    <div className="mt-2 inline-flex items-center rounded-md border border-border bg-muted/30 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-foreground/85">
                       {item.text}
                     </div>
                   </div>
                 ) : (
                   <div key={index} className="flex items-center gap-2 text-sm">
-                    <Check className="w-5 h-5 text-muted-foreground" />
-                    <span className="text-muted-foreground">{item.text}</span>
+                    {item.type === 'limit' ? (
+                      <span className="w-5 h-5 inline-flex items-center justify-center text-muted-foreground/70">—</span>
+                    ) : (
+                      <Check className={`w-5 h-5 ${plan.isFree ? 'text-muted-foreground' : 'text-primary/90'}`} />
+                    )}
+                    <span className={item.type === 'limit' ? 'text-muted-foreground/80' : plan.isFree ? 'text-muted-foreground' : 'text-foreground/90 font-medium'}>{item.text}</span>
                   </div>
                 )
               ))}
