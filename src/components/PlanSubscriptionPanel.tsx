@@ -57,6 +57,7 @@ const PlanSubscriptionPanel = () => {
   const [plans, setPlans] = useState<PlanRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
+  const showStripePayment = false;
 
   const handleStripePayment = (planName: string, stripeUrl?: string | null) => {
     if (!user) {
@@ -414,14 +415,16 @@ const PlanSubscriptionPanel = () => {
                   <Bitcoin className="w-4 h-4 mr-2" />
                   {t('payWithCrypto')}
                 </Button>
-                <Button 
-                  variant="outline"
-                  className="w-full border-primary/20 hover:bg-primary/5 hover:border-primary/50 text-foreground"
-                  onClick={() => handleStripePayment(plan.name, plan.stripeUrl)}
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  {t('payWithStripe')}
-                </Button>
+                {showStripePayment && (
+                  <Button 
+                    variant="outline"
+                    className="w-full border-primary/20 hover:bg-primary/5 hover:border-primary/50 text-foreground"
+                    onClick={() => handleStripePayment(plan.name, plan.stripeUrl)}
+                  >
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    {t('payWithStripe')}
+                  </Button>
+                )}
               </div>
             )}
             
