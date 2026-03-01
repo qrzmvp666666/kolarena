@@ -57,7 +57,7 @@ const Community = () => {
       name: 'Binance',
       tag: '合约返佣 40%',
       desc: '使用专属注册链接，享长期返佣权益。',
-      url: '#',
+      url: 'https://www.bsmkweb.cc/register?ref=725888129',
       color: '#F3BA2F'
     },
     {
@@ -65,7 +65,7 @@ const Community = () => {
       name: 'OKX',
       tag: '高返佣专属通道',
       desc: '使用专属注册链接，享长期返佣权益。',
-      url: '#',
+      url: 'https://www.nzdcvhpxqwy.com/join/35743285',
       color: '#111111'
     },
     {
@@ -73,7 +73,7 @@ const Community = () => {
       name: 'Bitget',
       tag: '合约返佣 40%',
       desc: '使用专属注册链接，享长期返佣权益。',
-      url: '#',
+      url: 'https://share.glassgs.com/u/REX5UYHB',
       color: '#F59E0B'
     },
   ];
