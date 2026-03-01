@@ -38,7 +38,7 @@ const Community = () => {
       icon: MessageCircle,
       color: '#5865F2',
       qrText: '扫码加入 Discord',
-      url: '#'
+      url: 'https://discord.gg/rxQW8jbX'
     },
     {
       id: 'qq',
@@ -100,64 +100,8 @@ const Community = () => {
           </p>
         </div>
 
-        {/* Community Platforms - Refined Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {communities.map((comm) => (
-            <div key={comm.id} className="group p-5 rounded-3xl border border-border bg-card/40 hover:border-foreground/20 hover:shadow-xl hover:shadow-foreground/[0.02] transition-all duration-500 flex flex-col items-center">
-              {/* Platform Info */}
-              <div className="flex items-center justify-between w-full mb-6 bg-muted/10 p-4 rounded-2xl border border-border/40 backdrop-blur-sm">
-                <div className="flex items-center gap-4">
-                  <div 
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg shadow-black/10 transition-transform group-hover:scale-105"
-                    style={{ backgroundColor: comm.color }}
-                  >
-                    <comm.icon size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold tracking-tight">{comm.name}</h3>
-                    <p className="text-[11px] text-muted-foreground font-medium opacity-70 tracking-wider">
-                      {comm.handle.toUpperCase()}
-                    </p>
-                  </div>
-                </div>
-                <div className="p-2 rounded-lg bg-background/40 text-muted-foreground group-hover:text-foreground transition-all">
-                  <QrCode size={18} />
-                </div>
-              </div>
-
-              {/* QR Code Area - Reduced Size & Refined Style */}
-              <div className="w-40 h-40 bg-white p-3 rounded-2xl border border-muted relative group-hover:border-foreground/10 transition-all shadow-inner mb-6">
-                <div className="w-full h-full bg-muted/20 flex flex-col items-center justify-center text-muted-foreground font-bold text-center gap-1 rounded-xl">
-                  <span className="text-[10px] opacity-40 uppercase tracking-[0.2em]">{comm.name}</span>
-                  <span className="text-[10px] font-normal opacity-60">二维码生成中...</span>
-                  <div className="absolute inset-4 border border-dashed border-muted/50 flex items-center justify-center bg-white/40 rounded-lg">
-                     <span className="text-[10px] text-muted-foreground/20 tracking-widest uppercase">official qr</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="w-full space-y-4 px-2">
-                <Button 
-                  variant="outline"
-                  className="w-full py-5 text-sm font-semibold border border-foreground/10 transition-all hover:bg-foreground hover:text-background rounded-xl"
-                  onClick={() => comm.url !== '#' && window.open(comm.url, '_blank')}
-                >
-                  跳转到聊天端
-                </Button>
-                <div className="flex items-center justify-center gap-2 opacity-50">
-                   <div className="h-[1px] w-8 bg-muted-foreground/30"></div>
-                   <p className="text-[10px] text-muted-foreground tracking-wide uppercase">
-                     JOIN THE CIRCLE
-                   </p>
-                   <div className="h-[1px] w-8 bg-muted-foreground/30"></div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
         {/* Exchange Registration Cards */}
-        <div id="exchanges" className="mb-10 scroll-mt-20">
+        <div id="exchanges" className="mb-12 scroll-mt-20">
           <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
               交易所注册链接
@@ -191,7 +135,7 @@ const Community = () => {
 
                 <Button
                   variant="outline"
-                  className="w-full py-5 text-sm font-semibold border border-foreground/10 transition-all hover:bg-foreground hover:text-background rounded-xl gap-2"
+                  className="w-full py-5 text-sm font-semibold bg-white text-black border-white hover:bg-white/90 hover:text-black rounded-xl gap-2"
                   onClick={() => exchange.url !== '#' && window.open(exchange.url, '_blank')}
                 >
                   立即注册
@@ -200,6 +144,69 @@ const Community = () => {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Community Platforms - Refined Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
+          {communities.map((comm) => (
+            <div key={comm.id} className="group p-5 rounded-3xl border border-border bg-card/40 hover:border-foreground/20 hover:shadow-xl hover:shadow-foreground/[0.02] transition-all duration-500 flex flex-col items-center">
+              {/* Platform Info */}
+              <div className="flex items-center justify-between w-full mb-6 bg-muted/10 p-4 rounded-2xl border border-border/40 backdrop-blur-sm">
+                <div className="flex items-center gap-4">
+                  <div 
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg shadow-black/10 transition-transform group-hover:scale-105"
+                    style={{ backgroundColor: comm.color }}
+                  >
+                    <comm.icon size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold tracking-tight">{comm.name}</h3>
+                    <p className="text-[11px] text-muted-foreground font-medium opacity-70 tracking-wider">
+                      {comm.handle.toUpperCase()}
+                    </p>
+                  </div>
+                </div>
+                <div className="p-2 rounded-lg bg-background/40 text-muted-foreground group-hover:text-foreground transition-all">
+                  <QrCode size={18} />
+                </div>
+              </div>
+
+              {/* QR Code Area */}
+              <div className="w-40 h-40 bg-white p-3 rounded-2xl border border-muted relative group-hover:border-foreground/10 transition-all shadow-inner mb-6">
+                {comm.id === 'discord' ? (
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(comm.url)}`}
+                    alt="Discord 二维码"
+                    className="w-full h-full object-contain rounded-xl"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-muted/10 rounded-xl border border-dashed border-muted/60 flex flex-col items-center justify-center text-center gap-2">
+                    <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-[0.2em]">{comm.name}</span>
+                    <span className="text-sm font-semibold text-muted-foreground/85">二维码暂未开放</span>
+                  </div>
+                )}
+              </div>
+              
+              {comm.id === 'discord' && (
+                <div className="w-full space-y-4 px-2">
+                  <Button 
+                    variant="outline"
+                    className="w-full py-5 text-sm font-semibold bg-white text-black border-white hover:bg-white/90 hover:text-black rounded-xl"
+                    onClick={() => comm.url !== '#' && window.open(comm.url, '_blank')}
+                  >
+                    跳转到聊天端
+                  </Button>
+                  <div className="flex items-center justify-center gap-2 opacity-50">
+                     <div className="h-[1px] w-8 bg-muted-foreground/30"></div>
+                     <p className="text-[10px] text-muted-foreground tracking-wide uppercase">
+                       JOIN THE CIRCLE
+                     </p>
+                     <div className="h-[1px] w-8 bg-muted-foreground/30"></div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
 
       </div>
