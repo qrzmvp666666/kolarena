@@ -617,7 +617,7 @@ const ChartPage = () => {
                                                 {t('chartKeepOne')}
                                             </button>
                                         </div>
-                                        <div className="space-y-1 max-h-[260px] overflow-y-auto">
+                                        <div className="space-y-1 max-h-[260px] overflow-y-auto scrollbar-hidden">
                                             {binanceSymbols.map(sym => {
                                                 const checked = selectedSymbols.includes(sym.binanceSymbol);
                                                 return (
@@ -699,7 +699,7 @@ const ChartPage = () => {
                                                 </button>
                                             </div>
                                         </div>
-                                        <div className="space-y-1 max-h-[250px] overflow-y-auto">
+                                        <div className="space-y-1 max-h-[250px] overflow-y-auto scrollbar-hidden">
                                             {activeAvailableKols.map(kol => (
                                                 <div
                                                     key={kol.name}
