@@ -52,6 +52,17 @@ interface RedemptionRecordData {
   status: string;
   created_at: string;
 }
+
+const normalizeMembershipTier = (tier?: string | null): 'free' | 'pro' | 'max' | 'lifetime' => {
+  if (!tier) return 'free';
+  const normalized = tier.toLowerCase();
+  if (normalized === 'monthly' || normalized === 'quarterly' || normalized === 'yearly') return 'pro';
+  if (normalized === 'pro' || normalized === 'max' || normalized === 'lifetime' || normalized === 'free') {
+    return normalized;
+  }
+  return 'free';
+};
+
 const mockPurchases: PurchaseRecord[] = [
   {
     id: '1',
@@ -165,6 +176,10 @@ const Account = () => {
   }, [location.search, contextUser]);
   const email = contextUser?.email || '';
   const avatarUrl = contextUser?.avatar || '';
+  const getTierLabel = useCallback((tier?: string | null) => {
+    const normalized = normalizeMembershipTier(tier);
+    return t(`tier${normalized.charAt(0).toUpperCase() + normalized.slice(1)}`);
+  }, [t]);
 
   const fetchRedemptionRecords = useCallback(async (page = 0) => {
     setIsLoadingRecords(true);
@@ -211,7 +226,7 @@ const Account = () => {
       if (error) throw error;
       const result = data as { success: boolean; membership_tier: string; membership_expires_at: string | null };
       if (result.success) {
-        setMembershipTier(result.membership_tier || 'free');
+        setMembershipTier(normalizeMembershipTier(result.membership_tier));
         setMembershipExpiresAt(result.membership_expires_at);
       }
     } catch (error) {
@@ -778,7 +793,7 @@ const Account = () => {
                               <Badge className="bg-primary/20 text-primary border-0">{record.plan_name}</Badge>
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              {record.previous_tier || 'free'} → {record.new_tier}
+                              {getTierLabel(record.previous_tier || 'free')} → {getTierLabel(record.new_tier)}
                               {record.new_expires_at && ` • ${t('expiresAt')}: ${formatDateTime(record.new_expires_at, { year: 'numeric', month: '2-digit', day: '2-digit' }, timeZone)}`}
                               {' • '}{formatDateTime(record.created_at, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }, timeZone)}
                             </div>
@@ -876,9 +891,8 @@ const Account = () => {
                       <div className="flex items-center gap-4">
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
                           membershipTier === 'free' ? 'bg-muted' :
-                          membershipTier === 'monthly' ? 'bg-blue-500/20' :
-                          membershipTier === 'quarterly' ? 'bg-purple-500/20' :
-                          membershipTier === 'yearly' ? 'bg-foreground/10' :
+                          membershipTier === 'pro' ? 'bg-blue-500/20' :
+                          membershipTier === 'max' ? 'bg-purple-500/20' :
                           'bg-foreground/20'
                         }`}>
                           {membershipTier === 'free' ? (
@@ -894,12 +908,11 @@ const Account = () => {
                             <span className="font-mono font-medium">{t('currentTier')}</span>
                             <Badge className={`font-mono text-xs ${
                               membershipTier === 'free' ? 'bg-muted text-muted-foreground border-0' :
-                              membershipTier === 'monthly' ? 'bg-blue-500/20 text-blue-400 border-0' :
-                              membershipTier === 'quarterly' ? 'bg-purple-500/20 text-purple-400 border-0' :
-                              membershipTier === 'yearly' ? 'bg-foreground text-background border-0' :
+                              membershipTier === 'pro' ? 'bg-blue-500/20 text-blue-400 border-0' :
+                              membershipTier === 'max' ? 'bg-purple-500/20 text-purple-400 border-0' :
                               'bg-foreground text-background border-0 shadow-sm'
                             }`}>
-                              {t(`tier${membershipTier.charAt(0).toUpperCase() + membershipTier.slice(1)}`)}
+                              {getTierLabel(membershipTier)}
                             </Badge>
                           </div>
                           <div className="text-sm text-muted-foreground mt-1">

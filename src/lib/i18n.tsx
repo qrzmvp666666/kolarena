@@ -389,6 +389,8 @@ export const translations: Translations = {
   currentTier: { zh: '当前等级', en: 'Current Tier' },
   membershipExpiresAt: { zh: '会员到期时间', en: 'Membership Expires' },
   tierFree: { zh: '免费用户', en: 'Free' },
+  tierPro: { zh: 'Pro会员', en: 'Pro' },
+  tierMax: { zh: 'Max会员', en: 'Max' },
   tierMonthly: { zh: '月度会员', en: 'Monthly' },
   tierQuarterly: { zh: '季付', en: 'Quarterly' },
   tierYearly: { zh: '年度会员', en: 'Yearly' },
