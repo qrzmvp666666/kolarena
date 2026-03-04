@@ -1,7 +1,7 @@
 import TopNav from '@/components/TopNav';
 import TickerBar from '@/components/TickerBar';
 import { useLanguage } from '@/lib/i18n';
-import { Send, MessageCircle, QrCode, Users, Landmark, ExternalLink } from 'lucide-react';
+import { Send, MessageCircle, QrCode, Users, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -58,7 +58,7 @@ const Community = () => {
       tag: '合约返佣 40%',
       desc: '使用专属注册链接，享长期返佣权益。',
       url: 'https://www.bsmkweb.cc/register?ref=725888129',
-      color: '#F3BA2F'
+      logo: '/exchanges/binance.svg'
     },
     {
       id: 'okx',
@@ -66,7 +66,7 @@ const Community = () => {
       tag: '高返佣专属通道',
       desc: '使用专属注册链接，享长期返佣权益。',
       url: 'https://www.nzdcvhpxqwy.com/join/35743285',
-      color: '#111111'
+      logo: '/exchanges/okx.svg'
     },
     {
       id: 'bitget',
@@ -74,7 +74,7 @@ const Community = () => {
       tag: '合约返佣 40%',
       desc: '使用专属注册链接，享长期返佣权益。',
       url: 'https://share.glassgs.com/u/REX5UYHB',
-      color: '#F59E0B'
+      logo: '/exchanges/image.png'
     },
   ];
 
@@ -116,10 +116,14 @@ const Community = () => {
               <div key={exchange.id} className="group p-6 rounded-3xl border border-border bg-card/30 hover:bg-card hover:border-foreground/20 transition-all duration-500">
                 <div className="flex items-center gap-4 mb-4">
                   <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg shadow-black/10"
-                    style={{ backgroundColor: exchange.color }}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center bg-muted/20 border border-border/60 shadow-lg shadow-black/10"
                   >
-                    <Landmark className="w-5 h-5" />
+                    <img
+                      src={exchange.logo}
+                      alt={`${exchange.name} logo`}
+                      className="w-6 h-6 object-contain"
+                      loading="lazy"
+                    />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold tracking-tight">{exchange.name}</h3>
