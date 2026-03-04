@@ -10,12 +10,13 @@ import { supabase } from '@/lib/supabase';
 import { useUser } from '@/contexts/UserContext';
 
 type PlanType = 'monthly' | 'quarterly' | 'yearly' | 'lifetime';
-type BillingCycle = 'monthly' | 'yearly';
-type PlanTab = 'monthly' | 'yearly' | 'lifetime';
+type BillingCycle = 'monthly' | 'quarterly' | 'yearly';
+type PlanTab = 'monthly' | 'quarterly' | 'yearly' | 'lifetime';
 
 interface PlanRecord {
   id: number;
   name: string;
+  plan_family: 'pro' | 'max' | 'lifetime';
   duration: PlanType;
   price: number;
   currency: string;
@@ -179,24 +180,39 @@ const PlanSubscriptionPanel = () => {
     { text: t('featureExclusive'), highlight: true },
   ];
 
-  const plansByDuration = useMemo(() => {
-    const map: Partial<Record<PlanType, PlanRecord>> = {};
+  const plansByFamilyAndDuration = useMemo(() => {
+    const map: Partial<Record<'pro' | 'max' | 'lifetime', Partial<Record<PlanType, PlanRecord>>>> = {};
     plans.forEach((plan) => {
-      map[plan.duration] = plan;
+      const family = plan.plan_family || (plan.duration === 'lifetime' ? 'lifetime' : 'pro');
+      if (!map[family]) {
+        map[family] = {};
+      }
+      map[family]![plan.duration] = plan;
     });
     return map;
   }, [plans]);
 
-  const proPlanDuration: PlanType = billingCycle === 'yearly' ? 'yearly' : 'monthly';
-  const proPlan = plansByDuration[proPlanDuration];
-  const lifetimePlan = plansByDuration.lifetime;
+  const proPlanDuration: PlanType = billingCycle;
+  const proPlan = plansByFamilyAndDuration.pro?.[proPlanDuration];
+  const maxPlan = plansByFamilyAndDuration.max?.[proPlanDuration];
+  const lifetimePlan = plansByFamilyAndDuration.lifetime?.lifetime ?? plansByFamilyAndDuration.pro?.lifetime;
 
   const defaultMonthlyPrice = 10;
+  const defaultQuarterlyPrice = 28;
   const defaultYearlyPrice = 99;
+  const defaultMaxMonthlyPrice = 20;
+  const defaultMaxQuarterlyPrice = 56;
+  const defaultMaxYearlyPrice = 199;
   const defaultLifetimePrice = 299;
 
-  const proPrice = proPlan?.price ?? (billingCycle === 'yearly' ? defaultYearlyPrice : defaultMonthlyPrice);
+  const proPrice = proPlan?.price ?? (
+    billingCycle === 'yearly' ? defaultYearlyPrice : billingCycle === 'quarterly' ? defaultQuarterlyPrice : defaultMonthlyPrice
+  );
   const proCurrency = proPlan?.currency ?? 'USDT';
+  const maxPrice = maxPlan?.price ?? (
+    billingCycle === 'yearly' ? defaultMaxYearlyPrice : billingCycle === 'quarterly' ? defaultMaxQuarterlyPrice : defaultMaxMonthlyPrice
+  );
+  const maxCurrency = maxPlan?.currency ?? 'USDT';
   const lifetimePrice = lifetimePlan?.price ?? defaultLifetimePrice;
   const lifetimeCurrency = lifetimePlan?.currency ?? 'USDT';
 
@@ -252,18 +268,18 @@ const PlanSubscriptionPanel = () => {
         key: 'max',
         type: proPlanDuration,
         name: t('planMax'),
-        price: proPrice,
-        currency: proCurrency,
-        priceLabel: formatPrice(proPrice, proCurrency),
+        price: maxPrice,
+        currency: maxCurrency,
+        priceLabel: formatPrice(maxPrice, maxCurrency),
         period: periodLabel(proPlanDuration),
-        description: proPlan?.description || t('planProDesc'),
-        features: Array.isArray(proPlan?.benefits) && proPlan.benefits.length
-          ? proPlan.benefits.map((text) => ({ text }))
+        description: maxPlan?.description || t('planProDesc'),
+        features: Array.isArray(maxPlan?.benefits) && maxPlan.benefits.length
+          ? maxPlan.benefits.map((text) => ({ text }))
           : proFeatures,
         featuresTitle: billingCycle === 'yearly' ? t('featuresTitlePremium') : t('featuresTitlePlus'),
         isPopular: true,
-        stripeUrl: proPlan?.stripe_invoice_url,
-        nowpaymentUrl: proPlan?.nowpayment_invoice_url,
+        stripeUrl: maxPlan?.stripe_invoice_url,
+        nowpaymentUrl: maxPlan?.nowpayment_invoice_url,
         isFree: false,
       },
       {
@@ -295,6 +311,12 @@ const PlanSubscriptionPanel = () => {
     lifetimePlan?.nowpayment_invoice_url,
     lifetimePlan?.stripe_invoice_url,
     lifetimePrice,
+    maxCurrency,
+    maxPlan?.benefits,
+    maxPlan?.description,
+    maxPlan?.nowpayment_invoice_url,
+    maxPlan?.stripe_invoice_url,
+    maxPrice,
     proCurrency,
     proFeatures,
     proPlan?.benefits,
@@ -388,6 +410,17 @@ const PlanSubscriptionPanel = () => {
             className="min-w-[84px]"
           >
             {t('billingMonthly')}
+          </Button>
+          <Button
+            variant={activePlanTab === 'quarterly' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => {
+              setBillingCycle('quarterly');
+              setActivePlanTab('quarterly');
+            }}
+            className="min-w-[84px]"
+          >
+            {t('planQuarterly')}
           </Button>
           <Button
             variant={activePlanTab === 'yearly' ? 'default' : 'ghost'}

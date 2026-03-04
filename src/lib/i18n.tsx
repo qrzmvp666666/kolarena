@@ -289,7 +289,7 @@ export const translations: Translations = {
   
   // Plan Types
   planMonthly: { zh: '月费会员', en: 'Monthly' },
-  planQuarterly: { zh: '季度会员', en: 'Quarterly' },
+  planQuarterly: { zh: '季付', en: 'Quarterly' },
   planYearly: { zh: '年费会员', en: 'Yearly' },
   planLifetime: { zh: '终身会员', en: 'Lifetime' },
   planFree: { zh: '免费', en: 'Free' },
@@ -390,7 +390,7 @@ export const translations: Translations = {
   membershipExpiresAt: { zh: '会员到期时间', en: 'Membership Expires' },
   tierFree: { zh: '免费用户', en: 'Free' },
   tierMonthly: { zh: '月度会员', en: 'Monthly' },
-  tierQuarterly: { zh: '季度会员', en: 'Quarterly' },
+  tierQuarterly: { zh: '季付', en: 'Quarterly' },
   tierYearly: { zh: '年度会员', en: 'Yearly' },
   tierLifetime: { zh: '终身会员', en: 'Lifetime' },
   lifetimeMemberDesc: { zh: '永久有效，无需续费', en: 'Permanent, no renewal needed' },
