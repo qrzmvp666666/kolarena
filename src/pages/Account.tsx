@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { CreditCard, Wallet, Bitcoin, Clock, CheckCircle, XCircle, Gift, Ticket, Zap, Star, Crown, Info, ArrowRight, User, ShieldCheck, RefreshCw } from 'lucide-react';
+import { CreditCard, Wallet, Bitcoin, Clock, CheckCircle, XCircle, Gift, Ticket, Zap, Star, Crown, Info, ArrowRight, User, ShieldCheck, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import { formatDateTime, useTimeZone } from '@/lib/timezone';
 import { useUser } from '@/contexts/UserContext';
@@ -126,6 +126,8 @@ const Account = () => {
   const [membershipTier, setMembershipTier] = useState<string>('free');
   const [membershipExpiresAt, setMembershipExpiresAt] = useState<string | null>(null);
   const [isLoadingMembership, setIsLoadingMembership] = useState(false);
+
+  const [expandedPurchaseId, setExpandedPurchaseId] = useState<string | null>(null);
 
   const userId = contextUser?.id || '';
 
@@ -703,18 +705,18 @@ const Account = () => {
                 {isLoadingPurchases ? (
                   <div className="text-center text-sm text-muted-foreground py-8">{t('loading')}</div>
                 ) : purchaseRecords.map((purchase) => {
-                  const txId = purchase.tx_hash || purchase.provider_payment_id || '-';
+                  const isExpanded = expandedPurchaseId === purchase.id;
                   return (
                   <div
                     key={purchase.id}
-                    className="group bg-card hover:bg-muted/30 border border-border rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors duration-200"
+                    className="group bg-card hover:bg-muted/30 border border-border rounded-xl p-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4 transition-colors duration-200"
                   >
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex flex-shrink-0 items-center justify-center">
+                    <div className="flex items-start gap-4 flex-1 overflow-hidden">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex flex-shrink-0 items-center justify-center mt-1">
                         <Bitcoin className="w-6 h-6 text-primary" />
                       </div>
-                      <div className="flex flex-col gap-1 overflow-hidden">
-                        <div className="flex items-center gap-2 flex-wrap text-sm sm:text-base">
+                      <div className="flex flex-col gap-2 overflow-hidden w-full">
+                        <div className="flex items-center gap-2 flex-wrap text-sm sm:text-base mt-2.5">
                           <span className="font-semibold text-foreground">
                             {purchase.plan_name}
                           </span>
@@ -726,23 +728,54 @@ const Account = () => {
                             ≈ {purchase.price_amount} {purchase.price_currency}
                           </span>
                         </div>
-                        <div className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
-                          <span>
-                            {formatDateTime(purchase.created_at, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }, timeZone)}
-                          </span>
-                          {txId !== '-' && (
-                            <>
-                              <span className="hidden sm:inline">•</span>
-                              <span className="font-mono text-[10px] sm:text-xs truncate max-w-[200px] sm:max-w-xs" title={txId}>
-                                TX: {txId}
-                              </span>
-                            </>
+                        
+                        <div 
+                          className="flex items-center gap-1 text-xs text-primary cursor-pointer hover:underline w-fit mt-1 select-none"
+                          onClick={() => setExpandedPurchaseId(isExpanded ? null : purchase.id)}
+                        >
+                          {isExpanded ? (
+                            <><ChevronUp className="w-3 h-3" /> {t('collapseDetails') || '收起详细信息'}</>
+                          ) : (
+                            <><ChevronDown className="w-3 h-3" /> {t('expandDetails') || '展开详细信息'}</>
                           )}
                         </div>
+
+                        {isExpanded && (
+                          <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-xs text-muted-foreground bg-muted/20 p-3 rounded-md border border-border/30 mt-2 animate-in slide-in-from-top-2 duration-200 fade-in">
+                            <span className="opacity-70 whitespace-nowrap">{t('internalOrderId')}:</span>
+                            <span className="font-mono truncate select-all" title={purchase.id}>{purchase.id}</span>
+                            
+                            {purchase.provider_payment_id && (
+                              <>
+                                <span className="opacity-70 whitespace-nowrap">{t('paymentProviderId')}:</span>
+                                <span className="font-mono truncate select-all" title={purchase.provider_payment_id}>{purchase.provider_payment_id}</span>
+                              </>
+                            )}
+                            
+                            {purchase.pay_address && (
+                              <>
+                                <span className="opacity-70 whitespace-nowrap">{t('paymentAddress')}:</span>
+                                <span className="font-mono truncate select-all" title={purchase.pay_address}>{purchase.pay_address}</span>
+                              </>
+                            )}
+                            
+                            {purchase.tx_hash && (
+                              <>
+                                <span className="opacity-70 whitespace-nowrap">TX Hash:</span>
+                                <span className="font-mono truncate select-all" title={purchase.tx_hash}>{purchase.tx_hash}</span>
+                              </>
+                            )}
+                            
+                            <div className="col-span-2 border-t border-border/30 my-0.5"></div>
+                            
+                            <span className="opacity-70 whitespace-nowrap">{t('time') || '时间'}:</span>
+                            <span>{formatDateTime(purchase.created_at, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }, timeZone)}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                     
-                    <div className="flex items-center sm:justify-end">
+                    <div className="flex items-center sm:justify-end shrink-0 sm:pt-2">
                       {getStatusBadge(purchase.status, purchase.provider_status)}
                     </div>
                   </div>

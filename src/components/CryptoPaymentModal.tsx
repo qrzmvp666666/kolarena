@@ -4,6 +4,7 @@ import { useLanguage } from '@/lib/i18n';
 import { Bitcoin, Copy, Wallet } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { QRCodeSVG } from 'qrcode.react';
+import { useNavigate } from 'react-router-dom';
 
 interface CryptoPaymentModalProps {
   open: boolean;
@@ -36,6 +37,7 @@ const CryptoPaymentModal = ({
 }: CryptoPaymentModalProps) => {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const normalizedStatus = String(providerStatus || '').toLowerCase();
   const translatedStatus = normalizedStatus
@@ -108,14 +110,32 @@ const CryptoPaymentModal = ({
                 <p className="font-mono text-sm">{payAmount ?? '-'} {payCurrency ?? currency}</p>
               </div>
 
-              <Button variant="outline" className="w-full" onClick={handleCopyAddress}>
-                <Copy className="w-4 h-4 mr-2" />
-                {t('copyPaymentAddress')}
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" className="w-full" onClick={handleCopyAddress}>
+                  <Copy className="w-4 h-4 mr-2" />
+                  {t('copyPaymentAddress')}
+                </Button>
+                <Button 
+                  variant="default" 
+                  className="w-full" 
+                  onClick={() => {
+                    onOpenChange(false);
+                    navigate('/account?tab=purchases');
+                  }}
+                >
+                  {t('viewPurchaseRecords')}
+                </Button>
+              </div>
 
-              <div className="text-xs text-muted-foreground flex items-center gap-2">
-                <Wallet className="w-3 h-3" />
-                {t('paymentManualTransferHint')}
+              <div className="flex flex-col gap-1 text-xs text-muted-foreground mt-2">
+                <div className="flex items-start gap-1">
+                  <Wallet className="w-3 h-3 mt-0.5 shrink-0" />
+                  <span>{t('paymentManualTransferHint')}</span>
+                </div>
+                <div className="flex items-start gap-1 text-primary/80">
+                  <span className="w-3 shrink-0 text-center font-bold">ℹ</span>
+                  <span>{t('hasPaidPrompt')}</span>
+                </div>
               </div>
             </div>
           ) : (
