@@ -66,6 +66,7 @@ interface ChartWindowProps {
     onSignalHover?: (id: string | null) => void;
     selectedDirection?: 'all' | 'long' | 'short';
     selectedTimeRange?: 'all' | '24h' | '3d' | '7d' | '30d';
+    selectedEntryStatus?: 'all' | 'pending' | 'entered';
 }
 
 const ChartWindow = ({
@@ -79,6 +80,7 @@ const ChartWindow = ({
     onSignalHover,
     selectedDirection = 'all',
     selectedTimeRange = 'all',
+    selectedEntryStatus = 'all',
 }: ChartWindowProps) => {
     const { candles, loading } = useBinanceCandles(symbol, interval);
     const [rawSignals, setRawSignals] = useState<SignalRow[]>([]);
@@ -168,6 +170,15 @@ const ChartWindow = ({
         filtered = filtered.filter(s => selectedKols.has(s.kol_name));
         filtered = filtered.filter(s => s.status !== 'closed' && s.status !== 'cancelled');
 
+        if (selectedEntryStatus !== 'all') {
+            filtered = filtered.filter(s => {
+                const entryStatus = s.status === 'pending_entry'
+                    ? 'pending'
+                    : (s.status === 'entered' || s.status === 'active' ? 'entered' : null);
+                return entryStatus === selectedEntryStatus;
+            });
+        }
+
         if (selectedDirection !== 'all') {
             filtered = filtered.filter(s => s.direction === selectedDirection);
         }
@@ -208,7 +219,7 @@ const ChartWindow = ({
         } else {
             return mapped;
         }
-    }, [rawSignals, selectedKols, interval, candles, selectedDirection, selectedTimeRange]);
+    }, [rawSignals, selectedKols, interval, candles, selectedDirection, selectedTimeRange, selectedEntryStatus]);
 
     return (
         <Card className="w-full h-full border-none rounded-none bg-transparent shadow-none">
@@ -259,6 +270,7 @@ const ChartPage = () => {
     // Global filters for direction and time range
     const [globalSelectedDirection, setGlobalSelectedDirection] = useState<'all' | 'long' | 'short'>('all');
     const [globalSelectedTimeRange, setGlobalSelectedTimeRange] = useState<'all' | '24h' | '3d' | '7d' | '30d'>('7d');
+    const [globalSelectedEntryStatus, setGlobalSelectedEntryStatus] = useState<'all' | 'pending' | 'entered'>('all');
     
     // We still track manual selection flag per chart to avoid auto-select clashing with user intent
     // (though with global selection, we might just need one global flag, but per-chart is safer for loading states)
@@ -542,6 +554,9 @@ const ChartPage = () => {
         // Reset sidebar & signal states
         setHoveredSignalId(null);
         setRightSidebarTab('pending');
+        setGlobalSelectedDirection('all');
+        setGlobalSelectedTimeRange('7d');
+        setGlobalSelectedEntryStatus('all');
 
         // Rebuild layouts
         setLayouts(buildLayoutsForCharts(nextCharts, { rows: 1, cols: 1 }));
@@ -748,7 +763,7 @@ const ChartPage = () => {
                                         <SelectValue placeholder={t('filterDirection')} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">{t('filterDirection')}</SelectItem>
+                                        <SelectItem value="all">{t('all')}</SelectItem>
                                         <SelectItem value="long">{t('signalLong')}</SelectItem>
                                         <SelectItem value="short">{t('signalShort')}</SelectItem>
                                     </SelectContent>
@@ -759,11 +774,22 @@ const ChartPage = () => {
                                         <SelectValue placeholder={t('filterTime')} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">{t('filterTime')}</SelectItem>
+                                        <SelectItem value="all">{t('all')}</SelectItem>
                                         <SelectItem value="24h">24{t('hours')}</SelectItem>
                                         <SelectItem value="3d">3{t('days')}</SelectItem>
                                         <SelectItem value="7d">7{t('days')}</SelectItem>
                                         <SelectItem value="30d">30{t('days')}</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
+                                <Select value={globalSelectedEntryStatus} onValueChange={(v: any) => setGlobalSelectedEntryStatus(v)}>
+                                    <SelectTrigger className="h-7 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[110px]">
+                                        <SelectValue placeholder={t('filterEntryStatus')} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">{t('all')}</SelectItem>
+                                        <SelectItem value="pending">{t('entryPending')}</SelectItem>
+                                        <SelectItem value="entered">{t('entryEntered')}</SelectItem>
                                     </SelectContent>
                                 </Select>
 
@@ -915,6 +941,7 @@ const ChartPage = () => {
                                                     onSignalHover={setHoveredSignalId}
                                                     selectedDirection={globalSelectedDirection}
                                                     selectedTimeRange={globalSelectedTimeRange}
+                                                    selectedEntryStatus={globalSelectedEntryStatus}
                                                 />
                                             </div>
                                         </div>
@@ -983,6 +1010,7 @@ const ChartPage = () => {
                                 selectedSymbols={new Set(selectedSymbols)}
                                 selectedDirection={globalSelectedDirection}
                                 selectedTimeRange={globalSelectedTimeRange}
+                                selectedEntryStatus={globalSelectedEntryStatus}
                             />
                         </>
                     )}

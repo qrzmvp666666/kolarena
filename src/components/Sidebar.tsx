@@ -96,9 +96,10 @@ interface SidebarProps {
   selectedSymbols?: Set<string>;
   selectedDirection?: 'all' | 'long' | 'short';
   selectedTimeRange?: 'all' | '24h' | '3d' | '7d' | '30d';
+  selectedEntryStatus?: 'all' | 'pending' | 'entered';
 }
 
-const Sidebar = ({ activeTab, onTabChange, onSignalHover, selectedKols, selectedSymbols, selectedDirection = 'all', selectedTimeRange = 'all' }: SidebarProps) => {
+const Sidebar = ({ activeTab, onTabChange, onSignalHover, selectedKols, selectedSymbols, selectedDirection = 'all', selectedTimeRange = 'all', selectedEntryStatus = 'all' }: SidebarProps) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentInput, setCommentInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -291,6 +292,7 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover, selectedKols, selected
     const matchKol = selectedKols ? selectedKols.has(s.author) : true;
     const matchSymbol = selectedSymbols ? selectedSymbols.has(s.symbol) : true;
     const matchDirection = selectedDirection !== 'all' ? s.signalType === selectedDirection : true;
+    const matchEntryStatus = selectedEntryStatus !== 'all' ? s.entryStatus === selectedEntryStatus : true;
     const matchTime = selectedTimeRange !== 'all' ? (() => {
       const now = Date.now();
       const timeLimit = selectedTimeRange === '24h' ? 24 * 60 * 60 * 1000 :
@@ -299,7 +301,7 @@ const Sidebar = ({ activeTab, onTabChange, onSignalHover, selectedKols, selected
                         30 * 24 * 60 * 60 * 1000;
       return (now - s.rawTime) <= timeLimit;
     })() : true;
-    return matchKol && matchSymbol && matchDirection && matchTime;
+    return matchKol && matchSymbol && matchDirection && matchEntryStatus && matchTime;
   });
 
   const filteredHistorySignals = historySignals.filter(s => {
