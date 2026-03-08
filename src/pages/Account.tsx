@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { CreditCard, Wallet, Bitcoin, Clock, CheckCircle, XCircle, Gift, Ticket, Zap, Star, Crown, Info, ArrowRight, User, ShieldCheck } from 'lucide-react';
+import { CreditCard, Wallet, Bitcoin, Clock, CheckCircle, XCircle, Gift, Ticket, Zap, Star, Crown, Info, ArrowRight, User, ShieldCheck, RefreshCw } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import { formatDateTime, useTimeZone } from '@/lib/timezone';
 import { useUser } from '@/contexts/UserContext';
@@ -16,18 +16,22 @@ import { supabase } from '@/lib/supabase';
 
 type TabType = 'subscription' | 'purchases' | 'accounts' | 'redemption' | 'settings';
 
-type PlanType = 'monthly' | 'quarterly' | 'yearly';
-
 interface PurchaseRecord {
   id: string;
-  date: string;
-  crypto: string;
-  cryptoIcon: string;
-  amount: string;
-  usdValue: string;
-  plan: PlanType;
-  status: 'completed' | 'pending' | 'failed';
-  txHash: string;
+  plan_name: string;
+  plan_family: string;
+  plan_duration: string;
+  price_amount: number;
+  price_currency: string;
+  pay_amount: number | null;
+  pay_currency: string | null;
+  pay_address: string | null;
+  tx_hash: string | null;
+  provider_payment_id: string | null;
+  provider_status: string | null;
+  status: 'pending' | 'confirming' | 'paid' | 'completed' | 'failed' | 'expired' | 'refunded' | 'partially_paid';
+  created_at: string;
+  paid_at: string | null;
 }
 
 interface TradingAccount {
@@ -62,42 +66,6 @@ const normalizeMembershipTier = (tier?: string | null): 'free' | 'pro' | 'max' |
   }
   return 'free';
 };
-
-const mockPurchases: PurchaseRecord[] = [
-  {
-    id: '1',
-    date: '2024-01-15 14:32',
-    crypto: 'BTC',
-    cryptoIcon: '/crypto/btc.svg',
-    amount: '0.0025',
-    usdValue: '$10.00',
-    plan: 'monthly',
-    status: 'completed',
-    txHash: '0x1a2b3c...4d5e6f',
-  },
-  {
-    id: '2',
-    date: '2024-01-10 09:15',
-    crypto: 'ETH',
-    cryptoIcon: '/crypto/eth.svg',
-    amount: '0.012',
-    usdValue: '$28.00',
-    plan: 'quarterly',
-    status: 'completed',
-    txHash: '0x7g8h9i...0j1k2l',
-  },
-  {
-    id: '3',
-    date: '2024-01-05 18:22',
-    crypto: 'SOL',
-    cryptoIcon: '/crypto/sol.svg',
-    amount: '0.98',
-    usdValue: '$99.00',
-    plan: 'yearly',
-    status: 'pending',
-    txHash: '0x3m4n5o...6p7q8r',
-  },
-];
 
 const mockAccounts: TradingAccount[] = [
   {
@@ -143,8 +111,14 @@ const Account = () => {
   const [redemptionRecords, setRedemptionRecords] = useState<RedemptionRecordData[]>([]);
   const [redemptionTotal, setRedemptionTotal] = useState(0);
   const [redemptionPage, setRedemptionPage] = useState(0);
+  const [purchaseRecords, setPurchaseRecords] = useState<PurchaseRecord[]>([]);
+  const [purchaseTotal, setPurchaseTotal] = useState(0);
+  const [purchasePage, setPurchasePage] = useState(0);
+  const [isLoadingPurchases, setIsLoadingPurchases] = useState(false);
+  const [isSyncingPurchases, setIsSyncingPurchases] = useState(false);
   const [isLoadingRecords, setIsLoadingRecords] = useState(false);
   const RECORDS_PER_PAGE = 20;
+  const PURCHASES_PER_PAGE = 20;
   const [newPassword, setNewPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -200,6 +174,108 @@ const Account = () => {
       setIsLoadingRecords(false);
     }
   }, []);
+
+  const fetchPaymentOrders = useCallback(async (page = 0) => {
+    setIsLoadingPurchases(true);
+    try {
+      const { data, error } = await supabase.rpc('get_payment_orders', {
+        p_limit: PURCHASES_PER_PAGE,
+        p_offset: page * PURCHASES_PER_PAGE,
+      });
+
+      if (error) throw error;
+      const result = data as { success: boolean; total: number; records: PurchaseRecord[] };
+      if (result.success) {
+        setPurchaseRecords(result.records || []);
+        setPurchaseTotal(result.total || 0);
+      }
+    } catch (error) {
+      console.error('获取购买记录失败:', error);
+    } finally {
+      setIsLoadingPurchases(false);
+    }
+  }, []);
+
+  const syncPaymentOrders = useCallback(async (page = 0, showToast = false) => {
+    if (!userId) return;
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    setIsSyncingPurchases(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      let session = sessionData.session;
+
+      if (!session?.access_token) {
+        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError || !refreshed.session?.access_token) {
+          throw new Error('NOT_AUTHENTICATED');
+        }
+        session = refreshed.session;
+      }
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/nowpayments-sync-payment-status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: supabaseAnonKey,
+          'x-client-info': 'kolarena-web',
+        },
+        body: JSON.stringify({
+          limit: PURCHASES_PER_PAGE,
+          offset: page * PURCHASES_PER_PAGE,
+        }),
+      });
+
+      const json = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(json?.detail || json?.message || `HTTP_${response.status}`);
+      }
+
+      if (showToast && json?.updated > 0) {
+        toast({
+          title: t('purchaseStatusRefreshSuccess'),
+          description: t('purchaseStatusRefreshSuccessDesc').replace('{count}', String(json.updated)),
+        });
+      }
+    } catch (error: any) {
+      if (showToast) {
+        toast({
+          title: t('paymentFailed'),
+          description: `${t('paymentFailedReasonLabel')}: ${error?.message || t('error')}`,
+          variant: 'destructive',
+        });
+      }
+      console.error('同步购买记录失败:', error);
+    } finally {
+      setIsSyncingPurchases(false);
+    }
+  }, [PURCHASES_PER_PAGE, t, toast, userId]);
+
+  const refreshPurchaseOrders = useCallback(async (page = 0, showToast = false) => {
+    await syncPaymentOrders(page, showToast);
+    await fetchPaymentOrders(page);
+  }, [fetchPaymentOrders, syncPaymentOrders]);
+
+  useEffect(() => {
+    if (activeTab === 'purchases' && userId) {
+      refreshPurchaseOrders(purchasePage, false);
+
+      const channel = supabase
+        .channel('payment_orders_changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'payment_orders', filter: `user_id=eq.${userId}` },
+          () => { fetchPaymentOrders(purchasePage); }
+        )
+        .subscribe();
+
+      return () => { supabase.removeChannel(channel); };
+    }
+  }, [activeTab, userId, purchasePage, fetchPaymentOrders, refreshPurchaseOrders]);
 
   useEffect(() => {
     if (activeTab === 'redemption' && userId) {
@@ -465,50 +541,41 @@ const Account = () => {
     }
   };
 
-  const getPlanBadge = (plan: PlanType) => {
-    switch (plan) {
-      case 'monthly':
-        return (
-          <Badge className="bg-blue-500/20 text-blue-400 border-0">
-            {t('planMonthly')} ({t('planPriceMonthly')})
-          </Badge>
-        );
-      case 'quarterly':
-        return (
-          <Badge className="bg-purple-500/20 text-purple-400 border-0">
-            {t('planQuarterly')} ({t('planPriceQuarterly')})
-          </Badge>
-        );
-      case 'yearly':
-        return (
-          <Badge className="bg-foreground text-background border-0">
-            {t('planYearly')} ({t('planPriceYearly')})
-          </Badge>
-        );
-    }
-  };
+  const getStatusBadge = (status: PurchaseRecord['status'], providerStatus?: string | null) => {
+    const normalizedProviderStatus = String(providerStatus || '').toLowerCase();
+    const translatedProviderStatus = normalizedProviderStatus
+      ? t(`paymentStatus_${normalizedProviderStatus}`)
+      : null;
+    const displayStatus = translatedProviderStatus && translatedProviderStatus !== `paymentStatus_${normalizedProviderStatus}`
+      ? translatedProviderStatus
+      : providerStatus;
 
-  const getStatusBadge = (status: 'completed' | 'pending' | 'failed') => {
+    if (status === 'paid' || status === 'completed') {
+      return (
+        <Badge variant="outline" className="border-green-500 text-green-500 gap-1">
+          <CheckCircle className="w-3 h-3" />
+          {displayStatus || t('completed')}
+        </Badge>
+      );
+    }
+
+    if (status === 'pending' || status === 'confirming' || status === 'partially_paid') {
+      return (
+        <Badge variant="outline" className="border-border text-foreground hover:bg-muted gap-1">
+          <Clock className="w-3 h-3" />
+          {displayStatus || t('pending')}
+        </Badge>
+      );
+    }
+
     switch (status) {
-      case 'completed':
-        return (
-          <Badge variant="outline" className="border-green-500 text-green-500 gap-1">
-            <CheckCircle className="w-3 h-3" />
-            {t('completed')}
-          </Badge>
-        );
-      case 'pending':
-        return (
-          <Badge variant="outline" className="border-border text-foreground hover:bg-muted gap-1">
-            <Clock className="w-3 h-3" />
-            {t('pending')}
-          </Badge>
-        );
       case 'failed':
+      case 'expired':
+      case 'refunded':
         return (
           <Badge variant="outline" className="border-red-500 text-red-500 gap-1">
             <XCircle className="w-3 h-3" />
-            {t('failed')}
+            {displayStatus || t('failed')}
           </Badge>
         );
     }
@@ -596,7 +663,19 @@ const Account = () => {
 
           {activeTab === 'purchases' && (
             <div>
-              <h1 className="font-mono text-xl font-semibold mb-6">{t('purchaseRecords')}</h1>
+              <div className="flex items-center justify-between mb-6 gap-3">
+                <h1 className="font-mono text-xl font-semibold">{t('purchaseRecords')}</h1>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  disabled={isLoadingPurchases || isSyncingPurchases}
+                  onClick={() => refreshPurchaseOrders(purchasePage, true)}
+                >
+                  <RefreshCw className={`w-4 h-4 ${isSyncingPurchases ? 'animate-spin' : ''}`} />
+                  {isSyncingPurchases ? t('purchaseStatusRefreshing') : t('refresh')}
+                </Button>
+              </div>
               
               {/* Purchase Steps Guide */}
               <Card className="mb-6 border-primary/20 bg-primary/5">
@@ -621,23 +700,25 @@ const Account = () => {
               </Card>
               
               <div className="space-y-4">
-                {mockPurchases.map((purchase) => (
+                {isLoadingPurchases ? (
+                  <div className="text-center text-sm text-muted-foreground py-8">{t('loading')}</div>
+                ) : purchaseRecords.map((purchase) => (
                   <div
                     key={purchase.id}
                     className="bg-card border border-border rounded-lg p-4 flex items-center justify-between"
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                        <img src={purchase.cryptoIcon} alt={purchase.crypto} className="w-6 h-6" />
+                        <Bitcoin className="w-5 h-5 text-muted-foreground" />
                       </div>
                       <div>
                         <div className="font-mono font-medium flex items-center gap-2">
-                          {purchase.amount} {purchase.crypto}
-                          <span className="text-muted-foreground text-sm">({purchase.usdValue})</span>
-                          {getPlanBadge(purchase.plan)}
+                          {(purchase.pay_amount ?? '-')} {purchase.pay_currency || 'CRYPTO'}
+                          <span className="text-muted-foreground text-sm">({purchase.price_amount} {purchase.price_currency})</span>
+                          <Badge className="bg-primary/20 text-primary border-0">{purchase.plan_name}</Badge>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {purchase.date}
+                          {formatDateTime(purchase.created_at, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }, timeZone)}
                         </div>
                       </div>
                     </div>
@@ -645,15 +726,39 @@ const Account = () => {
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         <div className="font-mono text-xs text-muted-foreground">TX</div>
-                        <div className="font-mono text-sm">{purchase.txHash}</div>
+                        <div className="font-mono text-sm">{purchase.tx_hash || purchase.provider_payment_id || '-'}</div>
                       </div>
-                      {getStatusBadge(purchase.status)}
+                      {getStatusBadge(purchase.status, purchase.provider_status)}
                     </div>
                   </div>
                 ))}
               </div>
+
+              {!isLoadingPurchases && purchaseTotal > PURCHASES_PER_PAGE && (
+                <div className="flex justify-center gap-2 mt-6">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={purchasePage === 0}
+                    onClick={() => { setPurchasePage(p => p - 1); }}
+                  >
+                    {t('previousPage')}
+                  </Button>
+                  <span className="text-sm text-muted-foreground flex items-center">
+                    {purchasePage + 1} / {Math.ceil(purchaseTotal / PURCHASES_PER_PAGE)}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={(purchasePage + 1) * PURCHASES_PER_PAGE >= purchaseTotal}
+                    onClick={() => { setPurchasePage(p => p + 1); }}
+                  >
+                    {t('nextPage')}
+                  </Button>
+                </div>
+              )}
               
-              {mockPurchases.length === 0 && (
+              {!isLoadingPurchases && purchaseRecords.length === 0 && (
                 <div className="text-center text-muted-foreground py-12">
                   <Bitcoin className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>{t('noPurchaseRecords')}</p>

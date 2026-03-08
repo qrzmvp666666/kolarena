@@ -1,6 +1,9 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n';
-import { Bitcoin, Shield } from 'lucide-react';
+import { Bitcoin, Copy, Wallet } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface CryptoPaymentModalProps {
   open: boolean;
@@ -8,11 +11,45 @@ interface CryptoPaymentModalProps {
   planName: string;
   price: number;
   currency?: string;
+  orderId?: string;
+  providerPaymentId?: string | null;
+  providerStatus?: string | null;
   paymentUrl?: string | null;
+  payAddress?: string | null;
+  payAmount?: number | null;
+  payCurrency?: string | null;
 }
 
-const CryptoPaymentModal = ({ open, onOpenChange, planName, price, currency = 'USDT', paymentUrl }: CryptoPaymentModalProps) => {
+const CryptoPaymentModal = ({
+  open,
+  onOpenChange,
+  planName,
+  price,
+  currency = 'USDT',
+  orderId,
+  providerPaymentId,
+  providerStatus,
+  paymentUrl,
+  payAddress,
+  payAmount,
+  payCurrency,
+}: CryptoPaymentModalProps) => {
   const { t } = useLanguage();
+  const { toast } = useToast();
+
+  const normalizedStatus = String(providerStatus || '').toLowerCase();
+  const translatedStatus = normalizedStatus
+    ? t(`paymentStatus_${normalizedStatus}`)
+    : null;
+
+  const handleCopyAddress = async () => {
+    if (!payAddress) return;
+    await navigator.clipboard.writeText(payAddress);
+    toast({
+      title: t('redeemSuccess'),
+      description: t('paymentAddressCopied'),
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -27,6 +64,12 @@ const CryptoPaymentModal = ({ open, onOpenChange, planName, price, currency = 'U
           </p>
         </DialogHeader>
         
+        <div className="px-4 py-2 text-xs text-muted-foreground border-b border-border space-y-1">
+          {orderId && <div>{t('paymentOrderId')}: <span className="font-mono">{orderId}</span></div>}
+          {providerPaymentId && <div>{t('paymentProviderId')}: <span className="font-mono">{providerPaymentId}</span></div>}
+          {providerStatus && <div>{t('paymentStatusLabel')}: <span className="font-mono">{translatedStatus || providerStatus}</span></div>}
+        </div>
+
         <div className="flex justify-center bg-background">
           {paymentUrl ? (
             <iframe
@@ -40,6 +83,41 @@ const CryptoPaymentModal = ({ open, onOpenChange, planName, price, currency = 'U
             >
               {t('widgetLoadError')}
             </iframe>
+          ) : payAddress ? (
+            <div className="w-full p-4 space-y-3">
+              <div className="rounded-md border border-border bg-card p-4 flex flex-col items-center gap-3">
+                <p className="text-xs text-muted-foreground">{t('paymentQrCodeHint')}</p>
+                <div className="rounded-md bg-white p-3">
+                  <QRCodeSVG
+                    value={payAddress}
+                    size={168}
+                    bgColor="#ffffff"
+                    fgColor="#000000"
+                    includeMargin
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-md border border-border bg-card p-3">
+                <p className="text-xs text-muted-foreground mb-1">{t('paymentAddress')}</p>
+                <p className="font-mono text-xs break-all">{payAddress}</p>
+              </div>
+
+              <div className="rounded-md border border-border bg-card p-3">
+                <p className="text-xs text-muted-foreground mb-1">{t('payAmount')}</p>
+                <p className="font-mono text-sm">{payAmount ?? '-'} {payCurrency ?? currency}</p>
+              </div>
+
+              <Button variant="outline" className="w-full" onClick={handleCopyAddress}>
+                <Copy className="w-4 h-4 mr-2" />
+                {t('copyPaymentAddress')}
+              </Button>
+
+              <div className="text-xs text-muted-foreground flex items-center gap-2">
+                <Wallet className="w-3 h-3" />
+                {t('paymentManualTransferHint')}
+              </div>
+            </div>
           ) : (
             <div className="p-6 text-sm text-muted-foreground">
               {t('paymentNotAvailable')}

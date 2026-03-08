@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CreditCard, Bitcoin, Check, CircleDot } from 'lucide-react';
+import { CreditCard, Bitcoin, Check, CircleDot, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import CryptoPaymentModal from './CryptoPaymentModal';
 import LoginModal from './LoginModal';
 import { supabase } from '@/lib/supabase';
 import { useUser } from '@/contexts/UserContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type PlanType = 'monthly' | 'quarterly' | 'yearly' | 'lifetime';
 type BillingCycle = 'monthly' | 'quarterly' | 'yearly';
@@ -34,6 +35,7 @@ interface PlanFeature {
 interface DisplayPlanCard {
   key: 'free' | 'pro' | 'max' | 'lifetime';
   type: PlanType | 'free';
+  sourcePlanId?: number;
   name: string;
   price: number;
   currency: string;
@@ -55,13 +57,104 @@ const PlanSubscriptionPanel = () => {
   const navigate = useNavigate();
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [cryptoModalOpen, setCryptoModalOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<{ name: string; price: number; currency: string; nowpaymentUrl?: string | null } | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<{
+    name: string;
+    price: number;
+    currency: string;
+    orderId?: string;
+    providerPaymentId?: string | null;
+    paymentUrl?: string | null;
+    payAddress?: string | null;
+    payAmount?: number | null;
+    payCurrency?: string | null;
+    providerStatus?: string | null;
+  } | null>(null);
   const [plans, setPlans] = useState<PlanRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [activePlanTab, setActivePlanTab] = useState<PlanTab>('monthly');
+  const [selectedPayCurrency, setSelectedPayCurrency] = useState('USDT');
+  const [creatingPlanKey, setCreatingPlanKey] = useState<DisplayPlanCard['key'] | null>(null);
   const showStripePayment = false;
   const showExchangeRebateCallout = false;
+
+  const createNowpaymentsOrder = async (planId: number, payCurrency: string) => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    const ensureValidSession = async () => {
+      const { data: initialSessionData } = await supabase.auth.getSession();
+
+      if (!initialSessionData.session?.access_token) {
+        throw new Error('NOT_AUTHENTICATED');
+      }
+
+      const initialUserResult = await supabase.auth.getUser(initialSessionData.session.access_token);
+
+      if (!initialUserResult.error && initialUserResult.data.user) {
+        return initialSessionData.session;
+      }
+
+      const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError || !refreshed.session?.access_token) {
+        throw new Error('NOT_AUTHENTICATED');
+      }
+
+      const refreshedUserResult = await supabase.auth.getUser();
+      if (refreshedUserResult.error || !refreshedUserResult.data.user) {
+        throw new Error('NOT_AUTHENTICATED');
+      }
+
+      return refreshed.session;
+    };
+
+    let validSession = await ensureValidSession();
+
+    const requestWithSession = async (sessionToken: string) => {
+      const response = await fetch(`${supabaseUrl}/functions/v1/nowpayments-create-payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionToken}`,
+          apikey: supabaseAnonKey,
+          'x-client-info': 'kolarena-web',
+        },
+        body: JSON.stringify({ planId, payCurrency }),
+      });
+
+      const json = await response.json().catch(() => null);
+      return { response, json };
+    };
+
+    let result = await requestWithSession(validSession.access_token);
+
+    if (result.response.status === 401) {
+      const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+
+      if (!refreshError && refreshed.session?.access_token) {
+        validSession = refreshed.session;
+        result = await requestWithSession(validSession.access_token);
+      }
+    }
+
+    if (!result.response.ok) {
+      const error = new Error(
+        result.json?.detail?.message ||
+        result.json?.detail ||
+        result.json?.message ||
+        `HTTP_${result.response.status}`
+      ) as Error & {
+        context?: { status?: number; json?: any };
+      };
+      error.context = {
+        status: result.response.status,
+        json: result.json,
+      };
+      throw error;
+    }
+
+    return result.json;
+  };
 
   const handleStripePayment = (planName: string, stripeUrl?: string | null) => {
     if (!user) {
@@ -78,13 +171,76 @@ const PlanSubscriptionPanel = () => {
     window.open(stripeUrl, '_blank', 'noopener,noreferrer');
   };
 
-  const handleCryptoPayment = (planName: string, price: number, currency: string, nowpaymentUrl?: string | null) => {
+  const handleCryptoPayment = async (plan: DisplayPlanCard) => {
     if (!user) {
       setLoginModalOpen(true);
       return;
     }
-    setSelectedPlan({ name: planName, price, currency, nowpaymentUrl });
-    setCryptoModalOpen(true);
+
+    if (!plan.sourcePlanId) {
+      toast({
+        title: t('paymentFailed'),
+        description: `${t('paymentFailedReasonLabel')}: Plan id not found。${t('paymentContactSupportHint')}`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setCreatingPlanKey(plan.key);
+    try {
+      const data = await createNowpaymentsOrder(plan.sourcePlanId, selectedPayCurrency);
+      if (!data?.success || !data?.order) {
+        throw new Error(data?.message || 'CREATE_PAYMENT_FAILED');
+      }
+
+      setSelectedPlan({
+        name: plan.name,
+        price: plan.price,
+        currency: plan.currency,
+        orderId: data.order.id,
+        providerPaymentId: data.order.provider_payment_id,
+        paymentUrl: data.order.invoice_url,
+        payAddress: data.order.pay_address,
+        payAmount: data.order.pay_amount,
+        payCurrency: data.order.pay_currency || selectedPayCurrency,
+        providerStatus: data.order.provider_status,
+      });
+      setCryptoModalOpen(true);
+    } catch (error: any) {
+      const normalizedMessage = String(error?.message || '');
+      const responseStatus = error?.context?.status;
+      const responseJson = error?.context?.json;
+      const responseMessage =
+        responseJson?.detail?.message ||
+        responseJson?.detail?.error ||
+        responseJson?.detail ||
+        responseJson?.message ||
+        error?.context?.body?.message;
+
+      let reason = responseMessage || normalizedMessage || 'Unknown error';
+      if (normalizedMessage.includes('Failed to send a request to the Edge Function')) {
+        reason = t('paymentNetworkOrCorsError');
+      } else if (responseStatus === 401 || normalizedMessage === 'NOT_AUTHENTICATED' || /invalid jwt/i.test(normalizedMessage)) {
+        reason = t('paymentAuthExpired');
+      } else if (responseStatus === 500 && responseMessage === 'NOWPAYMENTS_API_KEY_MISSING') {
+        reason = t('paymentProviderKeyMissing');
+      } else if (/amountto is too small/i.test(reason)) {
+        reason = t('paymentAmountTooSmall');
+      }
+
+      if (reason === t('paymentAuthExpired')) {
+        await supabase.auth.signOut();
+        setLoginModalOpen(true);
+      }
+
+      toast({
+        title: t('paymentFailed'),
+        description: `${t('paymentFailedReasonLabel')}: ${reason}。${t('paymentContactSupportHint')}`,
+        variant: 'destructive',
+      });
+    } finally {
+      setCreatingPlanKey(null);
+    }
   };
 
   const periodLabel = (duration: PlanType) => {
@@ -180,22 +336,40 @@ const PlanSubscriptionPanel = () => {
     { text: t('featureExclusive'), highlight: true },
   ];
 
-  const plansByFamilyAndDuration = useMemo(() => {
-    const map: Partial<Record<'pro' | 'max' | 'lifetime', Partial<Record<PlanType, PlanRecord>>>> = {};
-    plans.forEach((plan) => {
-      const family = plan.plan_family || (plan.duration === 'lifetime' ? 'lifetime' : 'pro');
-      if (!map[family]) {
-        map[family] = {};
+  const proPlanDuration: PlanType = billingCycle;
+
+  const normalizedPlans = useMemo(() => {
+    return plans.map((plan) => {
+      const lowerName = (plan.name || '').toLowerCase();
+      const lowerFamily = (plan.plan_family || '').toLowerCase();
+
+      let inferredFamily: 'pro' | 'max' | 'lifetime' = 'pro';
+      if (lowerFamily === 'max' || lowerName.includes('max')) {
+        inferredFamily = 'max';
+      } else if (lowerFamily === 'lifetime' || plan.duration === 'lifetime' || lowerName.includes('lifetime')) {
+        inferredFamily = 'lifetime';
       }
-      map[family]![plan.duration] = plan;
+
+      return {
+        ...plan,
+        inferredFamily,
+      };
     });
-    return map;
   }, [plans]);
 
-  const proPlanDuration: PlanType = billingCycle;
-  const proPlan = plansByFamilyAndDuration.pro?.[proPlanDuration];
-  const maxPlan = plansByFamilyAndDuration.max?.[proPlanDuration];
-  const lifetimePlan = plansByFamilyAndDuration.lifetime?.lifetime ?? plansByFamilyAndDuration.pro?.lifetime;
+  const proPlan = useMemo(() => {
+    const sameDuration = normalizedPlans.filter((plan) => plan.duration === proPlanDuration);
+    return sameDuration.find((plan) => plan.inferredFamily === 'pro');
+  }, [normalizedPlans, proPlanDuration]);
+
+  const maxPlan = useMemo(() => {
+    const sameDuration = normalizedPlans.filter((plan) => plan.duration === proPlanDuration);
+    return sameDuration.find((plan) => plan.inferredFamily === 'max');
+  }, [normalizedPlans, proPlanDuration]);
+
+  const lifetimePlan = useMemo(() => {
+    return normalizedPlans.find((plan) => plan.inferredFamily === 'lifetime' || plan.duration === 'lifetime');
+  }, [normalizedPlans]);
 
   const defaultMonthlyPrice = 10;
   const defaultQuarterlyPrice = 28;
@@ -249,6 +423,7 @@ const PlanSubscriptionPanel = () => {
       {
         key: 'pro',
         type: proPlanDuration,
+        sourcePlanId: proPlan?.id,
         name: t('planPro'),
         price: proPrice,
         currency: proCurrency,
@@ -267,6 +442,7 @@ const PlanSubscriptionPanel = () => {
       {
         key: 'max',
         type: proPlanDuration,
+        sourcePlanId: maxPlan?.id,
         name: t('planMax'),
         price: maxPrice,
         currency: maxCurrency,
@@ -285,6 +461,7 @@ const PlanSubscriptionPanel = () => {
       {
         key: 'lifetime',
         type: 'lifetime',
+        sourcePlanId: lifetimePlan?.id,
         name: t('planLifetime'),
         price: lifetimePrice,
         currency: lifetimeCurrency,
@@ -502,12 +679,31 @@ const PlanSubscriptionPanel = () => {
             {/* Payment Buttons */}
             {!plan.isFree && (
               <div className="space-y-2 mb-4">
+                <Select value={selectedPayCurrency} onValueChange={setSelectedPayCurrency}>
+                  <SelectTrigger className="w-full border-border bg-background/50">
+                    <SelectValue placeholder="USDT" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USDT">USDT (TRC20)</SelectItem>
+                    <SelectItem value="BTC">BTC</SelectItem>
+                    <SelectItem value="ETH">ETH</SelectItem>
+                    <SelectItem value="SOL">SOL</SelectItem>
+                    <SelectItem value="BNB">BNB (BSC)</SelectItem>
+                    <SelectItem value="XRP">XRP</SelectItem>
+                    <SelectItem value="DOGE">DOGE</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Button 
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                  onClick={() => handleCryptoPayment(plan.name, plan.price, plan.currency, plan.nowpaymentUrl)}
+                  disabled={creatingPlanKey === plan.key}
+                  onClick={() => handleCryptoPayment(plan)}
                 >
-                  <Bitcoin className="w-4 h-4 mr-2" />
-                  {t('payWithCrypto')}
+                  {creatingPlanKey === plan.key ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Bitcoin className="w-4 h-4 mr-2" />
+                  )}
+                  {creatingPlanKey === plan.key ? t('paymentProcessing') : t('payWithCrypto')}
                 </Button>
                 {showStripePayment && (
                   <Button 
@@ -559,7 +755,13 @@ const PlanSubscriptionPanel = () => {
           planName={selectedPlan.name}
           price={selectedPlan.price}
           currency={selectedPlan.currency}
-          paymentUrl={selectedPlan.nowpaymentUrl}
+          orderId={selectedPlan.orderId}
+          providerPaymentId={selectedPlan.providerPaymentId}
+          providerStatus={selectedPlan.providerStatus}
+          paymentUrl={selectedPlan.paymentUrl}
+          payAddress={selectedPlan.payAddress}
+          payAmount={selectedPlan.payAmount}
+          payCurrency={selectedPlan.payCurrency}
         />
       )}
 
