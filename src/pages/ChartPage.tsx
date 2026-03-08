@@ -763,7 +763,7 @@ const ChartPage = () => {
                                         <SelectValue placeholder={t('filterDirection')} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">{t('all')}</SelectItem>
+                                        <SelectItem value="all">{t('filterDirection')}</SelectItem>
                                         <SelectItem value="long">{t('signalLong')}</SelectItem>
                                         <SelectItem value="short">{t('signalShort')}</SelectItem>
                                     </SelectContent>
@@ -774,7 +774,7 @@ const ChartPage = () => {
                                         <SelectValue placeholder={t('filterTime')} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">{t('all')}</SelectItem>
+                                        <SelectItem value="all">{t('filterTime')}</SelectItem>
                                         <SelectItem value="24h">24{t('hours')}</SelectItem>
                                         <SelectItem value="3d">3{t('days')}</SelectItem>
                                         <SelectItem value="7d">7{t('days')}</SelectItem>
@@ -787,7 +787,7 @@ const ChartPage = () => {
                                         <SelectValue placeholder={t('filterEntryStatus')} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">{t('all')}</SelectItem>
+                                        <SelectItem value="all">{t('filterEntryStatus')}</SelectItem>
                                         <SelectItem value="pending">{t('entryPending')}</SelectItem>
                                         <SelectItem value="entered">{t('entryEntered')}</SelectItem>
                                     </SelectContent>
