@@ -702,36 +702,51 @@ const Account = () => {
               <div className="space-y-4">
                 {isLoadingPurchases ? (
                   <div className="text-center text-sm text-muted-foreground py-8">{t('loading')}</div>
-                ) : purchaseRecords.map((purchase) => (
+                ) : purchaseRecords.map((purchase) => {
+                  const txId = purchase.tx_hash || purchase.provider_payment_id || '-';
+                  return (
                   <div
                     key={purchase.id}
-                    className="bg-card border border-border rounded-lg p-4 flex items-center justify-between"
+                    className="group bg-card hover:bg-muted/30 border border-border rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors duration-200"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                        <Bitcoin className="w-5 h-5 text-muted-foreground" />
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex flex-shrink-0 items-center justify-center">
+                        <Bitcoin className="w-6 h-6 text-primary" />
                       </div>
-                      <div>
-                        <div className="font-mono font-medium flex items-center gap-2">
-                          {(purchase.pay_amount ?? '-')} {purchase.pay_currency || 'CRYPTO'}
-                          <span className="text-muted-foreground text-sm">({purchase.price_amount} {purchase.price_currency})</span>
-                          <Badge className="bg-primary/20 text-primary border-0">{purchase.plan_name}</Badge>
+                      <div className="flex flex-col gap-1 overflow-hidden">
+                        <div className="flex items-center gap-2 flex-wrap text-sm sm:text-base">
+                          <span className="font-semibold text-foreground">
+                            {purchase.plan_name}
+                          </span>
+                          <span className="text-muted-foreground hidden sm:inline">•</span>
+                          <span className="font-mono font-medium text-foreground">
+                            {purchase.pay_amount ?? '-'} {purchase.pay_currency || 'CRYPTO'}
+                          </span>
+                          <span className="text-muted-foreground text-xs font-mono">
+                            ≈ {purchase.price_amount} {purchase.price_currency}
+                          </span>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {formatDateTime(purchase.created_at, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }, timeZone)}
+                        <div className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
+                          <span>
+                            {formatDateTime(purchase.created_at, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }, timeZone)}
+                          </span>
+                          {txId !== '-' && (
+                            <>
+                              <span className="hidden sm:inline">•</span>
+                              <span className="font-mono text-[10px] sm:text-xs truncate max-w-[200px] sm:max-w-xs" title={txId}>
+                                TX: {txId}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <div className="font-mono text-xs text-muted-foreground">TX</div>
-                        <div className="font-mono text-sm">{purchase.tx_hash || purchase.provider_payment_id || '-'}</div>
-                      </div>
+                    <div className="flex items-center sm:justify-end">
                       {getStatusBadge(purchase.status, purchase.provider_status)}
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
 
               {!isLoadingPurchases && purchaseTotal > PURCHASES_PER_PAGE && (
