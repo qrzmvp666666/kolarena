@@ -28,6 +28,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [showKickAlert, setShowKickAlert] = useState(false);
+  const isSingleSessionEnforced = String(import.meta.env.VITE_ENFORCE_SINGLE_SESSION || '').toLowerCase() === 'true';
 
   const loadUserProfile = async (authUserId: string, authEmail?: string | null) => {
     try {
@@ -52,10 +53,22 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const initializeSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+
       if (session?.user) {
         loadUserProfile(session.user.id, session.user.email);
+        return;
       }
+
+      const { data: refreshed, error } = await supabase.auth.refreshSession();
+      if (!error && refreshed.session?.user) {
+        loadUserProfile(refreshed.session.user.id, refreshed.session.user.email);
+      }
+    };
+
+    initializeSession().catch((error) => {
+      console.error('Failed to initialize auth session:', error);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -63,7 +76,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         loadUserProfile(session.user.id, session.user.email);
 
         // Single Session Enforcement
-        const allowMultiSession = withoutMultiSessionCheck();
+        const allowMultiSession = !isSingleSessionEnforced;
 
         if (!allowMultiSession) {
           (async () => {
@@ -91,12 +104,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
               }
             };
 
-            if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
+            if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY' || event === 'USER_UPDATED') {
               await claimSession();
             } else if (event === 'INITIAL_SESSION') {
               const localToken = localStorage.getItem(storageKey);
               if (!localToken) {
-                await claimSession();
+                const bootstrapToken = typeof crypto !== 'undefined' && crypto.randomUUID
+                  ? crypto.randomUUID()
+                  : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+                localStorage.setItem(storageKey, bootstrapToken);
               } else {
                 // Completely detached non-blocking check
                 setTimeout(async () => {
@@ -128,7 +145,55 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    const allowMultiSession = withoutMultiSessionCheck();
+    const recoverSessionIfNeeded = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session) {
+          const { data: refreshed, error } = await supabase.auth.refreshSession();
+          if (!error && refreshed.session?.user) {
+            loadUserProfile(refreshed.session.user.id, refreshed.session.user.email);
+          }
+          return;
+        }
+
+        const expiresAt = session.expires_at ? session.expires_at * 1000 : 0;
+        const shouldRefresh = !expiresAt || expiresAt - Date.now() < 10 * 60 * 1000;
+
+        if (shouldRefresh) {
+          const { data: refreshed, error } = await supabase.auth.refreshSession();
+          if (!error && refreshed.session?.user) {
+            loadUserProfile(refreshed.session.user.id, refreshed.session.user.email);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to recover auth session on focus:', error);
+      }
+    };
+
+    const handleFocus = () => {
+      recoverSessionIfNeeded().catch((error) => {
+        console.error('Focus session recovery failed:', error);
+      });
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        handleFocus();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const allowMultiSession = !isSingleSessionEnforced;
     if (allowMultiSession || !user) return;
 
     const userId = user.id;
@@ -151,11 +216,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
-
-  function withoutMultiSessionCheck() {
-    return import.meta.env.VITE_ALLOW_MULTI_SESSION === 'true';
-  }
+  }, [isSingleSessionEnforced, user]);
 
   const updateAvatar = (avatarUrl: string) => {
     if (user) {

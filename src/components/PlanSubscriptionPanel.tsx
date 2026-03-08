@@ -229,8 +229,10 @@ const PlanSubscriptionPanel = () => {
       }
 
       if (reason === t('paymentAuthExpired')) {
-        await supabase.auth.signOut();
-        setLoginModalOpen(true);
+        const { data: refreshed } = await supabase.auth.refreshSession();
+        if (!refreshed.session?.access_token) {
+          setLoginModalOpen(true);
+        }
       }
 
       toast({
