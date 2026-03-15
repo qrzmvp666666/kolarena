@@ -831,11 +831,11 @@ const KOLsPage = () => {
       <TopNav danmakuEnabled={false} onToggleDanmaku={() => {}} hideDanmakuToggle />
       <TickerBar />
 
-      <div className="px-6 py-3">
+      <div className="px-3 sm:px-6 py-3">
         {/* Filter Bar */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 mb-6">
           {/* Left: Market Type Toggle + Tab */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 overflow-x-auto pb-1">
             {/* Market Type Toggle */}
             <div className="flex items-center rounded-lg border border-border overflow-hidden">
               <button
@@ -883,12 +883,12 @@ const KOLsPage = () => {
           </div>
 
           {/* Right: Filters */}
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 w-full xl:w-auto">
             {/* KOL Selector */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">{t('selectTrader')}:</span>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">{t('selectTrader')}:</span>
               <Select value={selectedKol} onValueChange={handleKolChange}>
-                <SelectTrigger className="w-[200px] h-9 bg-card border-border">
+                <SelectTrigger className="w-full sm:w-[200px] h-9 bg-card border-border">
                   <SelectValue placeholder={kolsData[0]?.name}>
                     {(() => {
                       const found = kolsData.find(t => t.id === selectedKol);
@@ -925,9 +925,9 @@ const KOLsPage = () => {
             </div>
 
             {/* Time Range Filter */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <span className="text-xs text-muted-foreground">{t('timeRange')}:</span>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 overflow-x-auto pb-1">
                 {(['today', '7days', '1month', '6months', '1year'] as const).map((range) => (
                   <button
                     key={range}
@@ -992,7 +992,7 @@ const KOLsPage = () => {
             </div>
 
             {/* Refresh */}
-            <Button variant="outline" size="sm" className="gap-2" onClick={handleRefresh}>
+            <Button variant="outline" size="sm" className="gap-2 w-full sm:w-auto" onClick={handleRefresh}>
               <RefreshCw className="w-4 h-4" />
               {t('refresh')}
             </Button>

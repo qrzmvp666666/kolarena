@@ -154,9 +154,19 @@ export const TradingChart = ({
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
+    const getChartDimensions = () => {
+      const width = chartContainerRef.current?.clientWidth || 0;
+      const rawHeight = chartContainerRef.current?.clientHeight || 0;
+      return {
+        width,
+        height: Math.max(260, rawHeight || 0),
+      };
+    };
+
     const handleResize = () => {
       if (chartContainerRef.current) {
-         chartRef.current?.applyOptions({ width: chartContainerRef.current.clientWidth });
+        const next = getChartDimensions();
+        chartRef.current?.applyOptions({ width: next.width, height: next.height });
       }
     };
 
@@ -170,6 +180,13 @@ export const TradingChart = ({
           minute: '2-digit',
         }).format(new Date(time * 1000));
       }
+      if (typeof time === 'string') {
+        return new Intl.DateTimeFormat('zh-CN', {
+          timeZone,
+          month: '2-digit',
+          day: '2-digit',
+        }).format(new Date(time));
+      }
       const { year, month, day } = time;
       const d = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
       return new Intl.DateTimeFormat('zh-CN', {
@@ -179,13 +196,14 @@ export const TradingChart = ({
       }).format(d);
     };
 
+    const initialDimensions = getChartDimensions();
     const chart = createChart(chartContainerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: backgroundColor },
         textColor,
       },
-      width: chartContainerRef.current.clientWidth,
-      height: 500,
+      width: initialDimensions.width,
+      height: initialDimensions.height,
       localization: {
         locale: 'zh-CN',
         timeFormatter: formatChartTime,
@@ -201,7 +219,7 @@ export const TradingChart = ({
         ticksVisible: true,
         visible: true,
         minimumHeight: 32,
-        rightOffset: Math.floor((chartContainerRef.current.clientWidth / 6) / 2), // Center the latest candle
+        rightOffset: Math.floor((initialDimensions.width / 6) / 2), // Center the latest candle
       },
       crosshair: {
         mode: 1, // CrosshairMode.Normal

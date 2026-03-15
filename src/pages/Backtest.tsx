@@ -298,9 +298,9 @@ const BacktestPage = () => {
       <TopNav danmakuEnabled={false} onToggleDanmaku={() => {}} hideDanmakuToggle />
       <TickerBar />
 
-      <div className="px-6 py-3 max-w-[1400px] mx-auto">
+      <div className="px-3 sm:px-6 py-3 max-w-[1400px] mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex flex-wrap items-center gap-3 mb-6">
           <Button
             variant="ghost"
             size="sm"

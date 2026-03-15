@@ -33,7 +33,7 @@ const Index = () => {
       {/* Ticker Bar */}
       <TickerBar />
       
-      <div className="flex h-[calc(100vh-88px)]">
+      <div className="flex h-[calc(100dvh-88px)]">
         {/* Main Content with Chart and ModelBar */}
         <div className="flex-1 flex flex-col min-h-0 min-w-0">
           <ChartHeader 
@@ -44,7 +44,7 @@ const Index = () => {
           />
           
           {/* Chart Area - fills remaining space */}
-          <div className="flex-1 p-4 min-h-0">
+          <div className="flex-1 p-3 sm:p-4 min-h-0">
             <PerformanceChart visibleModels={visibleModels} displayMode={displayMode} timeRange={timeRange} />
           </div>
           

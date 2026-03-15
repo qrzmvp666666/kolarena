@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useBinanceWebSocket } from '@/hooks/useBinanceWebSocket';
 import { useBinanceSymbols } from '@/hooks/useBinanceSymbols';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/lib/supabase';
 
 interface KolRow {
@@ -37,6 +38,7 @@ interface TickerBarProps {
 
 const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
   const { t } = useLanguage();
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { symbols: binanceSymbols } = useBinanceSymbols();
 
@@ -192,11 +194,11 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
   };
 
   return (
-    <div className="flex items-center justify-between px-4 py-2 bg-secondary border-b border-border text-xs">
+    <div className="flex items-center justify-start sm:justify-between px-2 sm:px-4 py-1.5 sm:py-2 bg-secondary border-b border-border text-xs gap-2 sm:gap-4 overflow-x-auto scrollbar-hidden">
       {/* Left Side Content */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-3 sm:gap-6 min-w-0 shrink-0">
         {/* Signal Strength (icon only) */}
-        <div className="flex items-center">
+        <div className="flex items-center shrink-0">
           {signalStatus === 'none' ? (
             <WifiOff size={14} className={signalColor} />
           ) : (
@@ -213,7 +215,7 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
             return (
               <div 
                 key={sym.binanceSymbol} 
-                className="flex items-center gap-2 font-mono"
+                className="flex items-center gap-2 font-mono shrink-0"
               >
                 <img 
                   src={sym.icon_url || ''} 
@@ -235,7 +237,7 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
           <>
             {weeklyTop && (
               <div
-                className="flex items-center gap-2 font-mono cursor-pointer"
+                className="flex items-center gap-1.5 sm:gap-2 font-mono cursor-pointer shrink-0"
                 onClick={() => handleKolNavigate(weeklyTop.id)}
               >
                 <span className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider bg-accent/50 px-1.5 py-0.5 rounded-sm flex items-center">
@@ -245,7 +247,7 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
                   <AvatarImage src={weeklyTop.avatar} alt={weeklyTop.name} />
                   <AvatarFallback className="text-[8px]">{weeklyTop.shortName.slice(0, 2)}</AvatarFallback>
                 </Avatar>
-                <span className="text-foreground">{weeklyTop.name}</span>
+                <span className="text-foreground max-w-[56px] sm:max-w-none truncate">{isMobile ? weeklyTop.shortName : weeklyTop.name}</span>
                 <span className="flex items-center gap-0.5 text-accent-green">
                   <TrendingUp size={12} />
                   {formatReturnRate(weeklyTop.returnRate)}
@@ -255,7 +257,7 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
 
             {monthlyTop && (
               <div
-                className="flex items-center gap-2 font-mono cursor-pointer"
+                className="flex items-center gap-1.5 sm:gap-2 font-mono cursor-pointer shrink-0"
                 onClick={() => handleKolNavigate(monthlyTop.id)}
               >
                 <span className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider bg-accent/50 px-1.5 py-0.5 rounded-sm flex items-center">
@@ -265,7 +267,7 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
                   <AvatarImage src={monthlyTop.avatar} alt={monthlyTop.name} />
                   <AvatarFallback className="text-[8px]">{monthlyTop.shortName.slice(0, 2)}</AvatarFallback>
                 </Avatar>
-                <span className="text-foreground">{monthlyTop.name}</span>
+                <span className="text-foreground max-w-[56px] sm:max-w-none truncate">{isMobile ? monthlyTop.shortName : monthlyTop.name}</span>
                 <span className="flex items-center gap-0.5 text-accent-green">
                   <TrendingUp size={12} />
                   {formatReturnRate(monthlyTop.returnRate)}
@@ -275,7 +277,7 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
             
             {seasonTop && (
               <div
-                className="flex items-center gap-2 font-mono cursor-pointer"
+                className="flex items-center gap-1.5 sm:gap-2 font-mono cursor-pointer shrink-0"
                 onClick={() => handleKolNavigate(seasonTop.id)}
               >
                 <span className="text-muted-foreground font-bold text-[10px] uppercase tracking-wider bg-accent/50 px-1.5 py-0.5 rounded-sm flex items-center">
@@ -285,7 +287,7 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
                   <AvatarImage src={seasonTop.avatar} alt={seasonTop.name} />
                   <AvatarFallback className="text-[8px]">{seasonTop.shortName.slice(0, 2)}</AvatarFallback>
                 </Avatar>
-                <span className="text-foreground">{seasonTop.name}</span>
+                <span className="text-foreground max-w-[56px] sm:max-w-none truncate">{isMobile ? seasonTop.shortName : seasonTop.name}</span>
                 <span className={`flex items-center gap-0.5 ${seasonTop.returnRate >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
                   {seasonTop.returnRate >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                   {formatReturnRate(seasonTop.returnRate)}
@@ -297,8 +299,8 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
       </div>
 
       {/* Right Side Content - Only show rankings if we are NOT in K-line mode (i.e. crypto ticker is visible) */}
-      {showCryptoTicker ? (
-        <div className="flex items-center gap-6">
+      {!isMobile && (showCryptoTicker ? (
+        <div className="flex items-center gap-6 shrink-0">
           {weeklyTop && (
             <div
               className="flex items-center gap-2 font-mono cursor-pointer"
@@ -361,7 +363,7 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
         </div>
       ) : (
         // Right side for Chart Page: Show Highest and Lowest
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6 shrink-0">
           {highest && (
             <div
               className="flex items-center gap-2 font-mono cursor-pointer"
@@ -402,7 +404,7 @@ const TickerBar = ({ showCryptoTicker = true }: TickerBarProps) => {
             </div>
           )}
         </div>
-      )}
+      ))}
     </div>
   );
 };

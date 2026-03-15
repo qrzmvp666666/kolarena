@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MarketSidebarProps {
   currentSymbol: string;
@@ -15,6 +16,7 @@ interface MarketSidebarProps {
 export const MarketSidebar = ({ currentSymbol, onSelectSymbol }: MarketSidebarProps) => {
   const { symbols: binanceSymbols, loading } = useBinanceSymbols();
   const [collapsed, setCollapsed] = useState(false);
+  const isMobile = useIsMobile();
   const { t } = useLanguage();
 
   // Derive Binance-format symbol list for WebSocket subscription
@@ -26,28 +28,30 @@ export const MarketSidebar = ({ currentSymbol, onSelectSymbol }: MarketSidebarPr
     <div
       className={cn(
         "bg-card border-r border-border flex flex-col h-full shrink-0 transition-all duration-200",
-        collapsed ? "w-[56px]" : "w-[300px]"
+        isMobile ? "w-full" : (collapsed ? "w-[56px]" : "w-[300px]")
       )}
     >
       {/* Header */}
       <div
         className={cn(
           "h-[60px] flex items-center border-b border-border shrink-0",
-          collapsed ? "justify-center px-2" : "justify-between px-4"
+          (!isMobile && collapsed) ? "justify-center px-2" : "justify-between px-4"
         )}
       >
-        {!collapsed && <h2 className="text-sm text-foreground font-semibold">{t('markets')}</h2>}
-        <button
-          onClick={() => setCollapsed(v => !v)}
-          className="h-7 w-7 inline-flex items-center justify-center rounded border border-border bg-card text-foreground hover:bg-muted transition-colors"
-          aria-label={collapsed ? '展开市场' : '收起市场'}
-          title={collapsed ? '展开市场' : '收起市场'}
-        >
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </button>
+        {(isMobile || !collapsed) && <h2 className="text-sm text-foreground font-semibold">{t('markets')}</h2>}
+        {!isMobile && (
+          <button
+            onClick={() => setCollapsed(v => !v)}
+            className="h-8 w-8 inline-flex items-center justify-center rounded border border-border bg-card text-foreground hover:bg-muted transition-colors"
+            aria-label={collapsed ? '展开市场' : '收起市场'}
+            title={collapsed ? '展开市场' : '收起市场'}
+          >
+            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
+        )}
       </div>
 
-      {!collapsed && (
+      {(isMobile || !collapsed) && (
         <ScrollArea className="flex-1">
           <div className="flex flex-col">
             {loading && binanceSymbols.length === 0 ? (
@@ -119,7 +123,7 @@ export const MarketSidebar = ({ currentSymbol, onSelectSymbol }: MarketSidebarPr
 
                     <div className="flex flex-col items-end gap-0.5">
                       <span className={cn("text-sm font-mono font-medium transition-colors duration-300 tracking-tight", priceColorClass)}>
-                        {price ? `\$${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-'}
+                        {price ? `$${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-'}
                       </span>
                       <span className={cn("text-xs font-mono font-medium px-1.5 py-0.5 rounded transition-colors duration-300", badgeClass)}>
                         {percentChange > 0 ? '+' : ''}{percentChange.toFixed(2)}%

@@ -16,9 +16,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Users, X, Plus, RefreshCw, Square, Columns2, Rows2, LayoutGrid, ChevronLeft, ChevronRight, MessageSquare, Activity, History } from 'lucide-react';
+import { Users, X, Plus, RefreshCw, Square, Columns2, Rows2, LayoutGrid, ChevronLeft, ChevronRight, MessageSquare, Activity, History, PanelLeft } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import { ResponsiveGridLayout, useContainerWidth, type LayoutItem, type ResponsiveLayouts } from 'react-grid-layout';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 interface SignalRow {
   id: string;
@@ -246,6 +248,7 @@ const ChartWindow = ({
 
 const ChartPage = () => {
     const { t, language } = useLanguage();
+    const isMobile = useIsMobile();
     const [danmakuEnabled, setDanmakuEnabled] = useState(true);
     const [hoveredSignalId, setHoveredSignalId] = useState<string | null>(null);
 
@@ -258,6 +261,8 @@ const ChartPage = () => {
     const chartIdCounter = useRef(2);
     const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
     const [rightSidebarTab, setRightSidebarTab] = useState<'comments' | 'pending' | 'history'>('pending');
+    const [marketSheetOpen, setMarketSheetOpen] = useState(false);
+    const [rightSheetOpen, setRightSheetOpen] = useState(false);
     const [resetKey, setResetKey] = useState(0);
 
     const [availableKolsByChart, setAvailableKolsByChart] = useState<
@@ -277,8 +282,8 @@ const ChartPage = () => {
     const manualKolsSelectionRef = useRef<Record<string, boolean>>({});
 
     const cols = useMemo(
-        () => ({ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }),
-        []
+        () => (isMobile ? { lg: 1, md: 1, sm: 1, xs: 1, xxs: 1 } : { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }),
+        [isMobile]
     );
 
     const createLayoutItem = (id: string, x = 0, y = Infinity, w = 6, h = 6): LayoutItem => ({
@@ -589,28 +594,102 @@ const ChartPage = () => {
 
 
     return (
-        <div className="h-screen bg-background flex flex-col overflow-hidden relative">
+        <div className="h-[100dvh] bg-background flex flex-col overflow-hidden relative">
             {danmakuEnabled && <Danmaku />}
             <TopNav
                 danmakuEnabled={danmakuEnabled}
                 onToggleDanmaku={() => setDanmakuEnabled(!danmakuEnabled)}
+                mobileQuickActions={(
+                    isMobile ? (
+                        <div className="flex items-center gap-1">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="touch-target"
+                                onClick={() => setMarketSheetOpen(true)}
+                                aria-label={t('markets')}
+                                title={t('markets')}
+                            >
+                                <PanelLeft className="w-4 h-4" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="touch-target"
+                                onClick={() => {
+                                    setRightSidebarTab('pending');
+                                    setRightSheetOpen(true);
+                                }}
+                                aria-label={t('chartActiveSignalsShort')}
+                                title={t('chartActiveSignalsShort')}
+                            >
+                                <Activity className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    ) : undefined
+                )}
             />
             <TickerBar showCryptoTicker={false} />
 
-            <div className="flex flex-1 overflow-hidden">
-                <MarketSidebar
-                    currentSymbol={activeChart?.symbol || 'BTCUSDT'}
-                    onSelectSymbol={() => {}}
-                />
+            <div className="flex flex-1 min-h-0 overflow-hidden">
+                <div className="hidden md:block">
+                    <MarketSidebar
+                        currentSymbol={activeChart?.symbol || 'BTCUSDT'}
+                        onSelectSymbol={(symbol) => {
+                            setSelectedSymbols([symbol]);
+                            syncChartsWithSymbols([symbol]);
+                        }}
+                    />
+                </div>
 
                 <div className="flex-1 flex flex-col bg-background min-w-0">
-                    <div className="min-h-[60px] flex flex-col lg:flex-row lg:items-center lg:justify-between px-4 py-2 border-b border-border bg-card shrink-0 gap-3">
-                        <div className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
+                    <div className="min-h-[60px] flex flex-col lg:flex-row lg:items-center lg:justify-between px-3 sm:px-4 py-2 border-b border-border bg-card shrink-0 gap-3">
+                        <div className="md:hidden">
+                            <Sheet open={marketSheetOpen} onOpenChange={setMarketSheetOpen}>
+                                <SheetContent side="left" className="p-0 w-[88vw] max-w-[320px]">
+                                    <SheetHeader className="px-4 py-3 border-b border-border">
+                                        <SheetTitle className="font-mono text-sm">{t('markets')}</SheetTitle>
+                                    </SheetHeader>
+                                    <div className="h-[calc(100dvh-64px)]">
+                                        <MarketSidebar
+                                            currentSymbol={activeChart?.symbol || 'BTCUSDT'}
+                                            onSelectSymbol={(symbol) => {
+                                                setSelectedSymbols([symbol]);
+                                                syncChartsWithSymbols([symbol]);
+                                                setMarketSheetOpen(false);
+                                            }}
+                                        />
+                                    </div>
+                                </SheetContent>
+                            </Sheet>
+
+                            <Sheet open={rightSheetOpen} onOpenChange={setRightSheetOpen}>
+                                <SheetContent side="right" className="p-0 w-[92vw] max-w-[380px]">
+                                    <SheetHeader className="px-4 py-3 border-b border-border">
+                                        <SheetTitle className="font-mono text-sm">{t('chartActiveSignalsShort')}</SheetTitle>
+                                    </SheetHeader>
+                                    <div className="h-[calc(100dvh-64px)]">
+                                        <Sidebar
+                                            activeTab={rightSidebarTab}
+                                            onTabChange={setRightSidebarTab}
+                                            onSignalHover={setHoveredSignalId}
+                                            selectedKols={globalSelectedKols}
+                                            selectedSymbols={new Set(selectedSymbols)}
+                                            selectedDirection={globalSelectedDirection}
+                                            selectedTimeRange={globalSelectedTimeRange}
+                                            selectedEntryStatus={globalSelectedEntryStatus}
+                                        />
+                                    </div>
+                                </SheetContent>
+                            </Sheet>
+                        </div>
+
+                        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 flex-nowrap overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button
                                         size="sm"
-                                        className="h-7 gap-2 text-[11px] font-medium border border-border bg-card text-foreground hover:bg-muted transition-colors"
+                                        className="h-8 gap-2 text-[11px] font-medium border border-border bg-card text-foreground hover:bg-muted transition-colors shrink-0"
                                         disabled={symbolsLoading}
                                     >
                                         {symbolDisplay}
@@ -759,7 +838,7 @@ const ChartPage = () => {
                             </Popover>
                             <div className="flex items-center gap-2">
                                 <Select value={globalSelectedDirection} onValueChange={(v: any) => setGlobalSelectedDirection(v)}>
-                                    <SelectTrigger className="h-7 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[90px]">
+                                    <SelectTrigger className="h-8 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[82px] sm:w-[90px] shrink-0">
                                         <SelectValue placeholder={t('filterDirection')} />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -770,7 +849,7 @@ const ChartPage = () => {
                                 </Select>
 
                                 <Select value={globalSelectedTimeRange} onValueChange={(v: any) => setGlobalSelectedTimeRange(v)}>
-                                    <SelectTrigger className="h-7 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[100px]">
+                                    <SelectTrigger className="h-8 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[90px] sm:w-[100px] shrink-0">
                                         <SelectValue placeholder={t('filterTime')} />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -783,7 +862,7 @@ const ChartPage = () => {
                                 </Select>
 
                                 <Select value={globalSelectedEntryStatus} onValueChange={(v: any) => setGlobalSelectedEntryStatus(v)}>
-                                    <SelectTrigger className="h-7 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[110px]">
+                                    <SelectTrigger className="h-8 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[100px] sm:w-[110px] shrink-0">
                                         <SelectValue placeholder={t('filterEntryStatus')} />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -796,7 +875,7 @@ const ChartPage = () => {
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="h-7 w-7 p-0 border border-border bg-card text-foreground hover:bg-muted transition-colors"
+                                    className="h-8 w-8 p-0 border border-border bg-card text-foreground hover:bg-muted transition-colors shrink-0"
                                     onClick={handleResetLayout}
                                     aria-label={t('chartResetLayout')}
                                     title={t('chartResetLayout')}

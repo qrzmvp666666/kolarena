@@ -1,33 +1,39 @@
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Sun, Moon, MessageSquare, MessageSquareOff, Globe, User, LogOut, ChevronDown, Clock } from 'lucide-react';
+import { Sun, Moon, MessageSquare, MessageSquareOff, Globe, User, LogOut, ChevronDown, Clock, Menu } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { useLanguage } from '@/lib/i18n';
 import { useTimeZone } from '@/lib/timezone';
 import { useUser } from '@/contexts/UserContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import LoginModal from '@/components/LoginModal';
 
 interface TopNavProps {
   danmakuEnabled: boolean;
   onToggleDanmaku: () => void;
   hideDanmakuToggle?: boolean;
+  mobileQuickActions?: ReactNode;
 }
 
-const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: TopNavProps) => {
+const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false, mobileQuickActions }: TopNavProps) => {
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const { timeZone, setTimeZone, timeZones } = useTimeZone();
+  const isMobile = useIsMobile();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useUser();
   
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const handleLogin = () => {
     // User state is now managed by UserContext
@@ -46,64 +52,41 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
   };
 
   const currentTimeZoneLabel = timeZones.find((tz) => tz.value === timeZone)?.label || timeZone;
+  const navItems = [
+    { to: '/chart', label: t('chartPage'), isActive: location.pathname === '/chart' || location.pathname === '/' },
+    { to: '/leaderboard', label: t('leaderboard'), isActive: location.pathname === '/leaderboard' },
+    { to: '/kols', label: t('kols'), isActive: location.pathname === '/kols' },
+    { to: '/signals', label: t('models'), isActive: location.pathname === '/signals' },
+    { to: '/community', label: t('joinCommunity'), isActive: location.pathname === '/community' },
+    { to: '/about', label: t('aboutUs'), isActive: location.pathname === '/about' },
+  ];
 
   return (
-    <nav className="flex items-center justify-between px-6 py-3 border-b border-border bg-card">
+    <nav className="flex items-center justify-between px-3 md:px-6 py-2.5 md:py-3 border-b border-border bg-card gap-2">
       {/* Logo */}
       <Link to="/chart" className="flex items-center gap-2">
-        <span className="text-xl font-bold tracking-tight logo-shine logo-text">
+        <span className="text-lg md:text-xl font-bold tracking-tight logo-shine logo-text">
           KOL<span>Arena</span>
         </span>
       </Link>
 
       {/* Center Navigation */}
-      <div className="flex items-center gap-6">
-        <Link 
-          to="/chart" 
-          className={`font-mono text-sm transition-colors ${
-            (location.pathname === '/chart' || location.pathname === '/')
-              ? 'text-foreground text-base font-bold'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          {t('chartPage')}
-        </Link>
-        <span className="text-muted-foreground">|</span>
-        <Link 
-          to="/leaderboard" 
-          className={`font-mono text-sm transition-colors ${
-            location.pathname === '/leaderboard' ? 'text-foreground text-base font-bold' : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          {t('leaderboard')}
-        </Link>
-        <span className="text-muted-foreground">|</span>
-        <Link 
-          to="/kols" 
-          className={`font-mono text-sm transition-colors ${
-            location.pathname === '/kols' ? 'text-foreground text-base font-bold' : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          {t('kols')}
-        </Link>
-        <span className="text-muted-foreground">|</span>
-        <Link 
-          to="/signals" 
-          className={`font-mono text-sm transition-colors ${
-            location.pathname === '/signals' ? 'text-foreground text-base font-bold' : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          {t('models')}
-        </Link>
-        <span className="text-muted-foreground">|</span>
-        <Link 
-          to="/community" 
-          className={`font-mono text-sm transition-colors ${
-            location.pathname === '/community' ? 'text-foreground text-base font-bold' : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          {t('joinCommunity')}
-        </Link>
+      <div className="hidden md:flex items-center gap-5">
+        {navItems.map((item, index) => (
+          <div key={item.to} className="flex items-center gap-5">
+            <Link
+              to={item.to}
+              className={`font-mono text-sm transition-colors ${
+                item.isActive
+                  ? 'text-foreground text-base font-bold'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {item.label}
+            </Link>
+            {index < navItems.length - 1 && <span className="text-muted-foreground">|</span>}
+          </div>
+        ))}
         <span className="text-muted-foreground">|</span>
         <button
           onClick={handleProClick}
@@ -113,53 +96,52 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
         >
           套餐
         </button>
-        <span className="text-muted-foreground">|</span>
-        <Link 
-          to="/about"
-          className={`font-mono text-sm transition-colors ${
-            location.pathname === '/about' ? 'text-foreground text-base font-bold' : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          {t('aboutUs')}
-        </Link>
       </div>
 
       {/* Right Side - Controls & User */}
-      <div className="flex items-center gap-3">
-        {/* Language Toggle */}
-        <button
-          onClick={toggleLanguage}
-          className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-accent transition-colors font-mono text-xs"
-          aria-label="Toggle language"
-          title={language === 'zh' ? 'Switch to English' : '切换到中文'}
-        >
-          <Globe size={16} />
-          <span>{language === 'zh' ? '中文' : 'EN'}</span>
-        </button>
+      <div className="flex items-center gap-1 md:gap-3">
+        {isMobile && mobileQuickActions}
 
-        <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-accent transition-colors font-mono text-xs">
-            <Clock size={16} />
-            <span className="max-w-[120px] truncate" title={currentTimeZoneLabel}>{currentTimeZoneLabel}</span>
-            <ChevronDown size={12} className="text-muted-foreground" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="font-mono text-xs">
-            {timeZones.map((tz) => (
-              <DropdownMenuItem
-                key={tz.value}
-                onClick={() => setTimeZone(tz.value)}
-                className="cursor-pointer"
-              >
-                {tz.label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Language Toggle */}
+        {!isMobile && (
+          <button
+            onClick={toggleLanguage}
+            className="touch-target flex items-center gap-1 px-2 py-1 rounded-md hover:bg-accent transition-colors font-mono text-xs"
+            aria-label="Toggle language"
+            title={language === 'zh' ? 'Switch to English' : '切换到中文'}
+          >
+            <Globe size={16} />
+            <span>{language === 'zh' ? '中文' : 'EN'}</span>
+          </button>
+        )}
+
+        {!isMobile && (
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-accent transition-colors font-mono text-xs">
+              <Clock size={16} />
+              <>
+                <span className="max-w-[120px] truncate" title={currentTimeZoneLabel}>{currentTimeZoneLabel}</span>
+                <ChevronDown size={12} className="text-muted-foreground" />
+              </>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="font-mono text-xs">
+              {timeZones.map((tz) => (
+                <DropdownMenuItem
+                  key={tz.value}
+                  onClick={() => setTimeZone(tz.value)}
+                  className="cursor-pointer"
+                >
+                  {tz.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
         
-        {!hideDanmakuToggle && (
+        {!isMobile && !hideDanmakuToggle && (
           <button
             onClick={onToggleDanmaku}
-            className="p-2 rounded-md hover:bg-accent transition-colors"
+            className="touch-target p-2 rounded-md hover:bg-accent transition-colors"
             aria-label="Toggle danmaku"
             title={danmakuEnabled ? t('closeDanmaku') : t('openDanmaku')}
           >
@@ -167,16 +149,18 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
           </button>
         )}
         
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-md hover:bg-accent transition-colors"
-          aria-label="Toggle theme"
-        >
-          {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-        </button>
+        {!isMobile && (
+          <button
+            onClick={toggleTheme}
+            className="touch-target p-2 rounded-md hover:bg-accent transition-colors"
+            aria-label="Toggle theme"
+          >
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+        )}
 
         {/* User Section */}
-        <div className="ml-2 pl-3 border-l border-border">
+        <div className="hidden md:block ml-2 pl-3 border-l border-border">
           {user ? (
             <div className="flex items-center gap-2">
               <DropdownMenu>
@@ -213,6 +197,148 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false }: 
             </button>
           )}
         </div>
+
+        {isMobile && (
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="touch-target">
+                <Menu className="w-5 h-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[85vw] max-w-[360px] overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle className="font-mono">KOLArena</SheetTitle>
+              </SheetHeader>
+              <div className="mt-6 space-y-3">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block rounded-md px-3 py-3 font-mono text-sm border transition-colors ${
+                      item.isActive
+                        ? 'border-foreground text-foreground bg-accent'
+                        : 'border-border text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+                <button
+                  onClick={() => {
+                    handleProClick();
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`w-full text-left rounded-md px-3 py-3 font-mono text-sm border transition-colors ${
+                    location.pathname === '/account'
+                      ? 'border-foreground text-foreground bg-accent'
+                      : 'border-border text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  套餐
+                </button>
+
+                <div className="pt-2 border-t border-border space-y-2">
+                  <button
+                    onClick={toggleLanguage}
+                    className="w-full flex items-center justify-between rounded-md px-3 py-2 text-sm font-mono border border-border"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Globe size={15} />
+                      语言
+                    </span>
+                    <span className="text-muted-foreground">{language === 'zh' ? '中文' : 'EN'}</span>
+                  </button>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="w-full flex items-center justify-between rounded-md px-3 py-2 text-sm font-mono border border-border">
+                      <span className="flex items-center gap-2">
+                        <Clock size={15} />
+                        时区
+                      </span>
+                      <span className="flex items-center gap-1 text-muted-foreground">
+                        <span className="max-w-[140px] truncate">{currentTimeZoneLabel}</span>
+                        <ChevronDown size={12} />
+                      </span>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="font-mono text-xs max-h-[300px] overflow-y-auto">
+                      {timeZones.map((tz) => (
+                        <DropdownMenuItem
+                          key={tz.value}
+                          onClick={() => setTimeZone(tz.value)}
+                          className="cursor-pointer"
+                        >
+                          {tz.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {!hideDanmakuToggle && (
+                    <button
+                      onClick={onToggleDanmaku}
+                      className="w-full flex items-center justify-between rounded-md px-3 py-2 text-sm font-mono border border-border"
+                    >
+                      <span className="flex items-center gap-2">
+                        {danmakuEnabled ? <MessageSquare size={15} /> : <MessageSquareOff size={15} />}
+                        弹幕
+                      </span>
+                      <span className="text-muted-foreground">{danmakuEnabled ? '开启' : '关闭'}</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={toggleTheme}
+                    className="w-full flex items-center justify-between rounded-md px-3 py-2 text-sm font-mono border border-border"
+                  >
+                    <span className="flex items-center gap-2">
+                      {theme === 'light' ? <Moon size={15} /> : <Sun size={15} />}
+                      主题
+                    </span>
+                    <span className="text-muted-foreground">{theme === 'light' ? '浅色' : '深色'}</span>
+                  </button>
+                </div>
+
+                <div className="pt-2 border-t border-border">
+                  <div className="text-xs text-muted-foreground mb-2">{currentTimeZoneLabel}</div>
+                  {user ? (
+                    <div className="space-y-2">
+                      <Link
+                        to="/account"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-mono border border-border"
+                      >
+                        <User size={15} />
+                        {t('myAccount')}
+                      </Link>
+                      <button
+                        onClick={async () => {
+                          await handleLogout();
+                          setMobileMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-mono border border-border text-left"
+                      >
+                        <LogOut size={15} />
+                        {t('logout')}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setLoginModalOpen(true);
+                        setMobileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-transparent hover:bg-accent text-foreground font-mono text-sm transition-colors"
+                    >
+                      <User size={16} />
+                      {t('loginRegister')}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        )}
 
         {/* Login Modal */}
         <LoginModal

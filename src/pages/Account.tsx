@@ -606,7 +606,7 @@ const Account = () => {
       <div className="flex flex-1">
         {/* Sidebar - only show full sidebar when logged in */}
         {contextUser && (
-        <div className="w-64 border-r border-border bg-card p-4">
+        <div className="hidden md:block w-64 border-r border-border bg-card p-4">
           <h2 className="font-mono text-lg font-semibold mb-4 px-2">{t('myAccount')}</h2>
           
           <nav className="space-y-1">
@@ -658,7 +658,53 @@ const Account = () => {
         </div>
         )}
 
-        <div className="flex-1 p-6 overflow-y-auto">
+        <div className="flex-1 p-3 sm:p-6 overflow-y-auto">
+          {contextUser && (
+            <div className="md:hidden mb-4">
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                <button
+                  onClick={() => setTab('subscription')}
+                  className={`shrink-0 px-3 py-2 rounded-md border font-mono text-xs transition-colors ${
+                    activeTab === 'subscription'
+                      ? 'bg-accent text-foreground border-border'
+                      : 'text-muted-foreground border-border'
+                  }`}
+                >
+                  {t('subscriptionPlans')}
+                </button>
+                <button
+                  onClick={() => setTab('purchases')}
+                  className={`shrink-0 px-3 py-2 rounded-md border font-mono text-xs transition-colors ${
+                    activeTab === 'purchases'
+                      ? 'bg-accent text-foreground border-border'
+                      : 'text-muted-foreground border-border'
+                  }`}
+                >
+                  {t('purchaseRecords')}
+                </button>
+                <button
+                  onClick={() => setTab('redemption')}
+                  className={`shrink-0 px-3 py-2 rounded-md border font-mono text-xs transition-colors ${
+                    activeTab === 'redemption'
+                      ? 'bg-accent text-foreground border-border'
+                      : 'text-muted-foreground border-border'
+                  }`}
+                >
+                  {t('redemptionCenter')}
+                </button>
+                <button
+                  onClick={() => setTab('settings')}
+                  className={`shrink-0 px-3 py-2 rounded-md border font-mono text-xs transition-colors ${
+                    activeTab === 'settings'
+                      ? 'bg-accent text-foreground border-border'
+                      : 'text-muted-foreground border-border'
+                  }`}
+                >
+                  {t('accountSettings')}
+                </button>
+              </div>
+            </div>
+          )}
           {activeTab === 'subscription' && (
             <PlanSubscriptionPanel />
           )}

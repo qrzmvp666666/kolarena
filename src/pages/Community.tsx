@@ -86,7 +86,7 @@ const Community = () => {
       {/* Ticker Bar */}
       <TickerBar />
       
-      <div className="px-6 py-10 max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="px-3 sm:px-6 py-10 max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
         {/* Hero Section */}
         <div className="text-center mb-12 relative">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-8xl font-black text-foreground/[0.03] select-none pointer-events-none tracking-tighter">

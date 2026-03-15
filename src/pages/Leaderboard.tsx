@@ -719,15 +719,15 @@ const LeaderboardContent = () => {
       <TickerBar />
       
       {/* Main Content */}
-      <div className="px-6 py-3">
+      <div className="px-3 sm:px-6 py-3">
         {/* Header */}
         <div className="mb-4">
         </div>
 
         {/* Filter Bar - Similar to Signals page */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 mb-6">
           {/* Left: Market Type Toggle + Tabs */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 overflow-x-auto pb-1">
             {/* Market Type Toggle */}
             <div className="flex items-center rounded-lg border border-border overflow-hidden">
               <button
@@ -786,9 +786,9 @@ const LeaderboardContent = () => {
           </div>
 
           {/* Search & Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 w-full xl:w-auto">
           {activeTab === 'overall' && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 overflow-x-auto pb-1">
                 {(['today', '7days', '1month', '6months', '1year'] as const).map((range) => (
                   <button
                     key={range}
@@ -852,14 +852,14 @@ const LeaderboardContent = () => {
               </div>
             )}
           {activeTab === 'overall' && (
-              <div className="relative">
+              <div className="relative flex-1 xl:flex-none">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   type="text"
                   placeholder={t('searchTrader')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 w-48 bg-card border-border"
+                  className="pl-9 w-full xl:w-48 bg-card border-border"
                 />
               </div>
             )}
@@ -996,7 +996,7 @@ const LeaderboardContent = () => {
             {/* Data Table */}
             <div className="border border-border rounded-lg overflow-hidden mb-6">
               <ScrollArea className="w-full">
-                <table className="w-full text-xs">
+                <table className="w-full text-xs min-w-[760px]">
                   <thead>
                     <tr className="bg-muted/50 border-b border-border">
                       <th className="px-4 py-3 text-left font-semibold text-muted-foreground">RANK</th>

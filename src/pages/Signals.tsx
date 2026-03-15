@@ -419,11 +419,11 @@ const SignalsContent = () => {
       <TickerBar />
 
       {/* Main Content */}
-      <div className="px-6 py-3">
+      <div className="px-3 sm:px-6 py-3">
         {/* Filter Bar - Row 1 */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 mb-4">
           {/* Left: Market Type Toggle + Tabs */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 overflow-x-auto pb-1">
             {/* Market Type Toggle */}
             <div className="flex items-center rounded-lg border border-border overflow-hidden">
               <button
@@ -515,15 +515,15 @@ const SignalsContent = () => {
           </div>
 
           {/* Search & Actions */}
-          <div className="flex items-center gap-3">
-            <div className="relative">
+          <div className="flex items-center gap-2 w-full xl:w-auto">
+            <div className="relative flex-1 xl:flex-none">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder={t('searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 w-64 bg-card border-border"
+                className="pl-9 w-full xl:w-64 bg-card border-border"
               />
             </div>
             <Button variant="outline" size="sm" className="gap-2" onClick={fetchSignals} disabled={loading}>
@@ -534,7 +534,7 @@ const SignalsContent = () => {
         </div>
 
         {/* Filter Bar - Row 2: Filters Left, Reset Right */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-6">
           <div className="flex flex-wrap items-center gap-6">
             {/* Trading Pair Filter */}
             <div className="flex items-center gap-2">
@@ -607,7 +607,7 @@ const SignalsContent = () => {
             variant="outline"
             size="sm"
             onClick={handleResetFilters}
-            className="ml-auto"
+            className="w-full lg:w-auto lg:ml-auto"
           >
             {t('resetFilters')}
           </Button>
@@ -631,7 +631,7 @@ const SignalsContent = () => {
           </TabsList>
 
           {/* Active Signals List View */}
-          <TabsContent value="active" className="mt-0 h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-2">
+          <TabsContent value="active" className="mt-0 h-[calc(100dvh-320px)] md:h-[calc(100dvh-280px)] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-1 sm:pr-2">
             {loading ? (
               <div className="flex items-center justify-center py-20 text-muted-foreground">
                 <RefreshCw className="w-5 h-5 animate-spin mr-2" />
@@ -660,7 +660,7 @@ const SignalsContent = () => {
           </TabsContent>
 
           {/* History Signals List View */}
-          <TabsContent value="history" className="mt-0 h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-2">
+          <TabsContent value="history" className="mt-0 h-[calc(100dvh-320px)] md:h-[calc(100dvh-280px)] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-1 sm:pr-2">
             {loading ? (
               <div className="flex items-center justify-center py-20 text-muted-foreground">
                 <RefreshCw className="w-5 h-5 animate-spin mr-2" />
