@@ -1,8 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
 
-const SUPABASE_URL = "https://kokvcgiuhbtymsnwdxtr.supabase.co";
-const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtva3ZjZ2l1aGJ0eW1zbndkeHRyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDMxNDk1OCwiZXhwIjoyMDg1ODkwOTU4fQ.vY33ql0QZ8qughmmhBN0myLuyfy19gtYIY_VugCSL4M";
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error("Missing env vars: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.");
