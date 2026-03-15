@@ -210,6 +210,43 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false, mo
                 <SheetTitle className="font-mono">KOLArena</SheetTitle>
               </SheetHeader>
               <div className="mt-6 space-y-3">
+                <div className="pb-2 border-b border-border">
+                  <div className="text-xs text-muted-foreground mb-2">{currentTimeZoneLabel}</div>
+                  {user ? (
+                    <div className="space-y-2">
+                      <Link
+                        to="/account"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-mono border border-border"
+                      >
+                        <User size={15} />
+                        {t('myAccount')}
+                      </Link>
+                      <button
+                        onClick={async () => {
+                          await handleLogout();
+                          setMobileMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-mono border border-border text-left"
+                      >
+                        <LogOut size={15} />
+                        {t('logout')}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setLoginModalOpen(true);
+                        setMobileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-transparent hover:bg-accent text-foreground font-mono text-sm transition-colors"
+                    >
+                      <User size={16} />
+                      {t('loginRegister')}
+                    </button>
+                  )}
+                </div>
+
                 {navItems.map((item) => (
                   <Link
                     key={item.to}
@@ -297,43 +334,6 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false, mo
                     </span>
                     <span className="text-muted-foreground">{theme === 'light' ? '浅色' : '深色'}</span>
                   </button>
-                </div>
-
-                <div className="pt-2 border-t border-border">
-                  <div className="text-xs text-muted-foreground mb-2">{currentTimeZoneLabel}</div>
-                  {user ? (
-                    <div className="space-y-2">
-                      <Link
-                        to="/account"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-mono border border-border"
-                      >
-                        <User size={15} />
-                        {t('myAccount')}
-                      </Link>
-                      <button
-                        onClick={async () => {
-                          await handleLogout();
-                          setMobileMenuOpen(false);
-                        }}
-                        className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-mono border border-border text-left"
-                      >
-                        <LogOut size={15} />
-                        {t('logout')}
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setLoginModalOpen(true);
-                        setMobileMenuOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-transparent hover:bg-accent text-foreground font-mono text-sm transition-colors"
-                    >
-                      <User size={16} />
-                      {t('loginRegister')}
-                    </button>
-                  )}
                 </div>
               </div>
             </SheetContent>
