@@ -16,6 +16,7 @@ import Community from "./pages/Community";
 import NotFound from "./pages/NotFound";
 import ChartPage from "./pages/ChartPage";
 import Backtest from "./pages/Backtest";
+import TrendComparisonPage from "./pages/TrendComparison";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App = () => (
                   <Route path="/account" element={<Account />} />
                   <Route path="/community" element={<Community />} />
                   <Route path="/backtest" element={<Backtest />} />
+                  <Route path="/comparison" element={<TrendComparisonPage />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
