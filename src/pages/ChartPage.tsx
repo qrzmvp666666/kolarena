@@ -856,7 +856,7 @@ const ChartPage = () => {
                             </Popover>
                             <div className="flex items-center gap-2">
                                 <Select value={globalSelectedDirection} onValueChange={(v: any) => setGlobalSelectedDirection(v)}>
-                                    <SelectTrigger className="h-8 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[82px] sm:w-[90px] shrink-0">
+                                    <SelectTrigger className="h-8 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[82px] sm:w-[90px] shrink-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0">
                                         <SelectValue placeholder={language === 'zh' ? '方向' : t('filterDirection')} />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -867,7 +867,7 @@ const ChartPage = () => {
                                 </Select>
 
                                 <Select value={globalSelectedTimeRange} onValueChange={(v: any) => setGlobalSelectedTimeRange(v)}>
-                                    <SelectTrigger className="h-8 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[90px] sm:w-[100px] shrink-0">
+                                    <SelectTrigger className="h-8 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[90px] sm:w-[100px] shrink-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0">
                                         <SelectValue placeholder={t('filterTime')} />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -880,7 +880,7 @@ const ChartPage = () => {
                                 </Select>
 
                                 <Select value={globalSelectedEntryStatus} onValueChange={(v: any) => setGlobalSelectedEntryStatus(v)}>
-                                    <SelectTrigger className="h-8 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[100px] sm:w-[110px] shrink-0">
+                                    <SelectTrigger className="h-8 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[100px] sm:w-[110px] shrink-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0">
                                         <SelectValue placeholder={t('filterEntryStatus')} />
                                     </SelectTrigger>
                                     <SelectContent>
