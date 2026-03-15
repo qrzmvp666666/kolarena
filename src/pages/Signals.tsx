@@ -532,7 +532,7 @@ const SignalsContent = () => {
           </TabsList>
 
           {/* Active Signals List View */}
-          <TabsContent value="active" className="mt-0 h-[calc(100dvh-320px)] md:h-[calc(100dvh-280px)] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-1 sm:pr-2">
+          <TabsContent value="active" className="mt-0 pr-1 sm:pr-2">
             {loading ? (
               <div className="flex items-center justify-center py-20 text-muted-foreground">
                 <RefreshCw className="w-5 h-5 animate-spin mr-2" />
@@ -561,7 +561,7 @@ const SignalsContent = () => {
           </TabsContent>
 
           {/* History Signals List View */}
-          <TabsContent value="history" className="mt-0 h-[calc(100dvh-320px)] md:h-[calc(100dvh-280px)] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-1 sm:pr-2">
+          <TabsContent value="history" className="mt-0 pr-1 sm:pr-2">
             {loading ? (
               <div className="flex items-center justify-center py-20 text-muted-foreground">
                 <RefreshCw className="w-5 h-5 animate-spin mr-2" />
