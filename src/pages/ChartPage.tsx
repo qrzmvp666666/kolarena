@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import KolAvatar from '@/components/KolAvatar';
 import { X, Plus, RefreshCw, Square, Columns2, Rows2, LayoutGrid, ChevronLeft, ChevronRight, MessageSquare, Activity, History, PanelLeft } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import { ResponsiveGridLayout, useContainerWidth, type LayoutItem, type ResponsiveLayouts } from 'react-grid-layout';
@@ -63,7 +63,6 @@ interface ChartWindowProps {
     interval: Interval;
     selectedKols: Set<string>;
     onAvailableKolsChange: (chartId: string, kols: KolOption[]) => void;
-    onAutoSelectAll: (chartId: string, kolNames: string[]) => void;
     hoveredSignalId?: string | null;
     onSignalHover?: (id: string | null) => void;
     selectedDirection?: 'all' | 'long' | 'short';
@@ -77,7 +76,6 @@ const ChartWindow = ({
     interval,
     selectedKols,
     onAvailableKolsChange,
-    onAutoSelectAll,
     hoveredSignalId,
     onSignalHover,
     selectedDirection = 'all',
@@ -88,7 +86,6 @@ const ChartWindow = ({
     const [rawSignals, setRawSignals] = useState<SignalRow[]>([]);
     // Removed chartSignals state to use useMemo derived state for instant updates
     // const [chartSignals, setChartSignals] = useState<ChartSignal[]>([]);
-    const hasInitializedSelection = React.useRef(false);
 
     useEffect(() => {
         const fetchSignals = async () => {
@@ -131,15 +128,6 @@ const ChartWindow = ({
                 });
                 const kolArray = Array.from(kols.values());
                 onAvailableKolsChange(chartId, kolArray);
-                
-                // If new KOLs appear in the updated list that weren't selected before, 
-                // we should probably auto-select them if it's the first load OR if we want live updates.
-                // However, the current logic only auto-selects on first load (hasInitializedSelection).
-                // To support live updates showing new signals from new KOLs:
-                if (!hasInitializedSelection.current && kolArray.length > 0) {
-                    onAutoSelectAll(chartId, kolArray.map(k => k.name));
-                    hasInitializedSelection.current = true;
-                }
             } catch (err) {
                 console.error('Failed to fetch signals for chart:', err);
             }
@@ -161,15 +149,13 @@ const ChartWindow = ({
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [chartId, symbol, onAvailableKolsChange, onAutoSelectAll]);
-
-    useEffect(() => {
-        hasInitializedSelection.current = false;
-    }, [symbol]);
+    }, [chartId, symbol, onAvailableKolsChange]);
 
     const chartSignals = useMemo(() => {
         let filtered = rawSignals;
-        filtered = filtered.filter(s => selectedKols.has(s.kol_name));
+        if (selectedKols.size > 0) {
+            filtered = filtered.filter(s => selectedKols.has(s.kol_name));
+        }
         filtered = filtered.filter(s => s.status !== 'closed' && s.status !== 'cancelled');
 
         if (selectedEntryStatus !== 'all') {
@@ -277,11 +263,6 @@ const ChartPage = () => {
     const [globalSelectedTimeRange, setGlobalSelectedTimeRange] = useState<'all' | '24h' | '3d' | '7d' | '30d'>('7d');
     const [globalSelectedEntryStatus, setGlobalSelectedEntryStatus] = useState<'all' | 'pending' | 'entered'>('all');
     const [symbolFilterOpen, setSymbolFilterOpen] = useState(false);
-    const [kolFilterOpen, setKolFilterOpen] = useState(false);
-    
-    // We still track manual selection flag per chart to avoid auto-select clashing with user intent
-    // (though with global selection, we might just need one global flag, but per-chart is safer for loading states)
-    const manualKolsSelectionRef = useRef<Record<string, boolean>>({});
 
     const cols = useMemo(
         () => (isMobile ? { lg: 1, md: 1, sm: 1, xs: 1, xxs: 1 } : { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }),
@@ -361,43 +342,28 @@ const ChartPage = () => {
         // Auto-select logic moved to effect below to access fresh state
     }, []);
 
-    // Effect to handle auto-selection when available KOLs change
-    useEffect(() => {
-        Object.entries(availableKolsByChart).forEach(([chartId, kols]) => {
-             if (manualKolsSelectionRef.current[chartId]) return;
-             
-             setGlobalSelectedKols(prev => {
-                 const next = new Set(prev);
-                 let changed = false;
-                 kols.forEach(k => {
-                     if (!next.has(k.name)) {
-                         next.add(k.name);
-                         changed = true;
-                     }
-                 });
-                 return changed ? next : prev;
-             });
-        });
-    }, [availableKolsByChart]);
-
-    const handleAutoSelectAll = useCallback((id: string, kolNames: string[]) => {
-        setGlobalSelectedKols(prev => {
-            const next = new Set(prev);
-            kolNames.forEach(n => next.add(n));
-            return next;
-        });
-    }, []);
-
-    const markManualKolsSelection = useCallback((id: string) => {
-        manualKolsSelectionRef.current[id] = true;
-    }, []);
-
     const activeChart = charts.find(c => c.id === activeChartId) || charts[0];
 
     const activeAvailableKols =
         (activeChart && availableKolsByChart[activeChart.id]) || [];
     // activeSelectedKols is just the global set now
     const activeSelectedKols = globalSelectedKols;
+
+    const handleSelectAllVisibleKols = useCallback(() => {
+        setGlobalSelectedKols(new Set());
+    }, []);
+
+    const handleToggleKolChip = useCallback((kolName: string) => {
+        setGlobalSelectedKols(prev => {
+            const next = new Set(prev);
+            if (next.has(kolName)) {
+                next.delete(kolName);
+            } else {
+                next.add(kolName);
+            }
+            return next;
+        });
+    }, []);
     
     const symbolDisplay = selectedSymbols.length === 1
         ? selectedSymbols[0].replace('USDT', '') + '/USDT'
@@ -409,7 +375,6 @@ const ChartPage = () => {
             if (!target) return;
             if (target.closest('[data-filter-popover-root="true"]')) return;
             setSymbolFilterOpen(false);
-            setKolFilterOpen(false);
         };
 
         document.addEventListener('pointerdown', handlePointerDownOutsideFilter, true);
@@ -508,13 +473,6 @@ const ChartPage = () => {
             delete next[chartId];
             return next;
         });
-        
-        // Remove manual selection flag for closed chart
-        if (manualKolsSelectionRef.current[chartId]) {
-            delete manualKolsSelectionRef.current[chartId];
-        }
-        
-        // No need to clean up selectedKolsByChart as it is global now (or rather gone)
 
         if (activeChartId === chartId) {
             const remaining = charts.filter(c => c.id !== chartId);
@@ -571,7 +529,6 @@ const ChartPage = () => {
         // Reset KOL selection & available KOLs (will be re-fetched by chart)
         setAvailableKolsByChart({});
         setGlobalSelectedKols(new Set());
-        manualKolsSelectionRef.current = {};
 
         // Reset sidebar & signal states
         setHoveredSignalId(null);
@@ -583,7 +540,7 @@ const ChartPage = () => {
         // Rebuild layouts
         setLayouts(buildLayoutsForCharts(nextCharts, { rows: 1, cols: 1 }));
 
-        // Increment resetKey to force ChartWindow remount (resets hasInitializedSelection ref)
+        // Increment resetKey to force ChartWindow remount
         setResetKey(prev => prev + 1);
     };
 
@@ -701,205 +658,152 @@ const ChartPage = () => {
                             </Sheet>
                         </div>
 
-                        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 flex-nowrap overflow-x-auto scrollbar-x-hidden pb-1 sm:flex-wrap sm:overflow-visible">
-                            <Popover open={symbolFilterOpen} onOpenChange={setSymbolFilterOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        size="sm"
-                                        className="h-8 gap-2 text-[11px] font-medium border border-border bg-card text-foreground hover:bg-muted transition-colors shrink-0"
-                                        disabled={symbolsLoading}
-                                        data-filter-popover-root="true"
-                                    >
-                                        {symbolDisplay}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-56 p-2" align="start" data-filter-popover-root="true">
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between px-2 pt-1 pb-2 border-b">
-                                            <Label className="text-xs font-medium text-muted-foreground" />
-                                            <button
-                                                className="text-[10px] text-muted-foreground hover:underline"
-                                                onClick={() => {
-                                                    if (binanceSymbols.length === 0) return;
-                                                    const first = binanceSymbols[0].binanceSymbol;
-                                                    setSelectedSymbols([first]);
-                                                    syncChartsWithSymbols([first]);
-                                                }}
-                                            >
-                                                {t('chartKeepOne')}
-                                            </button>
-                                        </div>
-                                        <div className="space-y-1 max-h-[260px] overflow-y-auto scrollbar-hidden">
-                                            {binanceSymbols.map(sym => {
-                                                const checked = selectedSymbols.includes(sym.binanceSymbol);
-                                                return (
-                                                    <div
-                                                        key={sym.binanceSymbol}
-                                                        className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded cursor-pointer transition-colors"
-                                                        onClick={() => {
-                                                            const isLast = checked && selectedSymbols.length === 1;
-                                                            if (isLast) return;
-                                                            const next = checked
-                                                                ? selectedSymbols.filter(s => s !== sym.binanceSymbol)
-                                                                : [...selectedSymbols, sym.binanceSymbol];
-                                                            setSelectedSymbols(next);
-                                                            syncChartsWithSymbols(next);
-                                                        }}
-                                                    >
-                                                        <Checkbox
-                                                            checked={checked}
-                                                            onCheckedChange={() => {}}
-                                                            className="h-3.5 w-3.5"
-                                                        />
-                                                        <span className="text-sm font-semibold">
-                                                            {sym.base}/{sym.quote}
-                                                        </span>
-                                                    </div>
-                                                );
-                                            })}
-                                            {binanceSymbols.length === 0 && (
-                                                <div className="text-[10px] text-muted-foreground p-2 text-center">
-                                                    {t('chartNoPairs')}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
-                            <Popover open={kolFilterOpen} onOpenChange={setKolFilterOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        size="sm"
-                                        className="h-7 gap-2 text-[11px] font-medium border border-border bg-card text-foreground hover:bg-muted transition-colors"
-                                        data-filter-popover-root="true"
-                                    >
-                                        KOL
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-56 p-2" align="start" data-filter-popover-root="true">
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between px-2 pt-1 pb-2 border-b">
-                                            <Label className="text-xs font-medium text-muted-foreground">
-                                                {t('chartSelectKol')}
-                                            </Label>
-                                            <div className="flex gap-2">
-                                                <button
-                                                    className="text-[10px] text-primary hover:underline"
-                                                    onClick={() => {
-                                                        // Global Select All
-                                                        Object.keys(availableKolsByChart).forEach(id => markManualKolsSelection(id));
-                                                        setGlobalSelectedKols(prev => {
-                                                            const next = new Set(prev);
-                                                            Object.values(availableKolsByChart).forEach(kols => {
-                                                                kols.forEach(k => next.add(k.name));
-                                                            });
-                                                            return next;
-                                                        });
-                                                    }}
-                                                >
-                                                    {t('chartSelectAll')}
-                                                </button>
+                        <div className="flex flex-col gap-2 flex-1 min-w-0">
+                            <div className="order-2 flex items-center gap-2 sm:gap-3 flex-nowrap overflow-x-auto scrollbar-x-hidden pb-1 sm:flex-wrap sm:overflow-visible">
+                                <Popover open={symbolFilterOpen} onOpenChange={setSymbolFilterOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            size="sm"
+                                            className="h-8 gap-2 text-[11px] font-medium border border-border bg-card text-foreground hover:bg-muted transition-colors shrink-0"
+                                            disabled={symbolsLoading}
+                                            data-filter-popover-root="true"
+                                        >
+                                            {symbolDisplay}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-56 p-2" align="start" data-filter-popover-root="true">
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between px-2 pt-1 pb-2 border-b">
+                                                <Label className="text-xs font-medium text-muted-foreground" />
                                                 <button
                                                     className="text-[10px] text-muted-foreground hover:underline"
                                                     onClick={() => {
-                                                        // Global Clear
-                                                        Object.keys(availableKolsByChart).forEach(id => markManualKolsSelection(id));
-                                                        setGlobalSelectedKols(new Set());
+                                                        if (binanceSymbols.length === 0) return;
+                                                        const first = binanceSymbols[0].binanceSymbol;
+                                                        setSelectedSymbols([first]);
+                                                        syncChartsWithSymbols([first]);
                                                     }}
                                                 >
-                                                    {t('chartClear')}
+                                                    {t('chartKeepOne')}
                                                 </button>
                                             </div>
+                                            <div className="space-y-1 max-h-[260px] overflow-y-auto scrollbar-hidden">
+                                                {binanceSymbols.map(sym => {
+                                                    const checked = selectedSymbols.includes(sym.binanceSymbol);
+                                                    return (
+                                                        <div
+                                                            key={sym.binanceSymbol}
+                                                            className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded cursor-pointer transition-colors"
+                                                            onClick={() => {
+                                                                const isLast = checked && selectedSymbols.length === 1;
+                                                                if (isLast) return;
+                                                                const next = checked
+                                                                    ? selectedSymbols.filter(s => s !== sym.binanceSymbol)
+                                                                    : [...selectedSymbols, sym.binanceSymbol];
+                                                                setSelectedSymbols(next);
+                                                                syncChartsWithSymbols(next);
+                                                            }}
+                                                        >
+                                                            <Checkbox
+                                                                checked={checked}
+                                                                onCheckedChange={() => {}}
+                                                                className="h-3.5 w-3.5"
+                                                            />
+                                                            <span className="text-sm font-semibold">
+                                                                {sym.base}/{sym.quote}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                                {binanceSymbols.length === 0 && (
+                                                    <div className="text-[10px] text-muted-foreground p-2 text-center">
+                                                        {t('chartNoPairs')}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="space-y-1 max-h-[250px] overflow-y-auto scrollbar-hidden">
-                                            {activeAvailableKols.map(kol => (
-                                                <div
-                                                    key={kol.name}
-                                                    className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded cursor-pointer transition-colors"
-                                                    onClick={() => {
-                                                        const isSelected = activeSelectedKols.has(kol.name);
-                                                        
-                                                        // Update manual selection flag for all current charts to prevent auto-select interference
-                                                        Object.keys(availableKolsByChart).forEach(id => markManualKolsSelection(id));
+                                    </PopoverContent>
+                                </Popover>
+                                <div className="flex items-center gap-2">
+                                    <Select value={globalSelectedDirection} onValueChange={(v: any) => setGlobalSelectedDirection(v)}>
+                                        <SelectTrigger className="h-8 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[82px] sm:w-[90px] shrink-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0">
+                                            <SelectValue placeholder={language === 'zh' ? '方向' : t('filterDirection')} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">{language === 'zh' ? '方向' : t('filterDirection')}</SelectItem>
+                                            <SelectItem value="long">{t('signalLong')}</SelectItem>
+                                            <SelectItem value="short">{t('signalShort')}</SelectItem>
+                                        </SelectContent>
+                                    </Select>
 
-                                                        setGlobalSelectedKols(prev => {
-                                                            const next = new Set(prev);
-                                                            if (isSelected) {
-                                                                 next.delete(kol.name);
-                                                            } else {
-                                                                 next.add(kol.name);
-                                                            }
-                                                            return next;
-                                                        });
-                                                    }}
-                                                >
-                                                    <Checkbox
-                                                        checked={activeSelectedKols.has(kol.name)}
-                                                        onCheckedChange={() => {}}
-                                                        className="h-3.5 w-3.5"
-                                                    />
-                                                    <Avatar className="w-5 h-5">
-                                                        <AvatarImage src={kol.avatar} />
-                                                        <AvatarFallback>{kol.name.substring(0, 1)}</AvatarFallback>
-                                                    </Avatar>
-                                                    <span className="text-xs truncate font-medium">{kol.name}</span>
-                                                </div>
-                                            ))}
-                                            {activeAvailableKols.length === 0 && (
-                                                <div className="text-[10px] text-muted-foreground p-2 text-center">
-                                                    {t('chartNoKolSignals')}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
-                            <div className="flex items-center gap-2">
-                                <Select value={globalSelectedDirection} onValueChange={(v: any) => setGlobalSelectedDirection(v)}>
-                                    <SelectTrigger className="h-8 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[82px] sm:w-[90px] shrink-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0">
-                                        <SelectValue placeholder={language === 'zh' ? '方向' : t('filterDirection')} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">{language === 'zh' ? '方向' : t('filterDirection')}</SelectItem>
-                                        <SelectItem value="long">{t('signalLong')}</SelectItem>
-                                        <SelectItem value="short">{t('signalShort')}</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                    <Select value={globalSelectedTimeRange} onValueChange={(v: any) => setGlobalSelectedTimeRange(v)}>
+                                        <SelectTrigger className="h-8 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[90px] sm:w-[100px] shrink-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0">
+                                            <SelectValue placeholder={t('filterTime')} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">{t('filterTime')}</SelectItem>
+                                            <SelectItem value="24h">24{t('hours')}</SelectItem>
+                                            <SelectItem value="3d">3{t('days')}</SelectItem>
+                                            <SelectItem value="7d">7{t('days')}</SelectItem>
+                                            <SelectItem value="30d">30{t('days')}</SelectItem>
+                                        </SelectContent>
+                                    </Select>
 
-                                <Select value={globalSelectedTimeRange} onValueChange={(v: any) => setGlobalSelectedTimeRange(v)}>
-                                    <SelectTrigger className="h-8 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[90px] sm:w-[100px] shrink-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0">
-                                        <SelectValue placeholder={t('filterTime')} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">{t('filterTime')}</SelectItem>
-                                        <SelectItem value="24h">24{t('hours')}</SelectItem>
-                                        <SelectItem value="3d">3{t('days')}</SelectItem>
-                                        <SelectItem value="7d">7{t('days')}</SelectItem>
-                                        <SelectItem value="30d">30{t('days')}</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                    <Select value={globalSelectedEntryStatus} onValueChange={(v: any) => setGlobalSelectedEntryStatus(v)}>
+                                        <SelectTrigger className="h-8 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[100px] sm:w-[110px] shrink-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0">
+                                            <SelectValue placeholder={t('filterEntryStatus')} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">{t('filterEntryStatus')}</SelectItem>
+                                            <SelectItem value="pending">{t('entryPending')}</SelectItem>
+                                            <SelectItem value="entered">{t('entryEntered')}</SelectItem>
+                                        </SelectContent>
+                                    </Select>
 
-                                <Select value={globalSelectedEntryStatus} onValueChange={(v: any) => setGlobalSelectedEntryStatus(v)}>
-                                    <SelectTrigger className="h-8 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[100px] sm:w-[110px] shrink-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0">
-                                        <SelectValue placeholder={t('filterEntryStatus')} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">{t('filterEntryStatus')}</SelectItem>
-                                        <SelectItem value="pending">{t('entryPending')}</SelectItem>
-                                        <SelectItem value="entered">{t('entryEntered')}</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-8 w-8 p-0 border border-border bg-card text-foreground hover:bg-muted transition-colors shrink-0"
+                                        onClick={handleResetLayout}
+                                        aria-label={t('chartResetLayout')}
+                                        title={t('chartResetLayout')}
+                                    >
+                                        <RefreshCw className="w-3.5 h-3.5" />
+                                    </Button>
+                                </div>
+                            </div>
 
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-8 w-8 p-0 border border-border bg-card text-foreground hover:bg-muted transition-colors shrink-0"
-                                    onClick={handleResetLayout}
-                                    aria-label={t('chartResetLayout')}
-                                    title={t('chartResetLayout')}
+                            <div className="order-1 flex items-center gap-2 overflow-x-auto scrollbar-x-hidden pb-1">
+                                <button
+                                    onClick={handleSelectAllVisibleKols}
+                                    className={`flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-full border text-xs font-mono transition-colors ${
+                                        activeSelectedKols.size === 0
+                                            ? 'border-foreground bg-foreground text-background'
+                                            : 'border-border text-muted-foreground hover:border-foreground/50 hover:text-foreground'
+                                    }`}
                                 >
-                                    <RefreshCw className="w-3.5 h-3.5" />
-                                </Button>
+                                    全部KOL
+                                </button>
+                                {activeAvailableKols.map((kol) => {
+                                    const isSelected = activeSelectedKols.has(kol.name);
+                                    return (
+                                        <button
+                                            key={kol.name}
+                                            onClick={() => handleToggleKolChip(kol.name)}
+                                            className={`flex items-center gap-1.5 shrink-0 px-2.5 py-1.5 rounded-full border text-xs font-mono transition-colors ${
+                                                isSelected
+                                                    ? 'border-foreground bg-foreground text-background'
+                                                    : 'border-border text-muted-foreground hover:border-foreground/50 hover:text-foreground'
+                                            }`}
+                                        >
+                                            <KolAvatar name={kol.name} avatarUrl={kol.avatar} className="w-4 h-4" fallbackClassName="text-[8px]" />
+                                            {kol.name}
+                                        </button>
+                                    );
+                                })}
+                                {activeAvailableKols.length === 0 && (
+                                    <div className="text-[10px] text-muted-foreground px-2 py-1">{t('chartNoKolSignals')}</div>
+                                )}
                             </div>
                         </div>
 
@@ -1033,7 +937,6 @@ const ChartPage = () => {
                                                     interval={chart.interval}
                                                     selectedKols={globalSelectedKols}
                                                     onAvailableKolsChange={handleAvailableKolsChange}
-                                                    onAutoSelectAll={handleAutoSelectAll}
                                                     hoveredSignalId={hoveredSignalId}
                                                     onSignalHover={setHoveredSignalId}
                                                     selectedDirection={globalSelectedDirection}
