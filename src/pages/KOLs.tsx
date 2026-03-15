@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TrendingUp, ArrowUpRight, ArrowDownRight, RefreshCw, RotateCcw } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, RefreshCw, RotateCcw } from 'lucide-react';
 import { formatDateTime, useTimeZone } from '@/lib/timezone';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip, Area, AreaChart } from 'recharts';
 
@@ -540,38 +540,34 @@ const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRan
         </div>
       )}
       {/* Stats Cards Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-        <div className="border border-border rounded-lg p-4 bg-card">
-          <div className="text-xs text-muted-foreground mb-1">{t('accountValue')}</div>
-          <div className="text-xl font-bold text-foreground">${Number(displayMetrics.account_value).toLocaleString()}</div>
-        </div>
-        <div className="border border-border rounded-lg p-4 bg-card">
-          <div className="text-xs text-muted-foreground mb-1">{t('returnRate')}</div>
-          <div className={`text-xl font-bold ${displayMetrics.return_rate >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div className="rounded-xl border border-border/50 bg-card/60 p-3 sm:p-4">
+          <div className="text-[11px] sm:text-xs text-muted-foreground mb-1">{t('returnRate')}</div>
+          <div className={`text-lg sm:text-xl font-bold ${displayMetrics.return_rate >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
             {displayMetrics.return_rate >= 0 ? '+' : ''}{Number(displayMetrics.return_rate).toFixed(2)}%
           </div>
         </div>
-        <div className="border border-border rounded-lg p-4 bg-card">
-          <div className="text-xs text-muted-foreground mb-1">{t('totalPnL')}</div>
-          <div className={`text-xl font-bold ${displayMetrics.total_pnl >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+        <div className="rounded-xl border border-border/50 bg-card/60 p-3 sm:p-4">
+          <div className="text-[11px] sm:text-xs text-muted-foreground mb-1">{t('totalPnL')}</div>
+          <div className={`text-lg sm:text-xl font-bold ${displayMetrics.total_pnl >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
             {displayMetrics.total_pnl >= 0 ? '+' : ''}${Number(displayMetrics.total_pnl).toLocaleString()}
           </div>
         </div>
-        <div className="border border-border rounded-lg p-4 bg-card">
-          <div className="text-xs text-muted-foreground mb-1">{t('winRate')}</div>
-          <div className="text-xl font-bold text-foreground">{Number(displayMetrics.win_rate).toFixed(2)}%</div>
+        <div className="rounded-xl border border-border/50 bg-card/60 p-3 sm:p-4">
+          <div className="text-[11px] sm:text-xs text-muted-foreground mb-1">{t('winRate')}</div>
+          <div className="text-lg sm:text-xl font-bold text-foreground">{Number(displayMetrics.win_rate).toFixed(2)}%</div>
         </div>
-        <div className="border border-border rounded-lg p-4 bg-card">
-          <div className="text-xs text-muted-foreground mb-1">{t('maxProfit')}</div>
-          <div className="text-xl font-bold text-accent-green">${Number(displayMetrics.max_profit).toLocaleString()}</div>
+        <div className="rounded-xl border border-border/50 bg-card/60 p-3 sm:p-4">
+          <div className="text-[11px] sm:text-xs text-muted-foreground mb-1">{t('maxProfit')}</div>
+          <div className="text-lg sm:text-xl font-bold text-accent-green">${Number(displayMetrics.max_profit).toLocaleString()}</div>
         </div>
-        <div className="border border-border rounded-lg p-4 bg-card">
-          <div className="text-xs text-muted-foreground mb-1">{t('maxLoss')}</div>
-          <div className="text-xl font-bold text-accent-red">-${Math.abs(Number(displayMetrics.max_loss)).toLocaleString()}</div>
+        <div className="rounded-xl border border-border/50 bg-card/60 p-3 sm:p-4">
+          <div className="text-[11px] sm:text-xs text-muted-foreground mb-1">{t('maxLoss')}</div>
+          <div className="text-lg sm:text-xl font-bold text-accent-red">-${Math.abs(Number(displayMetrics.max_loss)).toLocaleString()}</div>
         </div>
-        <div className="border border-border rounded-lg p-4 bg-card">
-          <div className="text-xs text-muted-foreground mb-1">{t('tradingDays')}</div>
-          <div className="text-xl font-bold text-foreground">{displayMetrics.trading_days}</div>
+        <div className="rounded-xl border border-border/50 bg-card/60 p-3 sm:p-4">
+          <div className="text-[11px] sm:text-xs text-muted-foreground mb-1">{t('tradingDays')}</div>
+          <div className="text-lg sm:text-xl font-bold text-foreground">{displayMetrics.trading_days}</div>
         </div>
       </div>
 
@@ -579,14 +575,13 @@ const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRan
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 border border-border rounded-lg p-4 bg-card text-foreground">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
+            <h3 className="text-sm font-medium text-foreground">
               {t('profitTrend')}
             </h3>
           </div>
           {hasTrendData ? (
             <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={returnRateTrendData}>
+              <AreaChart data={returnRateTrendData} margin={{ left: -10, right: 0, top: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorCumulative" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={cumulativeTrendColor} stopOpacity={0.32}/>
