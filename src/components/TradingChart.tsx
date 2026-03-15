@@ -3,6 +3,7 @@ import { createChart, ColorType, IChartApi, ISeriesApi, Time, CandlestickSeries 
 import { Candle } from '@/lib/binance';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTimeZone } from '@/lib/timezone';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export interface ChartSignal {
   id: string;
@@ -48,6 +49,7 @@ export const TradingChart = ({
   onSignalHover,
 }: TradingChartProps) => {
   const { timeZone } = useTimeZone();
+  const isMobile = useIsMobile();
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
@@ -163,10 +165,17 @@ export const TradingChart = ({
       };
     };
 
+    const getRightOffset = (width: number) => {
+      if (isMobile) return 2;
+      if (width <= 0) return 4;
+      return Math.max(3, Math.min(8, Math.floor(width / 180)));
+    };
+
     const handleResize = () => {
       if (chartContainerRef.current) {
         const next = getChartDimensions();
         chartRef.current?.applyOptions({ width: next.width, height: next.height });
+        chartRef.current?.timeScale().applyOptions({ rightOffset: getRightOffset(next.width) });
       }
     };
 
@@ -219,7 +228,7 @@ export const TradingChart = ({
         ticksVisible: true,
         visible: true,
         minimumHeight: 32,
-        rightOffset: Math.floor((initialDimensions.width / 6) / 2), // Center the latest candle
+        rightOffset: getRightOffset(initialDimensions.width),
       },
       crosshair: {
         mode: 1, // CrosshairMode.Normal
@@ -416,7 +425,7 @@ export const TradingChart = ({
       cancelAnimationFrame(animationFrameId);
       chart.remove();
     };
-  }, [backgroundColor, textColor, upColor, downColor, wickUpColor, wickDownColor, timeZone]);
+  }, [backgroundColor, textColor, upColor, downColor, wickUpColor, wickDownColor, timeZone, isMobile]);
 
   // Update chart size when container resizes (e.g. sidebar toggle, layout switch)
   useEffect(() => {

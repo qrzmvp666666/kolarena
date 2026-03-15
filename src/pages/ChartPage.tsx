@@ -15,12 +15,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import KolAvatar from '@/components/KolAvatar';
+import KolAvatar, { resolveKolAvatar } from '@/components/KolAvatar';
 import { X, Plus, RefreshCw, Square, Columns2, Rows2, LayoutGrid, ChevronLeft, ChevronRight, MessageSquare, Activity, History, PanelLeft } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import { ResponsiveGridLayout, useContainerWidth, type LayoutItem, type ResponsiveLayouts } from 'react-grid-layout';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+
+interface KolFilterRow {
+  id: string;
+  name: string;
+  avatar_url?: string | null;
+}
 
 interface SignalRow {
   id: string;
@@ -255,6 +261,9 @@ const ChartPage = () => {
         Record<string, KolOption[]>
     >({});
     
+    // All KOLs from leaderboard (full list, not derived from signals)
+    const [allKols, setAllKols] = useState<Array<{ id: string; name: string; avatar: string }>>([]);
+
     // Global Set of Selected KOLs (used by ALL charts equally)
     const [globalSelectedKols, setGlobalSelectedKols] = useState<Set<string>>(new Set());
     
@@ -349,6 +358,24 @@ const ChartPage = () => {
     // activeSelectedKols is just the global set now
     const activeSelectedKols = globalSelectedKols;
 
+    const fetchAllKols = useCallback(async () => {
+        try {
+            const { data, error } = await supabase.rpc('get_leaderboard_by_range', {
+                p_from: null,
+                p_to: null,
+            });
+            if (error) { console.error('Error fetching KOL list:', error); return; }
+            const rows = (data || []) as KolFilterRow[];
+            setAllKols(rows.map(row => ({
+                id: row.id,
+                name: row.name,
+                avatar: resolveKolAvatar(row.avatar_url, row.name),
+            })));
+        } catch (err) {
+            console.error('Error fetching KOL list:', err);
+        }
+    }, []);
+
     const handleSelectAllVisibleKols = useCallback(() => {
         setGlobalSelectedKols(new Set());
     }, []);
@@ -382,6 +409,10 @@ const ChartPage = () => {
             document.removeEventListener('pointerdown', handlePointerDownOutsideFilter, true);
         };
     }, []);
+
+    useEffect(() => {
+        fetchAllKols();
+    }, [fetchAllKols]);
 
     useEffect(() => {
         if (!gridContainerRef.current) return;
@@ -603,7 +634,7 @@ const ChartPage = () => {
                     ) : undefined
                 )}
             />
-            <TickerBar showCryptoTicker={false} />
+            <TickerBar />
 
             <div className="flex flex-1 min-h-0 overflow-hidden">
                 <div className="hidden md:block">
@@ -784,7 +815,7 @@ const ChartPage = () => {
                                 >
                                     全部KOL
                                 </button>
-                                {activeAvailableKols.map((kol) => {
+                                {allKols.map((kol) => {
                                     const isSelected = activeSelectedKols.has(kol.name);
                                     return (
                                         <button
@@ -801,7 +832,7 @@ const ChartPage = () => {
                                         </button>
                                     );
                                 })}
-                                {activeAvailableKols.length === 0 && (
+                                {allKols.length === 0 && (
                                     <div className="text-[10px] text-muted-foreground px-2 py-1">{t('chartNoKolSignals')}</div>
                                 )}
                             </div>
