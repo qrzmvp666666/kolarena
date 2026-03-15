@@ -3,19 +3,15 @@ import TopNav from '@/components/TopNav';
 import TickerBar from '@/components/TickerBar';
 import { useLanguage } from '@/lib/i18n';
 import SignalListCard from '@/components/SignalListCard';
-import { Search, RefreshCw } from 'lucide-react';
+import { Search, RefreshCw, RotateCcw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/lib/supabase';
 import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/hooks/use-toast';
 import LoginModal from '@/components/LoginModal';
-import { DatePickerWithRange } from '@/components/ui/date-range-picker';
-import type { DateRange } from 'react-day-picker';
-import { enUS, zhCN } from 'date-fns/locale';
 import { formatDateTime, useTimeZone } from '@/lib/timezone';
 
 const coinTypes = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'BNB', 'XAU', 'PENDLE', 'ARB', 'OP'];
@@ -116,8 +112,7 @@ const SignalsContent = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPair, setSelectedPair] = useState<string>('all');
   const [selectedSignalType, setSelectedSignalType] = useState<string>('all');
-  const [timeRange, setTimeRange] = useState<'today' | '7days' | '1month' | '6months' | '1year' | 'custom'>('7days');
-  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
+  const [timeRange, setTimeRange] = useState<'today' | '7days' | '1month' | '6months' | '1year'>('7days');
 
   // ---- Supabase data ----
   const [activeSignals, setActiveSignals] = useState<SignalRow[]>([]);
@@ -287,23 +282,12 @@ const SignalsContent = () => {
   const followedSignals = allSignals.filter(s => followedKolIds.has(s.kol_id));
   const unfollowedSignals = allSignals.filter(s => !followedKolIds.has(s.kol_id));
 
-  const subscriptionTabs = [
-    { id: 'subscribed' as const, label: t('signalSubscribed'), count: subscribedSignals.length },
-    { id: 'unsubscribed' as const, label: t('signalUnsubscribed'), count: unsubscribedSignals.length },
-  ];
-
-  const followTabs = [
-    { id: 'followed' as const, label: t('signalFollowed'), count: followedSignals.length },
-    { id: 'unfollowed' as const, label: t('signalUnfollowed'), count: unfollowedSignals.length },
-  ];
-
   const timeRanges = [
     { id: 'today' as const, label: t('timeRange_today') },
     { id: '7days' as const, label: t('timeRange_7days') },
     { id: '1month' as const, label: t('timeRange_1month') },
     { id: '6months' as const, label: t('timeRange_6months') },
     { id: '1year' as const, label: t('timeRange_1year') },
-    { id: 'custom' as const, label: t('timeRange_custom') },
   ];
 
   const handleResetFilters = useCallback(() => {
@@ -314,7 +298,6 @@ const SignalsContent = () => {
     setSelectedPair('all');
     setSelectedSignalType('all');
     setTimeRange('7days');
-    setCustomDateRange(undefined);
   }, []);
 
   const filteredSignals = useMemo(() => {
@@ -347,16 +330,6 @@ const SignalsContent = () => {
           const from = new Date(now);
           from.setFullYear(from.getFullYear() - 1);
           return { from, to: now };
-        }
-        case 'custom': {
-          if (customDateRange?.from && customDateRange?.to) {
-            const from = new Date(customDateRange.from);
-            from.setHours(0, 0, 0, 0);
-            const to = new Date(customDateRange.to);
-            to.setHours(23, 59, 59, 999);
-            return { from, to };
-          }
-          return null;
         }
         default:
           return null;
@@ -405,7 +378,6 @@ const SignalsContent = () => {
     selectedPair,
     selectedSignalType,
     timeRange,
-    customDateRange,
     subscribedKolIds,
     followedKolIds,
   ]);
@@ -422,125 +394,80 @@ const SignalsContent = () => {
       <div className="px-3 sm:px-6 py-3">
         {/* Filter Bar - Row 1 */}
         <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 mb-4">
-          {/* Left: Market Type Toggle + Tabs */}
-          <div className="flex items-center gap-3 overflow-x-auto pb-1">
-            {/* Market Type Toggle */}
-            <div className="flex items-center rounded-lg border border-border overflow-hidden">
-              <button
-                onClick={() => setMarketType('futures')}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${marketType === 'futures'
-                    ? 'bg-foreground text-background'
-                    : 'bg-card text-muted-foreground hover:text-foreground'
-                  }`}
-              >
-                {t('futures')}
-              </button>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      disabled
-                      className="px-4 py-2 text-sm font-medium bg-muted/50 text-muted-foreground cursor-not-allowed opacity-50"
-                    >
-                      {t('spot')}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{t('comingSoon')}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-
-            {/* All Button */}
-            <button
-              onClick={() => {
-                setSubscriptionFilter('all');
-                setFollowFilter('all');
-              }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${subscriptionFilter === 'all' && followFilter === 'all'
-                  ? 'bg-foreground text-background border-foreground shadow-sm'
-                  : 'bg-card border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground'
-                }`}
-            >
-              <span className="text-sm">{t('signalAll')}</span>
-              <span className={`text-xs px-1.5 py-0.5 rounded ${subscriptionFilter === 'all' && followFilter === 'all'
-                  ? 'bg-background/20 text-background font-semibold'
-                  : 'bg-muted text-muted-foreground font-semibold'
-                }`}>
-                {allSignals.length}
-              </span>
-            </button>
-
-            {/* Subscription Tabs */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{t('filterSubscription')}:</span>
-              {subscriptionTabs.map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setSubscriptionFilter(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${subscriptionFilter === tab.id
-                      ? 'bg-foreground text-background border-foreground shadow-sm'
-                      : 'bg-card border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground'
-                    }`}
-                >
-                  <span className="text-sm">{tab.label}</span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded ${subscriptionFilter === tab.id ? 'bg-background/20 text-background font-semibold' : 'bg-muted text-muted-foreground font-semibold'
-                    }`}>
-                    {tab.count}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {/* Follow Tabs */}
-            <div className="flex items-center gap-2">
-              {followTabs.map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setFollowFilter(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${followFilter === tab.id
-                      ? 'bg-foreground text-background border-foreground shadow-sm'
-                      : 'bg-card border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground'
-                    }`}
-                >
-                  <span className="text-sm">{tab.label}</span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded ${followFilter === tab.id ? 'bg-background/20 text-background font-semibold' : 'bg-muted text-muted-foreground font-semibold'
-                    }`}>
-                    {tab.count}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
+          <div />
 
           {/* Search & Actions */}
-          <div className="flex items-center gap-2 w-full xl:w-auto">
-            <div className="relative flex-1 xl:flex-none">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder={t('searchPlaceholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 w-full xl:w-64 bg-card border-border"
-              />
+          <div className="flex flex-col gap-2 w-full xl:w-auto">
+            <div className="flex items-center gap-2 w-full xl:w-auto">
+              <div className="relative flex-1 xl:flex-none">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder={t('searchPlaceholder')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 w-full xl:w-64 bg-card border-border"
+                />
+              </div>
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={fetchSignals} disabled={loading} title={t('refresh')}>
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              </Button>
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleResetFilters} title={t('resetFilters')}>
+                <RotateCcw className="w-4 h-4" />
+              </Button>
             </div>
-            <Button variant="outline" size="sm" className="gap-2" onClick={fetchSignals} disabled={loading}>
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              {t('refresh')}
-            </Button>
           </div>
         </div>
 
         {/* Filter Bar - Row 2: Filters Left, Reset Right */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-6">
-          <div className="flex flex-wrap items-center gap-6">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hidden pb-1 sm:flex-wrap sm:overflow-visible sm:gap-6">
+            {/* Market Type Filter */}
+            <div className="flex items-center gap-2 shrink-0">
+              <Select value={marketType} onValueChange={(v) => setMarketType(v as 'futures' | 'spot')}>
+                <SelectTrigger className="w-[88px] sm:w-[96px] h-8 text-xs bg-card border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  <SelectItem value="futures">{t('futures')}</SelectItem>
+                  <SelectItem value="spot">{t('spot')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Subscription Filter */}
+            <div className="flex items-center gap-2 shrink-0">
+              <Select value={subscriptionFilter} onValueChange={(v) => setSubscriptionFilter(v as 'all' | 'subscribed' | 'unsubscribed')}>
+                <SelectTrigger className="w-[130px] h-8 text-xs bg-card border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  <SelectItem value="all">{language === 'zh' ? '订阅（全部）' : `${t('filterSubscription')} (All)`}</SelectItem>
+                  <SelectItem value="subscribed">{t('signalSubscribed')} ({subscribedSignals.length})</SelectItem>
+                  <SelectItem value="unsubscribed">{t('signalUnsubscribed')} ({unsubscribedSignals.length})</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Follow Filter */}
+            <div className="flex items-center gap-2 shrink-0">
+              <Select value={followFilter} onValueChange={(v) => setFollowFilter(v as 'all' | 'followed' | 'unfollowed')}>
+                <SelectTrigger className="w-[130px] h-8 text-xs bg-card border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  <SelectItem value="all">{language === 'zh' ? '关注（全部）' : `${t('signalFollowed')} (All)`}</SelectItem>
+                  <SelectItem value="followed">{t('signalFollowed')} ({followedSignals.length})</SelectItem>
+                  <SelectItem value="unfollowed">{t('signalUnfollowed')} ({unfollowedSignals.length})</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Trading Pair Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{t('tradingPair')}:</span>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="hidden sm:inline text-xs text-muted-foreground">{t('tradingPair')}:</span>
               <Select value={selectedPair} onValueChange={setSelectedPair}>
-                <SelectTrigger className="w-28 h-8 text-xs bg-card border-border">
+                <SelectTrigger className="w-[96px] sm:w-28 h-8 text-xs bg-card border-border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-border z-50">
@@ -553,10 +480,10 @@ const SignalsContent = () => {
             </div>
 
             {/* Signal Type Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{t('signalType')}:</span>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="hidden sm:inline text-xs text-muted-foreground">{t('signalType')}:</span>
               <Select value={selectedSignalType} onValueChange={setSelectedSignalType}>
-                <SelectTrigger className="w-24 h-8 text-xs bg-card border-border">
+                <SelectTrigger className="w-[88px] sm:w-24 h-8 text-xs bg-card border-border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-border z-50">
@@ -568,49 +495,23 @@ const SignalsContent = () => {
               </Select>
             </div>
 
-            {/* Time Range Tabs */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-muted-foreground">{t('timeRange')}:</span>
-              <div className="flex flex-wrap items-center rounded-lg border border-border overflow-hidden">
-                {timeRanges.map(range => (
-                  <button
-                    key={range.id}
-                    onClick={() => {
-                      setTimeRange(range.id);
-                      if (range.id !== 'custom') setCustomDateRange(undefined);
-                    }}
-                    className={`px-3 py-1.5 text-xs font-medium transition-colors ${timeRange === range.id
-                        ? 'bg-foreground text-background'
-                        : 'bg-card text-muted-foreground hover:text-foreground'
-                      }`}
-                  >
-                    {range.label}
-                  </button>
-                ))}
-              </div>
-              {timeRange === 'custom' && (
-                <div className="w-full md:w-auto md:ml-2">
-                  <DatePickerWithRange
-                    date={customDateRange}
-                    setDate={setCustomDateRange}
-                    locale={language === 'zh' ? zhCN : enUS}
-                    formatPattern={language === 'zh' ? 'yyyy/MM/dd' : 'MMM dd, yyyy'}
-                    placeholder={t('selectDateRange')}
-                    buttonClassName="w-full md:w-[260px] text-xs"
-                  />
-                </div>
-              )}
+            {/* Time Range Filter */}
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="hidden sm:inline text-xs text-muted-foreground">{t('timeRange')}:</span>
+              <Select value={timeRange} onValueChange={(v) => setTimeRange(v as 'today' | '7days' | '1month' | '6months' | '1year')}>
+                <SelectTrigger className="w-[96px] sm:w-[110px] h-8 text-xs bg-card border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  {timeRanges.map(range => (
+                    <SelectItem key={range.id} value={range.id}>
+                      {range.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleResetFilters}
-            className="w-full lg:w-auto lg:ml-auto"
-          >
-            {t('resetFilters')}
-          </Button>
         </div>
 
         {/* Signal Tabs: Active vs History */}
@@ -620,13 +521,13 @@ const SignalsContent = () => {
               value="active"
               className="rounded-none border-b-2 border-transparent py-2 px-4 font-mono text-sm text-muted-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:border-b-foreground data-[state=active]:font-semibold"
             >
-              {t('activeSignals')}
+              {t('activeSignals')} ({filteredSignals.active.length})
             </TabsTrigger>
             <TabsTrigger
               value="history"
               className="rounded-none border-b-2 border-transparent py-2 px-4 font-mono text-sm text-muted-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:border-b-foreground data-[state=active]:font-semibold"
             >
-              {t('historySignals')}
+              {t('historySignals')} ({filteredSignals.history.length})
             </TabsTrigger>
           </TabsList>
 

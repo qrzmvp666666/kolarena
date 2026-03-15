@@ -661,7 +661,7 @@ const Account = () => {
         <div className="flex-1 p-3 sm:p-6 overflow-y-auto">
           {contextUser && (
             <div className="md:hidden mb-4">
-              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-x-hidden pb-1">
                 <button
                   onClick={() => setTab('subscription')}
                   className={`shrink-0 px-3 py-2 rounded-md border font-mono text-xs transition-colors ${

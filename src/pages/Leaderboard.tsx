@@ -727,7 +727,7 @@ const LeaderboardContent = () => {
         {/* Filter Bar - Similar to Signals page */}
         <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 mb-6">
           {/* Left: Market Type Toggle + Tabs */}
-          <div className="flex items-center gap-3 overflow-x-auto pb-1">
+          <div className="flex items-center gap-3 overflow-x-auto scrollbar-x-hidden pb-1">
             {/* Market Type Toggle */}
             <div className="flex items-center rounded-lg border border-border overflow-hidden">
               <button
@@ -788,7 +788,7 @@ const LeaderboardContent = () => {
           {/* Search & Actions */}
           <div className="flex items-center gap-2 w-full xl:w-auto">
           {activeTab === 'overall' && (
-              <div className="flex items-center gap-1 overflow-x-auto pb-1">
+              <div className="flex items-center gap-1 overflow-x-auto scrollbar-x-hidden pb-1">
                 {(['today', '7days', '1month', '6months', '1year'] as const).map((range) => (
                   <button
                     key={range}

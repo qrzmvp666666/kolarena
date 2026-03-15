@@ -108,13 +108,17 @@ All colors MUST be HSL.
   body,
   #root {
     min-height: 100%;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
   }
 
   body {
     @apply bg-background text-foreground;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
-    overflow-x: clip;
+    overflow-x: hidden;
   }
 
   img,
@@ -274,6 +278,15 @@ All colors MUST be HSL.
 
 .scrollbar-hidden::-webkit-scrollbar {
   width: 0;
+  height: 0;
+  display: none;
+}
+
+.scrollbar-x-hidden {
+  -ms-overflow-style: none;
+}
+
+.scrollbar-x-hidden::-webkit-scrollbar {
   height: 0;
   display: none;
 }

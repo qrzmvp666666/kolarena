@@ -701,7 +701,7 @@ const ChartPage = () => {
                             </Sheet>
                         </div>
 
-                        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 flex-nowrap overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
+                        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 flex-nowrap overflow-x-auto scrollbar-x-hidden pb-1 sm:flex-wrap sm:overflow-visible">
                             <Popover open={symbolFilterOpen} onOpenChange={setSymbolFilterOpen}>
                                 <PopoverTrigger asChild>
                                     <Button
