@@ -11,7 +11,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { RefreshCw, Calendar as CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
 import { zhCN, enUS } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from 'recharts';
@@ -700,13 +702,12 @@ const LeaderboardContent = () => {
           <>
             {/* Data Table */}
             <div className="border border-border rounded-lg overflow-hidden mb-6">
-              <ScrollArea className="w-full">
-                <table className="w-full text-xs min-w-[760px]">
+              <div className="w-full overflow-x-auto">
+                <table className="w-full text-xs min-w-[600px]">
                   <thead>
                     <tr className="bg-muted/50 border-b border-border">
                       <th className="px-4 py-3 text-left font-semibold text-muted-foreground">RANK</th>
                       <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('trader')}</th>
-                      <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('accountValue')} ↓</th>
                       <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('returnRate')}</th>
                       <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('totalPnL')}</th>
                       <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('winRate')}</th>
@@ -736,9 +737,6 @@ const LeaderboardContent = () => {
                             <span className="text-foreground font-medium">{row.name}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-left text-foreground font-medium">
-                          ${Number(row.account_value).toLocaleString()}
-                        </td>
                         <td className={`px-4 py-3 text-left font-medium ${Number(row.return_rate) >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
                           {Number(row.return_rate) >= 0 ? '+' : ''}{Number(row.return_rate).toFixed(2)}%
                         </td>
@@ -754,7 +752,7 @@ const LeaderboardContent = () => {
                     })}
                   </tbody>
                 </table>
-              </ScrollArea>
+              </div>
             </div>
 
             {/* Note */}

@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Sun, Moon, MessageSquare, MessageSquareOff, Globe, User, LogOut, ChevronDown, Clock, Menu, FlaskConical, Activity } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
@@ -34,6 +34,14 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false, mo
   
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [pendingMobileRoute, setPendingMobileRoute] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!mobileMenuOpen && pendingMobileRoute) {
+      navigate(pendingMobileRoute);
+      setPendingMobileRoute(null);
+    }
+  }, [mobileMenuOpen, pendingMobileRoute, navigate]);
   
   const handleLogin = () => {
     // User state is now managed by UserContext
@@ -273,10 +281,12 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false, mo
                   <FlaskConical size={15} />
                   {t('strategyBacktest')}
                 </Link>
-                <Link
-                  to="/comparison"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-2 rounded-md px-3 py-3 font-mono text-sm border transition-colors ${
+                <button
+                  onClick={() => {
+                    setPendingMobileRoute('/comparison');
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`w-full text-left flex items-center gap-2 rounded-md px-3 py-3 font-mono text-sm border transition-colors ${
                     location.pathname === '/comparison'
                       ? 'border-foreground text-foreground bg-accent'
                       : 'border-border text-muted-foreground hover:text-foreground'
@@ -284,7 +294,7 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false, mo
                 >
                   <Activity size={15} />
                   {t('profitComparison')}
-                </Link>
+                </button>
                 <button
                   onClick={() => {
                     handleProClick();
