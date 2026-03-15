@@ -1,21 +1,15 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import TopNav from '@/components/TopNav';
 import TickerBar from '@/components/TickerBar';
 import { useLanguage } from '@/lib/i18n';
 import { models } from '@/lib/chartData';
 import { supabase } from '@/lib/supabase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { Calendar as CalendarIcon, TrendingUp, ArrowUpRight, ArrowDownRight, RefreshCw, FlaskConical } from 'lucide-react';
-import { format } from 'date-fns';
+import { TrendingUp, ArrowUpRight, ArrowDownRight, RefreshCw, RotateCcw } from 'lucide-react';
 import { formatDateTime, useTimeZone } from '@/lib/timezone';
-import { zhCN, enUS } from 'date-fns/locale';
-import { DateRange } from 'react-day-picker';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip, Area, AreaChart } from 'recharts';
 
 // ---- Shared types/helpers (same as Leaderboard) ----
@@ -151,8 +145,7 @@ const mapSignalToTrade = (signal: SignalRow, timeZone: string): TradeRow => {
 };
 
 const getTimeBounds = (
-  timeRange: 'today' | '7days' | '1month' | '6months' | '1year' | 'custom',
-  customRange?: DateRange
+  timeRange: 'today' | '7days' | '1month' | '6months' | '1year'
 ) => {
   const now = new Date();
   const end = new Date(now);
@@ -171,12 +164,6 @@ const getTimeBounds = (
     start.setDate(start.getDate() - 179);
   } else if (timeRange === '1year') {
     start.setDate(start.getDate() - 364);
-  } else if (timeRange === 'custom' && customRange?.from && customRange?.to) {
-    const customStart = new Date(customRange.from);
-    customStart.setHours(0, 0, 0, 0);
-    const customEnd = new Date(customRange.to);
-    customEnd.setHours(23, 59, 59, 999);
-    return { from: customStart.toISOString(), to: customEnd.toISOString() };
   }
 
   return { from: start.toISOString(), to: end.toISOString() };
@@ -189,12 +176,11 @@ interface AdvancedAnalysisProps {
   t: (key: string) => string;
   language: 'zh' | 'en';
   selectedTrader: string;
-  timeRange: 'today' | '7days' | '1month' | '6months' | '1year' | 'custom';
-  customDateRange?: DateRange;
+  timeRange: 'today' | '7days' | '1month' | '6months' | '1year';
   refreshTick: number;
 }
 
-const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRange, customDateRange, refreshTick }: AdvancedAnalysisProps) => {
+const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRange, refreshTick }: AdvancedAnalysisProps) => {
   const { timeZone } = useTimeZone();
   const currentTrader = traders.find(tr => tr.id === selectedTrader) || traders[0];
   const [metrics, setMetrics] = useState<KolMetricsRow | null>(null);
@@ -213,7 +199,7 @@ const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRan
     if (!kolId) return;
     setAnalyticsLoading(true);
     try {
-      const { from, to } = getTimeBounds(timeRange, customDateRange);
+      const { from, to } = getTimeBounds(timeRange);
       const [metricsRes, trendRes, distributionRes] = await Promise.all([
         supabase.rpc('get_kol_metrics', {
           p_kol_id: kolId,
@@ -253,7 +239,7 @@ const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRan
     } finally {
       setAnalyticsLoading(false);
     }
-  }, [timeRange, customDateRange]);
+  }, [timeRange]);
 
   const fetchSignals = useCallback(async (kolId: string) => {
     if (!kolId) return;
@@ -342,11 +328,11 @@ const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRan
 
   useEffect(() => {
     setActivePage(1);
-  }, [activeTrades.length, selectedTrader, timeRange, customDateRange, refreshTick]);
+  }, [activeTrades.length, selectedTrader, timeRange, refreshTick]);
 
   useEffect(() => {
     setHistoryPage(1);
-  }, [historyTrades.length, selectedTrader, timeRange, customDateRange, refreshTick]);
+  }, [historyTrades.length, selectedTrader, timeRange, refreshTick]);
 
   const activeTotalPages = Math.max(1, Math.ceil(activeTrades.length / SIGNALS_PAGE_SIZE));
   const historyTotalPages = Math.max(1, Math.ceil(historyTrades.length / SIGNALS_PAGE_SIZE));
@@ -735,17 +721,22 @@ const AdvancedAnalysisContent = ({ traders, t, language, selectedTrader, timeRan
 
 const KOLsPage = () => {
   const { t, language } = useLanguage();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [kolsData, setKolsData] = useState<KolData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedKol, setSelectedKol] = useState('');
   const [marketType, setMarketType] = useState<'futures' | 'spot'>('futures');
-  const [timeRange, setTimeRange] = useState<'today' | '7days' | '1month' | '6months' | '1year' | 'custom'>('7days');
-  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [timeRange, setTimeRange] = useState<'today' | '7days' | '1month' | '6months' | '1year'>('7days');
   const [refreshTick, setRefreshTick] = useState(0);
+
+  const timeRanges = [
+    { id: 'today' as const, label: t('timeRange_today') },
+    { id: '7days' as const, label: t('timeRange_7days') },
+    { id: '1month' as const, label: t('timeRange_1month') },
+    { id: '6months' as const, label: t('timeRange_6months') },
+    { id: '1year' as const, label: t('timeRange_1year') },
+  ];
 
   const requestedKolId = useMemo(() => {
     const raw = searchParams.get('kol');
@@ -813,18 +804,18 @@ const KOLsPage = () => {
     }
   }, [kolsData, requestedKolId, selectedKol]);
 
-  const getTimeRangeLabel = () => {
-    if (timeRange === 'custom' && customDateRange?.from && customDateRange?.to) {
-      const locale = language === 'zh' ? zhCN : enUS;
-      return `${format(customDateRange.from, 'MM/dd', { locale })} - ${format(customDateRange.to, 'MM/dd', { locale })}`;
-    }
-    return t(`timeRange_${timeRange}`);
-  };
-
   const handleRefresh = useCallback(() => {
     fetchLeaderboard();
     setRefreshTick(prev => prev + 1);
   }, [fetchLeaderboard]);
+
+  const handleResetFilters = useCallback(() => {
+    setMarketType('futures');
+    setTimeRange('7days');
+    if (kolsData.length > 0) {
+      handleKolChange(kolsData[0].id);
+    }
+  }, [kolsData, handleKolChange]);
 
   return (
     <div className="min-h-screen bg-background text-foreground font-mono relative">
@@ -833,170 +824,80 @@ const KOLsPage = () => {
 
       <div className="px-3 sm:px-6 py-3">
         {/* Filter Bar */}
-        <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 mb-6">
-          {/* Left: Market Type Toggle + Tab */}
-          <div className="flex items-center gap-3 overflow-x-auto scrollbar-x-hidden pb-1">
-            {/* Market Type Toggle */}
-            <div className="flex items-center rounded-lg border border-border overflow-hidden">
-              <button
-                onClick={() => setMarketType('futures')}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                  marketType === 'futures'
-                    ? 'bg-foreground text-background'
-                    : 'bg-card text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {t('futures')}
-              </button>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      disabled
-                      className="px-4 py-2 text-sm font-medium bg-muted/50 text-muted-foreground cursor-not-allowed opacity-50"
-                    >
-                      {t('spot')}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{t('comingSoon')}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-
-            {/* Data Overview Tab */}
-            <button
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all bg-foreground text-background border-foreground shadow-sm"
-            >
-              <span className="text-sm">{t('dataOverview')}</span>
-            </button>
-
-            {/* Strategy Backtest Button */}
-            <button
-              onClick={() => navigate(`/backtest${selectedKol ? `?kol=${selectedKol}` : ''}`)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all border-border text-foreground hover:border-foreground/50 hover:bg-foreground/5"
-            >
-              <FlaskConical className="w-4 h-4" />
-              <span className="text-sm">{t('strategyBacktest')}</span>
-            </button>
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hidden pb-1 sm:flex-wrap sm:overflow-visible sm:gap-6 mb-6">
+          <div className="flex items-center gap-2 shrink-0">
+            <Select value={marketType} onValueChange={(value) => setMarketType(value as 'futures' | 'spot')}>
+              <SelectTrigger className="w-[92px] sm:w-[110px] h-8 text-xs bg-card border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border z-50">
+                <SelectItem value="futures">{t('futures')}</SelectItem>
+                <SelectItem value="spot" disabled>
+                  {`${t('spot')} (${t('comingSoon')})`}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Right: Filters */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-x-hidden pb-1 w-full xl:w-auto">
-            {/* KOL Selector */}
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="hidden sm:inline text-xs sm:text-sm text-muted-foreground whitespace-nowrap">{t('selectTrader')}:</span>
-              <Select value={selectedKol} onValueChange={handleKolChange}>
-                <SelectTrigger className="w-[170px] sm:w-[200px] h-9 bg-card border-border">
-                  <SelectValue placeholder={kolsData[0]?.name}>
-                    {(() => {
-                      const found = kolsData.find(t => t.id === selectedKol);
-                      const idx = kolsData.findIndex(t => t.id === selectedKol);
-                      const display = found ? getKolDisplay(found, idx) : null;
-                      return found ? (
-                        <div className="flex items-center gap-2">
-                          {found.avatar_url ? (
-                            <img src={found.avatar_url} alt={found.name} className="w-5 h-5 rounded-full object-cover" />
-                          ) : (
-                            <span>{display?.icon}</span>
-                          )}
-                          <span>{found.name}</span>
-                        </div>
-                      ) : '';
-                    })()}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="bg-popover border border-border z-50">
-                  {kolsData.map((trader, idx) => (
-                    <SelectItem key={trader.id} value={trader.id}>
+          <div className="flex items-center gap-2 shrink-0">
+            <Select value={selectedKol} onValueChange={handleKolChange}>
+              <SelectTrigger className="w-[170px] sm:w-[200px] h-8 text-xs bg-card border-border">
+                <SelectValue placeholder={kolsData[0]?.name}>
+                  {(() => {
+                    const found = kolsData.find(t => t.id === selectedKol);
+                    const idx = kolsData.findIndex(t => t.id === selectedKol);
+                    const display = found ? getKolDisplay(found, idx) : null;
+                    return found ? (
                       <div className="flex items-center gap-2">
-                        {trader.avatar_url ? (
-                          <img src={trader.avatar_url} alt={trader.name} className="w-5 h-5 rounded-full object-cover" />
+                        {found.avatar_url ? (
+                          <img src={found.avatar_url} alt={found.name} className="w-5 h-5 rounded-full object-cover" />
                         ) : (
-                          <span>{getKolDisplay(trader, idx).icon}</span>
+                          <span>{display?.icon}</span>
                         )}
-                        <span>{trader.name}</span>
+                        <span>{found.name}</span>
                       </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Time Range Filter */}
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="hidden sm:inline text-xs text-muted-foreground">{t('timeRange')}:</span>
-              <div className="flex items-center gap-1 overflow-x-auto scrollbar-x-hidden pb-1">
-                {(['today', '7days', '1month', '6months', '1year'] as const).map((range) => (
-                  <button
-                    key={range}
-                    onClick={() => setTimeRange(range)}
-                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                      timeRange === range
-                        ? 'bg-foreground text-background'
-                        : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
-                    }`}
-                  >
-                    {t(`timeRange_${range}`)}
-                  </button>
-                ))}
-                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                  <PopoverTrigger asChild>
-                    <button
-                      className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-1.5 ${
-                        timeRange === 'custom'
-                          ? 'bg-foreground text-background'
-                          : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
-                      }`}
-                    >
-                      <CalendarIcon className="w-3 h-3" />
-                      {timeRange === 'custom' && customDateRange?.from && customDateRange?.to
-                        ? getTimeRangeLabel()
-                        : t('timeRange_custom')}
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-4" align="end" sideOffset={8}>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-foreground">{t('selectDateRange')}</span>
-                      </div>
-                      <div className="flex border border-border rounded-lg overflow-hidden p-1 bg-card">
-                        <Calendar
-                          initialFocus
-                          mode="range"
-                          selected={customDateRange}
-                          onSelect={setCustomDateRange}
-                          numberOfMonths={2}
-                          locale={language === 'zh' ? zhCN : enUS}
-                          className="pointer-events-auto"
-                        />
-                      </div>
-                      <Button
-                        size="sm"
-                        className="w-full bg-foreground text-background hover:bg-foreground/90 font-bold"
-                        onClick={() => {
-                          if (customDateRange?.from && customDateRange?.to) {
-                            setTimeRange('custom');
-                            setIsCalendarOpen(false);
-                          }
-                        }}
-                        disabled={!customDateRange?.from || !customDateRange?.to}
-                      >
-                        {t('confirm')}
-                      </Button>
+                    ) : '';
+                  })()}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="bg-popover border border-border z-50">
+                {kolsData.map((trader, idx) => (
+                  <SelectItem key={trader.id} value={trader.id}>
+                    <div className="flex items-center gap-2">
+                      {trader.avatar_url ? (
+                        <img src={trader.avatar_url} alt={trader.name} className="w-5 h-5 rounded-full object-cover" />
+                      ) : (
+                        <span>{getKolDisplay(trader, idx).icon}</span>
+                      )}
+                      <span>{trader.name}</span>
                     </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-
-            {/* Refresh */}
-            <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={handleRefresh}>
-              <RefreshCw className="w-4 h-4" />
-              {t('refresh')}
-            </Button>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <Select value={timeRange} onValueChange={(value) => setTimeRange(value as 'today' | '7days' | '1month' | '6months' | '1year')}>
+              <SelectTrigger className="w-[96px] sm:w-[110px] h-8 text-xs bg-card border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border z-50">
+                {timeRanges.map((range) => (
+                  <SelectItem key={range.id} value={range.id}>
+                    {range.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={handleRefresh} title={t('refresh')}>
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+          <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={handleResetFilters} title={t('resetFilters')}>
+            <RotateCcw className="w-4 h-4" />
+          </Button>
         </div>
 
         {/* Content */}
@@ -1012,7 +913,6 @@ const KOLsPage = () => {
             language={language}
             selectedTrader={selectedKol}
             timeRange={timeRange}
-            customDateRange={customDateRange}
             refreshTick={refreshTick}
           />
         )}

@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Sun, Moon, MessageSquare, MessageSquareOff, Globe, User, LogOut, ChevronDown, Clock, Menu } from 'lucide-react';
+import { Sun, Moon, MessageSquare, MessageSquareOff, Globe, User, LogOut, ChevronDown, Clock, Menu, FlaskConical } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { useLanguage } from '@/lib/i18n';
 import { useTimeZone } from '@/lib/timezone';
@@ -261,6 +261,18 @@ const TopNav = ({ danmakuEnabled, onToggleDanmaku, hideDanmakuToggle = false, mo
                     {item.label}
                   </Link>
                 ))}
+                <Link
+                  to="/backtest"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center gap-2 rounded-md px-3 py-3 font-mono text-sm border transition-colors ${
+                    location.pathname === '/backtest'
+                      ? 'border-foreground text-foreground bg-accent'
+                      : 'border-border text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <FlaskConical size={15} />
+                  {t('strategyBacktest')}
+                </Link>
                 <button
                   onClick={() => {
                     handleProClick();
