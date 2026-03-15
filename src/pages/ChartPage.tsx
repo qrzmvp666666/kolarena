@@ -16,7 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Users, X, Plus, RefreshCw, Square, Columns2, Rows2, LayoutGrid, ChevronLeft, ChevronRight, MessageSquare, Activity, History, PanelLeft } from 'lucide-react';
+import { X, Plus, RefreshCw, Square, Columns2, Rows2, LayoutGrid, ChevronLeft, ChevronRight, MessageSquare, Activity, History, PanelLeft } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n';
 import { ResponsiveGridLayout, useContainerWidth, type LayoutItem, type ResponsiveLayouts } from 'react-grid-layout';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -276,6 +276,8 @@ const ChartPage = () => {
     const [globalSelectedDirection, setGlobalSelectedDirection] = useState<'all' | 'long' | 'short'>('all');
     const [globalSelectedTimeRange, setGlobalSelectedTimeRange] = useState<'all' | '24h' | '3d' | '7d' | '30d'>('7d');
     const [globalSelectedEntryStatus, setGlobalSelectedEntryStatus] = useState<'all' | 'pending' | 'entered'>('all');
+    const [symbolFilterOpen, setSymbolFilterOpen] = useState(false);
+    const [kolFilterOpen, setKolFilterOpen] = useState(false);
     
     // We still track manual selection flag per chart to avoid auto-select clashing with user intent
     // (though with global selection, we might just need one global flag, but per-chart is safer for loading states)
@@ -400,6 +402,21 @@ const ChartPage = () => {
     const symbolDisplay = selectedSymbols.length === 1
         ? selectedSymbols[0].replace('USDT', '') + '/USDT'
         : (language === 'zh' ? `已选 ${selectedSymbols.length} 个` : `${selectedSymbols.length} selected`);
+
+    useEffect(() => {
+        const handlePointerDownOutsideFilter = (event: PointerEvent) => {
+            const target = event.target as HTMLElement | null;
+            if (!target) return;
+            if (target.closest('[data-filter-popover-root="true"]')) return;
+            setSymbolFilterOpen(false);
+            setKolFilterOpen(false);
+        };
+
+        document.addEventListener('pointerdown', handlePointerDownOutsideFilter, true);
+        return () => {
+            document.removeEventListener('pointerdown', handlePointerDownOutsideFilter, true);
+        };
+    }, []);
 
     useEffect(() => {
         if (!gridContainerRef.current) return;
@@ -685,17 +702,18 @@ const ChartPage = () => {
                         </div>
 
                         <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 flex-nowrap overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
-                            <Popover>
+                            <Popover open={symbolFilterOpen} onOpenChange={setSymbolFilterOpen}>
                                 <PopoverTrigger asChild>
                                     <Button
                                         size="sm"
                                         className="h-8 gap-2 text-[11px] font-medium border border-border bg-card text-foreground hover:bg-muted transition-colors shrink-0"
                                         disabled={symbolsLoading}
+                                        data-filter-popover-root="true"
                                     >
                                         {symbolDisplay}
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-56 p-2" align="start">
+                                <PopoverContent className="w-56 p-2" align="start" data-filter-popover-root="true">
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between px-2 pt-1 pb-2 border-b">
                                             <Label className="text-xs font-medium text-muted-foreground" />
@@ -748,17 +766,17 @@ const ChartPage = () => {
                                     </div>
                                 </PopoverContent>
                             </Popover>
-                            <Popover>
+                            <Popover open={kolFilterOpen} onOpenChange={setKolFilterOpen}>
                                 <PopoverTrigger asChild>
                                     <Button
                                         size="sm"
                                         className="h-7 gap-2 text-[11px] font-medium border border-border bg-card text-foreground hover:bg-muted transition-colors"
+                                        data-filter-popover-root="true"
                                     >
-                                        <Users className="w-3.5 h-3.5" />
-                                        {t('chartKolFilter')}
+                                        KOL
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-56 p-2" align="start">
+                                <PopoverContent className="w-56 p-2" align="start" data-filter-popover-root="true">
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between px-2 pt-1 pb-2 border-b">
                                             <Label className="text-xs font-medium text-muted-foreground">
@@ -839,10 +857,10 @@ const ChartPage = () => {
                             <div className="flex items-center gap-2">
                                 <Select value={globalSelectedDirection} onValueChange={(v: any) => setGlobalSelectedDirection(v)}>
                                     <SelectTrigger className="h-8 text-[11px] border-border bg-card text-foreground hover:bg-muted transition-colors w-[82px] sm:w-[90px] shrink-0">
-                                        <SelectValue placeholder={t('filterDirection')} />
+                                        <SelectValue placeholder={language === 'zh' ? '方向' : t('filterDirection')} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">{t('filterDirection')}</SelectItem>
+                                        <SelectItem value="all">{language === 'zh' ? '方向' : t('filterDirection')}</SelectItem>
                                         <SelectItem value="long">{t('signalLong')}</SelectItem>
                                         <SelectItem value="short">{t('signalShort')}</SelectItem>
                                     </SelectContent>
@@ -971,13 +989,13 @@ const ChartPage = () => {
                                             } bg-background/50 overflow-hidden`}
                                             onMouseDown={() => setActiveChartId(chart.id)}
                                         >
-                                            <div className="flex items-center justify-between px-3 py-2 text-xs bg-card border-b border-border chart-drag-handle cursor-move select-none">
-                                                <div className="flex items-center gap-2 font-semibold text-foreground">
+                                            <div className="flex items-center justify-between px-3 py-2 text-xs bg-card border-b border-border select-none">
+                                                <div className="flex items-center gap-2 font-semibold text-foreground chart-drag-handle cursor-move">
                                                     {chart.symbol.replace('USDT', '')}/USDT
                                                     <span className="text-muted-foreground">{chart.interval}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex bg-muted rounded p-1">
+                                                <div className="flex items-center gap-2 chart-interact">
+                                                    <div className="flex bg-muted rounded p-1 chart-interact">
                                                         {Object.keys(INTERVALS).map(i => (
                                                             <button
                                                                 key={i}
@@ -985,7 +1003,7 @@ const ChartPage = () => {
                                                                     e.stopPropagation();
                                                                     updateChart(chart.id, { interval: i as Interval });
                                                                 }}
-                                                                className={`px-2 py-1 text-[11px] font-medium rounded transition-all ${
+                                                                className={`px-2 py-1 text-[11px] font-medium rounded transition-all chart-interact ${
                                                                     chart.interval === i
                                                                         ? 'bg-background text-foreground shadow-sm'
                                                                         : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
@@ -996,7 +1014,7 @@ const ChartPage = () => {
                                                         ))}
                                                     </div>
                                                     <button
-                                                        className="text-muted-foreground hover:text-foreground"
+                                                        className="text-muted-foreground hover:text-foreground chart-interact"
                                                         onClick={e => {
                                                             e.stopPropagation();
                                                             handleRemoveChart(chart.id);
