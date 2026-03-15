@@ -652,7 +652,7 @@ const LeaderboardContent = () => {
   }, [kolsData, returnRateFilter, winRateFilter]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-mono relative">
+    <div className="min-h-screen bg-background text-foreground font-mono relative overflow-x-hidden">
       {/* Top Navigation */}
       <TopNav danmakuEnabled={false} onToggleDanmaku={() => {}} hideDanmakuToggle />
       
@@ -702,18 +702,18 @@ const LeaderboardContent = () => {
           <>
             {/* Data Table */}
             <div className="border border-border rounded-lg overflow-hidden mb-6">
-              <div className="w-full overflow-x-auto">
+              <div className="w-full overflow-x-auto overscroll-x-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
                 <table className="w-full text-xs min-w-[600px]">
                   <thead>
                     <tr className="bg-muted/50 border-b border-border">
-                      <th className="px-4 py-3 text-left font-semibold text-muted-foreground">RANK</th>
-                      <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('trader')}</th>
-                      <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('returnRate')}</th>
-                      <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('totalPnL')}</th>
-                      <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('winRate')}</th>
-                      <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('maxProfit')}</th>
-                      <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('maxLoss')}</th>
-                      <th className="px-4 py-3 text-left font-semibold text-muted-foreground">{t('tradingDays')}</th>
+                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground whitespace-nowrap">RANK</th>
+                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground whitespace-nowrap">{t('trader')}</th>
+                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground whitespace-nowrap">{t('returnRate')}</th>
+                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground whitespace-nowrap">{t('totalPnL')}</th>
+                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground whitespace-nowrap">{t('winRate')}</th>
+                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground whitespace-nowrap">{t('maxProfit')}</th>
+                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground whitespace-nowrap">{t('maxLoss')}</th>
+                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground whitespace-nowrap">{t('tradingDays')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -721,8 +721,8 @@ const LeaderboardContent = () => {
                       const display = getKolDisplay(row, index);
                       return (
                       <tr key={row.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                        <td className="px-4 py-3 text-foreground font-medium">{index + 1}</td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-2.5 text-foreground font-medium">{index + 1}</td>
+                        <td className="px-3 py-2.5">
                           <div 
                             className="flex items-center gap-2 cursor-pointer hover:underline transition-colors"
                             onClick={() => {
@@ -734,19 +734,19 @@ const LeaderboardContent = () => {
                             ) : (
                               <span>{display.icon}</span>
                             )}
-                            <span className="text-foreground font-medium">{row.name}</span>
+                            <span className="text-foreground font-medium whitespace-nowrap">{row.name}</span>
                           </div>
                         </td>
-                        <td className={`px-4 py-3 text-left font-medium ${Number(row.return_rate) >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+                        <td className={`px-3 py-2.5 text-left font-medium whitespace-nowrap ${Number(row.return_rate) >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
                           {Number(row.return_rate) >= 0 ? '+' : ''}{Number(row.return_rate).toFixed(2)}%
                         </td>
-                        <td className={`px-4 py-3 text-left font-medium ${Number(row.total_pnl) >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+                        <td className={`px-3 py-2.5 text-left font-medium whitespace-nowrap ${Number(row.total_pnl) >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
                           {Number(row.total_pnl) >= 0 ? '+' : ''}${Number(row.total_pnl).toLocaleString()}
                         </td>
-                        <td className="px-4 py-3 text-left text-muted-foreground">{Number(row.win_rate)}%</td>
-                        <td className="px-4 py-3 text-left text-accent-green">${Number(row.max_profit).toLocaleString()}</td>
-                        <td className="px-4 py-3 text-left text-accent-red">-${Math.abs(Number(row.max_loss)).toLocaleString()}</td>
-                        <td className="px-4 py-3 text-left text-muted-foreground">{row.trading_days}</td>
+                        <td className="px-3 py-2.5 text-left text-muted-foreground whitespace-nowrap">{Number(row.win_rate)}%</td>
+                        <td className="px-3 py-2.5 text-left text-accent-green whitespace-nowrap">${Number(row.max_profit).toLocaleString()}</td>
+                        <td className="px-3 py-2.5 text-left text-accent-red whitespace-nowrap">-${Math.abs(Number(row.max_loss)).toLocaleString()}</td>
+                        <td className="px-3 py-2.5 text-left text-muted-foreground whitespace-nowrap">{row.trading_days}</td>
                       </tr>
                       );
                     })}
