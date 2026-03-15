@@ -7,6 +7,7 @@ import { models } from '@/lib/chartData';
 import { supabase } from '@/lib/supabase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import KolAvatar from '@/components/KolAvatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowUpRight, ArrowDownRight, RefreshCw, RotateCcw } from 'lucide-react';
 import { formatDateTime, useTimeZone } from '@/lib/timezone';
@@ -818,8 +819,31 @@ const KOLsPage = () => {
       <TickerBar />
 
       <div className="px-3 sm:px-6 py-3">
+        {/* KOL Chips */}
+        {kolsData.length > 0 && (
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hidden pb-1 mb-3">
+            {kolsData.map((kol) => {
+              const active = selectedKol === kol.id;
+              return (
+                <button
+                  key={kol.id}
+                  onClick={() => handleKolChange(kol.id)}
+                  className={`flex items-center gap-1.5 shrink-0 px-2.5 py-1.5 rounded-full border text-xs font-mono transition-colors ${
+                    active
+                      ? 'border-foreground bg-foreground text-background'
+                      : 'border-border text-muted-foreground hover:border-foreground/50 hover:text-foreground'
+                  }`}
+                >
+                  <KolAvatar name={kol.name} avatarUrl={kol.avatar_url} className="w-4 h-4" fallbackClassName="text-[8px]" />
+                  {kol.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Filter Bar */}
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hidden pb-1 sm:flex-wrap sm:overflow-visible sm:gap-6 mb-6">
+        <div className="flex items-center gap-2 flex-wrap mb-3">
           <div className="flex items-center gap-2 shrink-0">
             <Select value={marketType} onValueChange={(value) => setMarketType(value as 'futures' | 'spot')}>
               <SelectTrigger className="w-[92px] sm:w-[110px] h-8 text-xs bg-card border-border">
@@ -830,44 +854,6 @@ const KOLsPage = () => {
                 <SelectItem value="spot" disabled>
                   {`${t('spot')} (${t('comingSoon')})`}
                 </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <Select value={selectedKol} onValueChange={handleKolChange}>
-              <SelectTrigger className="w-[170px] sm:w-[200px] h-8 text-xs bg-card border-border">
-                <SelectValue placeholder={kolsData[0]?.name}>
-                  {(() => {
-                    const found = kolsData.find(t => t.id === selectedKol);
-                    const idx = kolsData.findIndex(t => t.id === selectedKol);
-                    const display = found ? getKolDisplay(found, idx) : null;
-                    return found ? (
-                      <div className="flex items-center gap-2">
-                        {found.avatar_url ? (
-                          <img src={found.avatar_url} alt={found.name} className="w-5 h-5 rounded-full object-cover" />
-                        ) : (
-                          <span>{display?.icon}</span>
-                        )}
-                        <span>{found.name}</span>
-                      </div>
-                    ) : '';
-                  })()}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className="bg-popover border border-border z-50">
-                {kolsData.map((trader, idx) => (
-                  <SelectItem key={trader.id} value={trader.id}>
-                    <div className="flex items-center gap-2">
-                      {trader.avatar_url ? (
-                        <img src={trader.avatar_url} alt={trader.name} className="w-5 h-5 rounded-full object-cover" />
-                      ) : (
-                        <span>{getKolDisplay(trader, idx).icon}</span>
-                      )}
-                      <span>{trader.name}</span>
-                    </div>
-                  </SelectItem>
-                ))}
               </SelectContent>
             </Select>
           </div>
@@ -887,9 +873,6 @@ const KOLsPage = () => {
             </Select>
           </div>
 
-          <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={handleRefresh} title={t('refresh')}>
-            <RefreshCw className="w-4 h-4" />
-          </Button>
           <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={handleResetFilters} title={t('resetFilters')}>
             <RotateCcw className="w-4 h-4" />
           </Button>

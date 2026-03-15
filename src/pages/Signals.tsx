@@ -3,9 +3,9 @@ import TopNav from '@/components/TopNav';
 import TickerBar from '@/components/TickerBar';
 import { useLanguage } from '@/lib/i18n';
 import SignalListCard from '@/components/SignalListCard';
-import { Search, RefreshCw, RotateCcw } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { RefreshCw, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import KolAvatar, { resolveKolAvatar } from '@/components/KolAvatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/lib/supabase';
@@ -39,6 +39,14 @@ interface SignalRow {
   entry_time: string | null;
   exit_time: string | null;
   created_at: string;
+}
+
+interface KolFilterRow {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+  account_value: number;
+  rank?: number;
 }
 
 // Transform DB row → card props
@@ -76,7 +84,7 @@ const transformSignal = (row: SignalRow, isHistory: boolean, timeZone: string) =
   return {
     id: row.id,
     author: row.kol_name,
-    avatar: row.kol_avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${row.kol_name}`,
+    avatar: resolveKolAvatar(row.kol_avatar_url, row.kol_name),
     pair: `${row.symbol} 永续`,
     signalType: row.direction,
     leverage: row.leverage ? `${row.leverage}x` : '未提供',
@@ -109,7 +117,7 @@ const SignalsContent = () => {
   const [subscriptionFilter, setSubscriptionFilter] = useState<'all' | 'subscribed' | 'unsubscribed'>('all');
   const [followFilter, setFollowFilter] = useState<'all' | 'followed' | 'unfollowed'>('all');
   const [marketType, setMarketType] = useState<'futures' | 'spot'>('futures');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedKolIds, setSelectedKolIds] = useState<Set<string>>(new Set());
   const [selectedPair, setSelectedPair] = useState<string>('all');
   const [selectedSignalType, setSelectedSignalType] = useState<string>('all');
   const [timeRange, setTimeRange] = useState<'today' | '7days' | '1month' | '6months' | '1year'>('7days');
@@ -117,6 +125,7 @@ const SignalsContent = () => {
   // ---- Supabase data ----
   const [activeSignals, setActiveSignals] = useState<SignalRow[]>([]);
   const [historySignals, setHistorySignals] = useState<SignalRow[]>([]);
+  const [allKols, setAllKols] = useState<Array<{ id: string; name: string; avatar: string }>>([]);
   const [loading, setLoading] = useState(true);
 
   // ---- Follow / Subscribe state ----
@@ -233,9 +242,34 @@ const SignalsContent = () => {
     setLoading(false);
   }, []);
 
+  const fetchAllKols = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_leaderboard_by_range', {
+        p_from: null,
+        p_to: null,
+      });
+
+      if (error) {
+        console.error('Error fetching KOL list:', error);
+        return;
+      }
+
+      const rows = (data || []) as KolFilterRow[];
+      const mapped = rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        avatar: resolveKolAvatar(row.avatar_url, row.name),
+      }));
+      setAllKols(mapped);
+    } catch (err) {
+      console.error('Error fetching KOL list:', err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchSignals();
     fetchRelations();
+    fetchAllKols();
 
     // Realtime subscription for signals
     const signalsChannel = supabase
@@ -272,7 +306,7 @@ const SignalsContent = () => {
       supabase.removeChannel(signalsChannel);
       supabase.removeChannel(relationsChannel);
     };
-  }, [fetchSignals, fetchRelations]);
+  }, [fetchSignals, fetchRelations, fetchAllKols]);
 
   // Compute subscribed/unsubscribed counts
   const allSignals = [...activeSignals, ...historySignals];
@@ -294,14 +328,31 @@ const SignalsContent = () => {
     setSubscriptionFilter('all');
     setFollowFilter('all');
     setMarketType('futures');
-    setSearchQuery('');
+    setSelectedKolIds(new Set());
     setSelectedPair('all');
     setSelectedSignalType('all');
     setTimeRange('7days');
   }, []);
 
+  useEffect(() => {
+    if (selectedKolIds.size === 0 || allKols.length === 0) return;
+    const validIds = new Set(allKols.map((kol) => kol.id));
+    setSelectedKolIds((prev) => {
+      const next = new Set(Array.from(prev).filter((id) => validIds.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [allKols, selectedKolIds.size]);
+
+  const toggleKol = useCallback((kolId: string) => {
+    setSelectedKolIds(prev => {
+      const next = new Set(prev);
+      if (next.has(kolId)) next.delete(kolId);
+      else next.add(kolId);
+      return next;
+    });
+  }, []);
+
   const filteredSignals = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
     const now = new Date();
     const startOfToday = new Date(now);
     startOfToday.setHours(0, 0, 0, 0);
@@ -347,11 +398,7 @@ const SignalsContent = () => {
       if (selectedPair !== 'all' && !row.symbol.toUpperCase().includes(selectedPair.toUpperCase())) return false;
       if (selectedSignalType !== 'all' && selectedSignalType !== 'spot' && row.direction !== selectedSignalType) return false;
       if (selectedSignalType === 'spot') return false;
-      if (query) {
-        const symbolText = row.symbol?.toLowerCase() ?? '';
-        const nameText = row.kol_name?.toLowerCase() ?? '';
-        if (!symbolText.includes(query) && !nameText.includes(query)) return false;
-      }
+      if (selectedKolIds.size > 0 && !selectedKolIds.has(row.kol_id)) return false;
       if (activeRange) {
         const timeValue = useExitTime
           ? (row.exit_time ?? row.entry_time ?? row.created_at)
@@ -374,7 +421,7 @@ const SignalsContent = () => {
     subscriptionFilter,
     followFilter,
     marketType,
-    searchQuery,
+    selectedKolIds,
     selectedPair,
     selectedSignalType,
     timeRange,
@@ -392,36 +439,42 @@ const SignalsContent = () => {
 
       {/* Main Content */}
       <div className="px-3 sm:px-6 py-3">
-        {/* Filter Bar - Row 1 */}
-        <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 mb-4">
-          <div />
-
-          {/* Search & Actions */}
-          <div className="flex flex-col gap-2 w-full xl:w-auto">
-            <div className="flex items-center gap-2 w-full xl:w-auto">
-              <div className="relative flex-1 xl:flex-none">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder={t('searchPlaceholder')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 w-full xl:w-64 bg-card border-border"
-                />
-              </div>
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={fetchSignals} disabled={loading} title={t('refresh')}>
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              </Button>
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleResetFilters} title={t('resetFilters')}>
-                <RotateCcw className="w-4 h-4" />
-              </Button>
-            </div>
+        {/* KOL Filter Chips */}
+        {allKols.length > 0 && (
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hidden pb-1 mb-3">
+            <button
+              onClick={() => setSelectedKolIds(new Set())}
+              className={`flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-full border text-xs font-mono transition-colors ${
+                selectedKolIds.size === 0
+                  ? 'border-foreground bg-foreground text-background'
+                  : 'border-border text-muted-foreground hover:border-foreground/50 hover:text-foreground'
+              }`}
+            >
+              全部KOL
+            </button>
+            {allKols.map(kol => {
+              const active = selectedKolIds.has(kol.id);
+              return (
+                <button
+                  key={kol.id}
+                  onClick={() => toggleKol(kol.id)}
+                  className={`flex items-center gap-1.5 shrink-0 px-2.5 py-1.5 rounded-full border text-xs font-mono transition-colors ${
+                    active
+                      ? 'border-foreground bg-foreground text-background'
+                      : 'border-border text-muted-foreground hover:border-foreground/50 hover:text-foreground'
+                  }`}
+                >
+                  <KolAvatar name={kol.name} avatarUrl={kol.avatar} className="w-4 h-4" fallbackClassName="text-[8px]" />
+                  {kol.name}
+                </button>
+              );
+            })}
           </div>
-        </div>
+        )}
 
-        {/* Filter Bar - Row 2: Filters Left, Reset Right */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-6">
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hidden pb-1 sm:flex-wrap sm:overflow-visible sm:gap-6">
+        {/* Filter Bar */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hidden pb-1 sm:flex-wrap sm:overflow-visible sm:gap-2 flex-wrap">
             {/* Market Type Filter */}
             <div className="flex items-center gap-2 shrink-0">
               <Select value={marketType} onValueChange={(v) => setMarketType(v as 'futures' | 'spot')}>
@@ -510,6 +563,11 @@ const SignalsContent = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="flex items-center gap-1 shrink-0 ml-auto">
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleResetFilters} title={t('resetFilters')}>
+                <RotateCcw className="w-4 h-4" />
+              </Button>
             </div>
           </div>
         </div>

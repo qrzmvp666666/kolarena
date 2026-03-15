@@ -1,5 +1,6 @@
 import { useLanguage } from '@/lib/i18n';
 import { ArrowRight, Star, Bell } from 'lucide-react';
+import KolAvatar from '@/components/KolAvatar';
 
 interface SignalListItem {
   id: string;
@@ -63,10 +64,11 @@ const SignalListCard = ({ signal, isHistory = false, isFollowed = false, isSubsc
       <div className="flex items-center justify-between gap-3 mb-3">
         {/* Left Side: Avatar + Author + Arrow */}
         <div className="flex items-center gap-2 min-w-0">
-          <img
-            src={signal.avatar}
-            alt={signal.author}
-            className="w-10 h-10 rounded-full border border-border shrink-0"
+          <KolAvatar
+            name={signal.author}
+            avatarUrl={signal.avatar}
+            className="w-10 h-10 border border-border shrink-0"
+            fallbackClassName="text-xs"
           />
           <div className="flex items-center gap-1.5 min-w-0">
             <span className="font-semibold text-foreground text-base truncate max-w-[120px]">{signal.author}</span>
